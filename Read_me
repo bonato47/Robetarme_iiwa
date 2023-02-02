@@ -1,0 +1,10 @@
+READ_ME
+
+These files has to purpose to run the iiwa arm robot by following:
+1) a Dynamical system
+2) a path 
+
+In src/send_pose you have one node for the dynamical system (Ds.cpp) and one node for the path (Send_pos). 
+
+
+
