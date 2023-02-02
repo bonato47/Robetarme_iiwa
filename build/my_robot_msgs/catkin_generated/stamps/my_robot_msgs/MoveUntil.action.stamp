@@ -1,0 +1,9 @@
+#goal 
+float64 Min_error
+---
+#result
+float64 Error
+---
+#feedback
+
+float64 Percentage

@@ -1,0 +1,8 @@
+prefix=/home/bonato/catkin_ws/install
+
+Name: send_pos
+Description: Description of send_pos
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

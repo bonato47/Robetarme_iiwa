@@ -1,0 +1,2 @@
+set(iiwa_tools_MESSAGE_FILES "")
+set(iiwa_tools_SERVICE_FILES "/home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetFK.srv;/home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetIK.srv;/home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetJacobian.srv;/home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetJacobians.srv;/home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetGravity.srv;/home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetMassMatrix.srv")
