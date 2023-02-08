@@ -1,16 +1,14 @@
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
 #include "std_msgs/Float64MultiArray.h"
-#include "geometry_msgs/Pose.h"
-#include "geometry_msgs/Quaternion.h"
-#include "geometry_msgs/Point.h"
 #include <cmath>
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <vector>
-#include "iiwa_tools/GetIK.h"
 #include "std_srvs/Empty.h"
+#include <trac_ik/trac_ik.hpp>
+#include <eigen3/Eigen/Dense>
 
 using namespace std;
 
@@ -20,84 +18,101 @@ vector<double> TakeLine(vector<vector<double>> , int );
 vector<vector<double>> CSVtoVectorVectorDouble();
 
 int n =7;
+int Taille = 2;
 vector<double> eff(n);
 vector<double> vel(n);
-vector<double> pos(n);
+vector<double> pos_joint_actual(n);
 float pi =3.14;
 int main(int argc, char **argv)
 {
     std_msgs::Float64MultiArray msgP;
-    std_msgs::Float64MultiArray J;
-    std_msgs::Float64MultiArray Past_joint_pos;
-
-    iiwa_tools::GetIK  IK_state ;
-    vector<double> posDes(n);
-    vector<double> V_temp(n);
+    vector<double> pos_des_joint(n);
     vector<vector<double>> traj_joint;
-    //Choose the position of the end effector {pos,quat}
-    /* vector<vector<double>> traj_cart  = {{0.004663, 0.004663 ,1.298483,0,0,0.7,-0.7},                       
-                                  {0,0,1.3,0,0,0.7,-0.7}};
-    // */ 
-    vector<vector<double>> traj_cart;
-    traj_cart = CSVtoVectorVectorDouble();
-    int Len_vec =traj_cart.size();
 
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Send_pos");
     ros::NodeHandle Nh;
-    ros::ServiceClient client = Nh.serviceClient<iiwa_tools::GetIK>("iiwa/iiwa_ik_server");
     ros::Subscriber sub = Nh.subscribe("iiwa/joint_states", 1000, CounterCallback);
     ros::Publisher chatter_pub = Nh.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
     //Frequency of the Ros loop
     ros::Rate loop_rate(10);
 
-    vector<geometry_msgs::Pose> h(Len_vec);
-    for(int i = 0 ;i<Len_vec;++i){
-        
-        geometry_msgs::Point Pos_init ;
-        Pos_init.x = traj_cart[i][0];
-        Pos_init.y = traj_cart[i][1];
-        Pos_init.z = traj_cart[i][2];
-        geometry_msgs::Quaternion Quat_init ;
-        Quat_init.x = traj_cart[i][3];
-        Quat_init.y = traj_cart[i][4];
-        Quat_init.z = traj_cart[i][5];
-        Quat_init.w = traj_cart[i][6];
 
-        geometry_msgs::Pose poses_init ;
-        poses_init.position = Pos_init;
-        poses_init.orientation = Quat_init;
+/*     // Read trajectory from .csv 
+    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble();
+    int Len_vec =traj_cart.size(); */
 
-        h[i] = (poses_init);
+    vector<vector<double>> traj_cart = {{0,0,1.2,0.7,-0.7,0,0},{0.5,0.5,0.5,0.7,-0.7,0,0}};
+
+    //iniailization Invers Kinematics
+    string base_link = "iiwa_link_0";
+    string tip_link = "iiwa_link_ee";
+    string URDF_param="/robot_description";
+    double timeout_in_secs=0.005;
+    double error=1e-5; // a voir la taille
+    TRAC_IK::SolveType type=TRAC_IK::Distance;
+    TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
+
+    KDL::Chain chain;
+
+    bool valid = ik_solver.getKDLChain(chain);
+    if (!valid)
+    {
+        ROS_ERROR("There was no valid KDL chain found");
     }
 
-    Past_joint_pos.data = {pos[0],pos[1],pos[2],pos[3],pos[4],pos[5],pos[6]};
-    IK_state.request.poses = h;
-    IK_state.request.seed_angles = Past_joint_pos;
-    //Get IK to convert cartesian position to joint position
+    //Convert cartesian to joint space
 
-    client.call(IK_state);
-  
-    int Next  = 0;
-    for(int i = 0 ;i<Len_vec;++i){
-        for(int j = 0 ;j<7;++j){
-            V_temp[j] = IK_state.response.joints.data[Next];
-            ++Next;
+   
+    vector<double> pos_joint_next(7);
+    double* ptr;
+    for(int i = 0; i< Taille;i++)
+    {
+        KDL::JntArray Next_joint_task;
+        KDL::JntArray actual_joint_task; 
+        if(i == 0){
+            ptr = &pos_joint_actual[0];
+            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7); 
+            actual_joint_task.data = pos_joint_actual_eigen; 
         }
-        traj_joint.push_back(V_temp);
-    }
-    ROS_INFO("Let'move on");
+        else {
+            ptr = &pos_joint_next[0];
+            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7); 
+            actual_joint_task.data = pos_joint_actual_eigen; 
+            std::fill(pos_joint_next.begin(), pos_joint_next.end(), 0);
+        }
+       
+        KDL::Vector Vec(traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
+        KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[i][4],traj_cart[i][5],traj_cart[i][6],traj_cart[i][7]);
+        KDL::Frame Next_joint_cartesian(Rot,Vec); 
+
+        //ROS_INFO("%f" "%f" "%f" ,traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
+
+        Eigen::VectorXd pos_joint_next_eigen ;
+        int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
+        pos_joint_next_eigen = Next_joint_task.data;
+        for(int i = 0 ;i<7;++i){
+            pos_joint_next[i] =pos_joint_next_eigen(i);
+        }
+        traj_joint.push_back(pos_joint_next);
+        ROS_INFO("%f" "%f" "%f" "%f" "%f" "%f" "%f" ,traj_joint[i][0],traj_joint[i][1],traj_joint[i][2],traj_joint[i][3],traj_joint[i][4],traj_joint[i][5],traj_joint[i][6]);
   
+    }
+   
+    //-----------------------------------------
+
+    ROS_INFO("Let'move on");
+    int Len_vec =2;
     //begin the Ros loop
-    Next  = 0;
+    int Next  = 0;
     int count = 0 ;
     while (ros::ok())
     {
         msgP.data = traj_joint[Next];
-        posDes= traj_joint[Next];
+        pos_des_joint= traj_joint[Next];
 
-        //ROS_INFO("%f", mseValue(pos,posDes,n));
-        if ((mseValue(pos,posDes,n) && (Next < Len_vec))  || (count >50)){
+        //ROS_INFO("%f", mseValue(pos,pos_des_joint,n));
+        if ((mseValue(pos_joint_actual,pos_des_joint,n) && (Next < Len_vec))  || (count >50)){
             ++Next;
             if(Next == Len_vec){
                 ROS_INFO("Last target reached, stop ");
@@ -117,7 +132,7 @@ int main(int argc, char **argv)
 
 void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
 {
-    pos = msg->position;
+    pos_joint_actual = msg->position;
     vel = msg->velocity;
     eff = msg->effort;
 }
@@ -184,7 +199,7 @@ vector<vector<double>> CSVtoVectorVectorDouble()
     else
         cout<<"Could not open the file\n";
 
-    for(int i=0;i<10;i++) //int(content.size())
+    for(int i=0;i<Taille;i++) //int(content.size())
     {
         string::size_type sz;     // alias of size_t
         double pos_x = stod(content[i][0],&sz);

@@ -1,9 +1,6 @@
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
 #include "std_msgs/Float64MultiArray.h"
-#include "geometry_msgs/Pose.h"
-#include "geometry_msgs/Quaternion.h"
-#include "geometry_msgs/Point.h"
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -45,7 +42,7 @@ int main(int argc, char **argv)
 
     iiwa_tools::GetFK  FK_state ;
 
-    double delta_t = 0.5;
+    double delta_t = 0.1;
    
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Ds");
@@ -55,13 +52,31 @@ int main(int argc, char **argv)
     ros::Publisher chatter_pub = Nh_.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
     ros::Rate loop_rate(1/delta_t);
 
+    //iniailization Forward Kinematics
 
     FK_state.request.joints.layout.dim.push_back(std_msgs::MultiArrayDimension());
     FK_state.request.joints.layout.dim.push_back(std_msgs::MultiArrayDimension());
     FK_state.request.joints.layout.dim[0].size = 1;
     FK_state.request.joints.layout.dim[1].size = 7;
 
+    //iniailization Invers Kinematics
+    string base_link = "iiwa_link_0";
+    string tip_link = "iiwa_link_ee";
+    string URDF_param="/robot_description";
+    double timeout_in_secs=0.005;
+    double error=1e-3; 
+    TRAC_IK::SolveType type=TRAC_IK::Distance;
+    TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
 
+    KDL::Chain chain;
+
+    bool valid = ik_solver.getKDLChain(chain);
+    if (!valid)
+    {
+        ROS_ERROR("There was no valid KDL chain found");
+    }
+
+    //initialization  Variable
     Vector3d speed,speed2, pos_cart_N,pos_cart_N2;
     std_msgs::Float64MultiArray msgP;
     std_msgs::Float64MultiArray Past_joint_pos;
@@ -74,6 +89,8 @@ int main(int argc, char **argv)
     vector<double> pos_joint_next(n);
     vector<double> Quat_N2(4);
     int count = 0;
+
+    //begin the ros loop
     while (ros::ok())
     {
         // Take joints state actual and convert to cartesian state
@@ -84,7 +101,6 @@ int main(int argc, char **argv)
         FK_state.request.joints.data = Past_joint_pos.data;
 
         client_FK.call(FK_state);
-        //Past_cart = FK_state.response.poses;
         Past_cart = FK_state.response.poses[0], FK_state.response.poses[1];
         Past_cart_pos = Past_cart.position;
         Past_cart_quat = Past_cart.orientation;
@@ -116,34 +132,7 @@ int main(int argc, char **argv)
         vector<double> Temp ={pos_cart_N[0],pos_cart_N[1],pos_cart_N[2],Quat_N[0],Quat_N[1],Quat_N[2],Quat_N[3]};
 
         //------------------------------------------------------------------------
-        //Nextnext point
-        ROS_INFO("Desired cartesian position 2 ");
-
-        speed2 = speed_func(Temp);
-        
-        pos_cart_N2 = Integral_func(Temp, speed2, delta_t);
-        Quat_N2 = {0,0,0.7,-0.7};
-        
-        ROS_INFO("%f %f %f",pos_cart_N2[0],pos_cart_N2[1],pos_cart_N2[2]);
-
-
-        //------------------------------------------------------------------------
-        string base_link = "iiwa_link_0";
-        string tip_link = "iiwa_link_ee";
-        string URDF_param="/robot_description";
-        double timeout_in_secs=0.005;
-        double error=1e-5; // a voir la taille
-        TRAC_IK::SolveType type=TRAC_IK::Distance;
-        TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
-
-        KDL::Chain chain;
-
-        bool valid = ik_solver.getKDLChain(chain);
-        if (!valid)
-        {
-            ROS_ERROR("There was no valid KDL chain found");
-        }
-
+        //Convert cartesian to joint space
         KDL::JntArray Next_joint_task;
         KDL::JntArray actual_joint_task;   
 
@@ -165,19 +154,14 @@ int main(int argc, char **argv)
 
         ROS_INFO("Next joint state:");
         ROS_INFO("%f %f %f %f %f %f %f",pos_joint_next[0],pos_joint_next[1],pos_joint_next[2],pos_joint_next[3],pos_joint_next[4],pos_joint_next[5],pos_joint_next[6]);
-        msgP.data = pos_joint_next;
+        
 
         //-----------------------------------------------------------------------
         //send next joint and wait
         if(count > 0){
+        msgP.data = pos_joint_next;
         chatter_pub.publish(msgP);
         }
-        //bool B;
-        //Send_pos_func(pos_joint_actual, pos_joint_next);
-
-        //ROS_INFO("target reached, go next one ");
-
-
         //--------------------------------------------------------------------
         ros::spinOnce();        
         loop_rate.sleep();  
@@ -202,10 +186,12 @@ Vector3d speed_func(vector<double> Pos)
     Position[2]= Pos[2];
     Matrix3d A;
     //Set a linear DS
-    A << -0.1, 0, 0 ,0,-0.1,0,0,0,-0.1;
+    A << -1, 0, 0 ,0,-1,0,0,0,-1;
     Vector3d x01,b1,w; 
     // Set the attracotr
-    x01 << 0.5,0.5,0.5;
+    //x01 << 0.5,0.5,0.5;
+    x01 << 0,0,1.2;
+
     b1 =  -A*x01;
     w = A *Position +b1 ;
     //w = w.normalized()*0.1;

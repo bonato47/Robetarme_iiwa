@@ -69,12 +69,6 @@ sensor_msgs/JointState.h
 /home/bonato/catkin_ws/src/send_pos/src/sensor_msgs/JointState.h
 std_msgs/Float64MultiArray.h
 /home/bonato/catkin_ws/src/send_pos/src/std_msgs/Float64MultiArray.h
-geometry_msgs/Pose.h
-/home/bonato/catkin_ws/src/send_pos/src/geometry_msgs/Pose.h
-geometry_msgs/Quaternion.h
-/home/bonato/catkin_ws/src/send_pos/src/geometry_msgs/Quaternion.h
-geometry_msgs/Point.h
-/home/bonato/catkin_ws/src/send_pos/src/geometry_msgs/Point.h
 cmath
 -
 iostream
