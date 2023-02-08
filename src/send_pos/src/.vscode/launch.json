@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": false,
-      "cwd": "/home/bonato/Learn_ws/src/beginner_tutorials/src",
-      "program": "/home/bonato/Learn_ws/src/beginner_tutorials/src/build/Debug/outDebug",
+      "cwd": "/home/bonato/catkin_ws/src/send_pos/src",
+      "program": "/home/bonato/catkin_ws/src/send_pos/src/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

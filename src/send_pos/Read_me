@@ -1,0 +1,26 @@
+Ds.cpp
+
+This code follows these main lines:
+
+1) Convert actual joint (from subscirber) to cartesian with Forward Kinematic
+2) Create a Ds with one attractor 
+3) Find the speed in function of Ds and actual cartesian position
+4) integrate to have the next position 
+5) Use an Inerse kinematic (IK) to have the next joints
+6) Send to the robot by a publisher
+7) Wait and repeat
+
+Warning: the orientation is not take in count in this first version
+
+
+
+
+Send_pose.cpp
+
+This code follows these main lines:
+
+1) inizialisate the trajectory in cartesian space
+2) convert trajectory into joint space with the IK
+3) send next joint position
+4) compare each actual joint to desired joint, until error is small enough
+5) then send next joint poisiton until goal reached

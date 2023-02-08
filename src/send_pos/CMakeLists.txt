@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   message_generation
   iiwa_tools
+  trac_ik_lib
 )
 
 ## System dependencies are found with CMake's conventionsF
@@ -127,7 +128,7 @@ include_directories(
 )
 
 ## Declare a C++ library
- #dd_library(${PROJECT_NAME}
+ #add_library(${PROJECT_NAME}
  # src/Send_pos_function.cpp
  #
 

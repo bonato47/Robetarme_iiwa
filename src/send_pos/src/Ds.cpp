@@ -12,7 +12,9 @@
 #include "std_srvs/Empty.h"
 #include <eigen3/Eigen/Dense>
 #include <stdio.h>
-//#include "Send_pos_function.h"
+#include <trac_ik/trac_ik.hpp>
+#include "Send_pos_function.h"
+
 
 
 using namespace Eigen;
@@ -25,7 +27,7 @@ vector<double> eff(n);
 
 void CounterCallback(const sensor_msgs::JointState::ConstPtr msg);
 
-// Function that Calculate the speed with a DS
+ // Function that Calculate the speed with a DS
 Vector3d speed_func(vector<double> Pos);
 
 // Function that integrate the speed
@@ -36,7 +38,7 @@ bool mseValue(vector<double> v1, vector<double> v2);
 
 // Function that verify if goal is reached
 bool Send_pos_func(vector<double> pos,vector<double> posDes);
-
+ 
 
 
 //Define work space
@@ -47,7 +49,7 @@ int main(int argc, char **argv)
     iiwa_tools::GetIK  IK_state ;
     iiwa_tools::GetFK  FK_state ;
 
-    double delta_t = 0.1;
+    double delta_t = 0.5;
    
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Ds");
@@ -72,6 +74,7 @@ int main(int argc, char **argv)
     Vector3d speed,speed2, Pos_N,Pos_N2;
     std_msgs::Float64MultiArray msgP;
     std_msgs::Float64MultiArray Past_joint_pos;
+    std_msgs::Float64MultiArray Next_joint_pos;
     geometry_msgs::Quaternion Past_cart_quat;
     geometry_msgs::Pose Past_cart;
     geometry_msgs::Point Past_cart_pos;
@@ -96,7 +99,7 @@ int main(int argc, char **argv)
         Past_cart_quat = Past_cart.orientation;
         
         ROS_INFO("%f %f %f %f %f %f %f",pos_task_actual[0],pos_task_actual[1],pos_task_actual[2],pos_task_actual[3],pos_task_actual[4],pos_task_actual[5],pos_task_actual[6]);
-        //ROS_INFO("%f %f %f",Past_cart_pos.x, Past_cart_pos.y, Past_cart_pos.z);
+        ROS_INFO("%f %f %f",Past_cart_pos.x, Past_cart_pos.y, Past_cart_pos.z);
   
         Pos_cart_actual={Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z,Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w};
 
@@ -104,16 +107,16 @@ int main(int argc, char **argv)
         //Send the cartesian stat to Dynamical System (DS) to find desired speed
 
         // need to add the orientation
-        //ROS_INFO("Desired speed");
+        ROS_INFO("Desired speed");
 
         speed = speed_func(Pos_cart_actual);
-        //ROS_INFO("%f %f %f",speed[0],speed[1],speed[2]);
+        ROS_INFO("%f %f %f",speed[0],speed[1],speed[2]);
 
         //-----------------------------------------------------------------------
         //integrate the speed with the actual cartesian state to find new cartesian state
-        //ROS_INFO("Desired cartesian position");
+        ROS_INFO("Desired cartesian position");
         Pos_N = Integral_func(Pos_cart_actual, speed, delta_t);
-       // ROS_INFO("%f %f %f",Pos_N[0],Pos_N[1],Pos_N[2]);
+        ROS_INFO("%f %f %f",Pos_N[0],Pos_N[1],Pos_N[2]);
 
         // need to add the orientation
         Quat_N = {0,0,0.7,-0.7};
@@ -123,21 +126,22 @@ int main(int argc, char **argv)
 
        //------------------------------------------------------------------------
         //Nextnext point
-        //ROS_INFO("Desired cartesian position 2 ");
+        ROS_INFO("Desired cartesian position 2 ");
 
         speed2 = speed_func(Temp);
         
         Pos_N2 = Integral_func(Temp, speed2, delta_t);
         Quat_N2 = {0,0,0.7,-0.7};
         
-        //ROS_INFO("%f %f %f",Pos_N2[0],Pos_N2[1],Pos_N2[2]);
+        ROS_INFO("%f %f %f",Pos_N2[0],Pos_N2[1],Pos_N2[2]);
 
 
         //-----------------------------------------------------------------------
         //convert cartesian state to joint state with IK, with two position
+
+        /*
         vector<vector<double>> traj_cart ={{Pos_N[0],Pos_N[1],Pos_N[2],Quat_N[0],Quat_N[1],Quat_N[2],Quat_N[3]},
                                             {Pos_N2[0],Pos_N2[1],Pos_N2[2],Quat_N2[0],Quat_N2[1],Quat_N2[2],Quat_N2[3]}};
-
         int Len_vec =traj_cart.size();
 
         vector<geometry_msgs::Pose> h(Len_vec);
@@ -164,12 +168,19 @@ int main(int argc, char **argv)
         IK_state.request.seed_angles = Past_joint_pos;
 
         client_IK.call(IK_state);  
-
+        
+        Next_joint_pos = IK_state.response.joints;
         for(int j = 0 ;j<7;++j){
             Pos_task_next[j] = IK_state.response.joints.data[j];
         }
+        ------------------------------------------------------------------------
+        */
 
-        //ROS_INFO("Next joint state:");
+        ik_solver(string base_link, string tip_link, string URDF_param="/robot_description", double timeout_in_secs=0.005, double error=1e-5, TRAC_IK::SolveType type=TRAC_IK::Speed);  
+
+        //int rc = ik_solver.CartToJnt(KDL::JntArray joint_seed, KDL::Frame desired_end_effector_pose, KDL::JntArray& return_joints, KDL::Twist tolerances);
+
+        ROS_INFO("Next joint state:");
         ROS_INFO("%f %f %f %f %f %f %f",Pos_task_next[0],Pos_task_next[1],Pos_task_next[2],Pos_task_next[3],Pos_task_next[4],Pos_task_next[5],Pos_task_next[6]);
         //ROS_INFO("Send :");
         msgP.data = Pos_task_next;
@@ -181,7 +192,7 @@ int main(int argc, char **argv)
         //bool B;
         //Send_pos_func(pos_task_actual, Pos_task_next);
 
-        ROS_INFO("target reached, go next one ");
+        //ROS_INFO("target reached, go next one ");
 
 
         //--------------------------------------------------------------------

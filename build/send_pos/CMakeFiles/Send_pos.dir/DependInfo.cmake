@@ -20,15 +20,18 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "/home/bonato/catkin_ws/src/send_pos/include"
   "/home/bonato/catkin_ws/devel/include"
   "/home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/include"
+  "/home/bonato/catkin_ws/src/trac_ik/trac_ik_lib/include"
   "/opt/ros/melodic/include"
   "/opt/ros/melodic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp"
-  "/usr/local/include"
+  "/opt/ros/melodic/share/orocos_kdl/cmake/../../../include"
   "/usr/include/eigen3"
+  "/usr/local/include"
   )
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
   "/home/bonato/catkin_ws/build/iiwa_ros/iiwa_tools/CMakeFiles/iiwa_tools.dir/DependInfo.cmake"
+  "/home/bonato/catkin_ws/build/trac_ik/trac_ik_lib/CMakeFiles/trac_ik.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.

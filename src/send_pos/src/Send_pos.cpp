@@ -7,16 +7,18 @@
 #include <cmath>
 #include <iostream>
 #include <sstream>
+#include <fstream>
+#include <vector>
 #include "iiwa_tools/GetIK.h"
 #include "std_srvs/Empty.h"
-#include <eigen3/Eigen/Dense>
 
 using namespace std;
-using namespace Eigen;
 
 void CounterCallback(const sensor_msgs::JointState::ConstPtr);
-bool mseValue(vector<double> , vector<double> ,int);
+bool mseValue(vector<double> , vector<double> , int);
 vector<double> TakeLine(vector<vector<double>> , int );
+vector<vector<double>> CSVtoVectorVectorDouble();
+
 int n =7;
 vector<double> eff(n);
 vector<double> vel(n);
@@ -33,8 +35,9 @@ int main(int argc, char **argv)
     vector<double> V_temp(n);
     vector<vector<double>> traj_joint;
     //Choose the position of the end effector {pos,quat}
-    vector<vector<double>> traj_cart{{0.004663, 0.004663 ,1.298483,0,0,0.7,-0.7},                       
-                                    {0,0,1.3,0,0,0.7,-0.7}};
+    /* vector<vector<double>> traj_cart  = {{0.004663, 0.004663 ,1.298483,0,0,0.7,-0.7},                       
+                                  {0,0,1.3,0,0,0.7,-0.7}};
+    // */ vector<vector<double>> traj_cart= CSVtoVectorVectorDouble();
     int Len_vec =traj_cart.size();
 
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
@@ -90,7 +93,7 @@ int main(int argc, char **argv)
     {
         msgP.data = traj_joint[Next];
         posDes= traj_joint[Next];
-        
+
         //ROS_INFO("%f", mseValue(pos,posDes,n));
         if ((mseValue(pos,posDes,n) && (Next < Len_vec))  || (count >50)){
             ++Next;
@@ -149,4 +152,47 @@ vector<double> TakeLine(vector<vector<double>> Mat, int numB )
     }
 
     return vector;
+}
+
+vector<vector<double>> CSVtoVectorVectorDouble()
+{
+    string fname = "trajectory.csv";
+    
+    vector<vector<string>> content;
+    vector<vector<double>> Traj;
+
+    vector<string> row;
+    string line, word;
+
+    fstream file (fname, ios::in);
+    if(file.is_open())
+    {
+        while(getline(file, line))
+        {
+            row.clear();
+            
+            stringstream str(line);
+            while(getline(str, word, ','))
+                row.push_back(word);
+            content.push_back(row);
+        }
+    }
+    else
+        cout<<"Could not open the file\n";
+
+    for(int i=0;i<int(content.size());i++)
+    {
+        string::size_type sz;     // alias of size_t
+        double pos_x = stod(content[i][0],&sz);
+        double pos_y = stod(content[i][1],&sz);
+        double pos_z = stod(content[i][2],&sz);
+        double quad_x = stod(content[i][3],&sz);
+        double quad_y = stod(content[i][4],&sz);
+        double quad_z = stod(content[i][5],&sz);
+        double quad_w = stod(content[i][6],&sz);
+
+        vector<double> Line = {pos_x,pos_y,pos_z,quad_x,quad_y,quad_z,quad_w};//, Pos_y, Pos_z;
+        Traj.push_back(Line);
+    }
+    return Traj;
 }
