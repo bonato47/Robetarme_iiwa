@@ -18,7 +18,7 @@ using namespace Eigen;
 using namespace std;
 
 int n =7;
-vector<double> pos_task_actual(n);
+vector<double> pos_joint_actual(n);
 vector<double> vel(n);
 vector<double> eff(n);
 
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     FK_state.request.joints.layout.dim[1].size = 7;
 
 
-    Vector3d speed,speed2, Pos_N,Pos_N2;
+    Vector3d speed,speed2, pos_cart_N,pos_cart_N2;
     std_msgs::Float64MultiArray msgP;
     std_msgs::Float64MultiArray Past_joint_pos;
     std_msgs::Float64MultiArray Next_joint_pos;
@@ -71,16 +71,16 @@ int main(int argc, char **argv)
     geometry_msgs::Point Past_cart_pos;
     vector<double> Pos_cart_actual(n);
     vector<double> Quat_N(4);
-    vector<double> Pos_task_next(n);
+    vector<double> pos_joint_next(n);
     vector<double> Quat_N2(4);
-
+    int count = 0;
     while (ros::ok())
     {
         // Take joints state actual and convert to cartesian state
         // With the help of th FK service
         ROS_INFO("Actual state");
 
-        Past_joint_pos.data = {pos_task_actual[0],pos_task_actual[1],pos_task_actual[2],pos_task_actual[3],pos_task_actual[4],pos_task_actual[5],pos_task_actual[6]};
+        Past_joint_pos.data = {pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]};
         FK_state.request.joints.data = Past_joint_pos.data;
 
         client_FK.call(FK_state);
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
         Past_cart_pos = Past_cart.position;
         Past_cart_quat = Past_cart.orientation;
         
-        ROS_INFO("%f %f %f %f %f %f %f",pos_task_actual[0],pos_task_actual[1],pos_task_actual[2],pos_task_actual[3],pos_task_actual[4],pos_task_actual[5],pos_task_actual[6]);
+        ROS_INFO("%f %f %f %f %f %f %f",pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]);
         ROS_INFO("%f %f %f",Past_cart_pos.x, Past_cart_pos.y, Past_cart_pos.z);
   
         Pos_cart_actual={Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z,Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w};
@@ -106,116 +106,89 @@ int main(int argc, char **argv)
         //-----------------------------------------------------------------------
         //integrate the speed with the actual cartesian state to find new cartesian state
         ROS_INFO("Desired cartesian position");
-        Pos_N = Integral_func(Pos_cart_actual, speed, delta_t);
-        ROS_INFO("%f %f %f",Pos_N[0],Pos_N[1],Pos_N[2]);
+        pos_cart_N = Integral_func(Pos_cart_actual, speed, delta_t);
+        ROS_INFO("%f %f %f",pos_cart_N[0],pos_cart_N[1],pos_cart_N[2]);
 
         // need to add the orientation
         Quat_N = {0,0,0.7,-0.7};
        
         
-        vector<double> Temp ={Pos_N[0],Pos_N[1],Pos_N[2],Quat_N[0],Quat_N[1],Quat_N[2],Quat_N[3]};
-/*
-       //------------------------------------------------------------------------
+        vector<double> Temp ={pos_cart_N[0],pos_cart_N[1],pos_cart_N[2],Quat_N[0],Quat_N[1],Quat_N[2],Quat_N[3]};
+
+        //------------------------------------------------------------------------
         //Nextnext point
         ROS_INFO("Desired cartesian position 2 ");
 
         speed2 = speed_func(Temp);
         
-        Pos_N2 = Integral_func(Temp, speed2, delta_t);
+        pos_cart_N2 = Integral_func(Temp, speed2, delta_t);
         Quat_N2 = {0,0,0.7,-0.7};
         
-        ROS_INFO("%f %f %f",Pos_N2[0],Pos_N2[1],Pos_N2[2]);
+        ROS_INFO("%f %f %f",pos_cart_N2[0],pos_cart_N2[1],pos_cart_N2[2]);
 
 
-        //-----------------------------------------------------------------------
-        //convert cartesian state to joint state with IK, with two position
-
-        
-        vector<vector<double>> traj_cart ={{Pos_N[0],Pos_N[1],Pos_N[2],Quat_N[0],Quat_N[1],Quat_N[2],Quat_N[3]},
-                                            {Pos_N2[0],Pos_N2[1],Pos_N2[2],Quat_N2[0],Quat_N2[1],Quat_N2[2],Quat_N2[3]}};
-        int Len_vec =traj_cart.size();
-
-        vector<geometry_msgs::Pose> h(Len_vec);
-        for(int i = 0 ;i<Len_vec;++i){
-        
-            geometry_msgs::Point Pos_init ;
-            Pos_init.x = traj_cart[i][0];
-            Pos_init.y = traj_cart[i][1];
-            Pos_init.z = traj_cart[i][2];
-            geometry_msgs::Quaternion Quat_init ;
-            Quat_init.x = traj_cart[i][3];
-            Quat_init.y = traj_cart[i][4];
-            Quat_init.z = traj_cart[i][5];
-            Quat_init.w = traj_cart[i][6];
-
-            geometry_msgs::Pose poses_init ;
-            poses_init.position = Pos_init;
-            poses_init.orientation = Quat_init;
-
-            h[i] = (poses_init);
-        }
-        Past_joint_pos.data = {pos_task_actual[0],pos_task_actual[1],pos_task_actual[2],pos_task_actual[3],pos_task_actual[4],pos_task_actual[5],pos_task_actual[6]};
-        IK_state.request.poses = h;
-        IK_state.request.seed_angles = Past_joint_pos;
-
-        client_IK.call(IK_state);  
-        
-        Next_joint_pos = IK_state.response.joints;
-        for(int j = 0 ;j<7;++j){
-            Pos_task_next[j] = IK_state.response.joints.data[j];
-        }
-        ------------------------------------------------------------------------
-        */
+        //------------------------------------------------------------------------
         string base_link = "iiwa_link_0";
         string tip_link = "iiwa_link_ee";
         string URDF_param="/robot_description";
         double timeout_in_secs=0.005;
-        double error=1e-5;
+        double error=1e-5; // a voir la taille
         TRAC_IK::SolveType type=TRAC_IK::Distance;
         TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
+
+        KDL::Chain chain;
+
+        bool valid = ik_solver.getKDLChain(chain);
+        if (!valid)
+        {
+            ROS_ERROR("There was no valid KDL chain found");
+        }
 
         KDL::JntArray Next_joint_task;
         KDL::JntArray actual_joint_task;   
 
-        double* ptr = &pos_task_actual[0];
-        Map<VectorXd> pos_task_actual_eigen(ptr, 7); 
-        actual_joint_task.data = pos_task_actual_eigen;
+        double* ptr = &pos_joint_actual[0];
+        Map<VectorXd> pos_joint_actual_eigen(ptr, 7); 
+        actual_joint_task.data = pos_joint_actual_eigen;
 
         KDL::Rotation Rot = KDL::Rotation::Quaternion(Quat_N[0],Quat_N[1],Quat_N[2],Quat_N[3]);
     
-        KDL::Vector Vec(Pos_N[0],Pos_N[1],Pos_N[2]);
+        KDL::Vector Vec(pos_cart_N[0],pos_cart_N[1],pos_cart_N[2]);
         KDL::Frame Next_joint_cartesian(Rot,Vec); 
 
-        //Next_joint_cartesian.orientation = 
-
-
-        int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, &Next_joint_task);
+        VectorXd pos_joint_next_eigen ;
+        int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
+        pos_joint_next_eigen = Next_joint_task.data;
+        for(int i = 0 ;i<7;++i){
+        pos_joint_next[i] =pos_joint_next_eigen(i);
+        }
 
         ROS_INFO("Next joint state:");
-        ROS_INFO("%f %f %f %f %f %f %f",Pos_task_next[0],Pos_task_next[1],Pos_task_next[2],Pos_task_next[3],Pos_task_next[4],Pos_task_next[5],Pos_task_next[6]);
-        //ROS_INFO("Send :");
-        msgP.data = Pos_task_next;
+        ROS_INFO("%f %f %f %f %f %f %f",pos_joint_next[0],pos_joint_next[1],pos_joint_next[2],pos_joint_next[3],pos_joint_next[4],pos_joint_next[5],pos_joint_next[6]);
+        msgP.data = pos_joint_next;
 
         //-----------------------------------------------------------------------
-        // Send the joint state to a service that is connected to send_pos
-        //when it is done, take new point
+        //send next joint and wait
+        if(count > 0){
         chatter_pub.publish(msgP);
+        }
         //bool B;
-        //Send_pos_func(pos_task_actual, Pos_task_next);
+        //Send_pos_func(pos_joint_actual, pos_joint_next);
 
         //ROS_INFO("target reached, go next one ");
 
 
         //--------------------------------------------------------------------
         ros::spinOnce();        
-        loop_rate.sleep();        
+        loop_rate.sleep();  
+        ++count;      
     }
     return 0;
 }
 
 void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
 {
-    pos_task_actual = msg->position;
+    pos_joint_actual = msg->position;
     vel = msg->velocity;
     eff = msg->effort;
 }
@@ -245,9 +218,9 @@ Vector3d Integral_func(vector<double> Pos_actual, Vector3d speed_actual, double 
     Position[0]= Pos_actual[0];
     Position[1]= Pos_actual[1];
     Position[2]= Pos_actual[2];
-    Vector3d Pos_Next;
-    Pos_Next = speed_actual * dt + Position;
-    return Pos_Next;
+    Vector3d pos_cart_Next;
+    pos_cart_Next = speed_actual * dt + Position;
+    return pos_cart_Next;
 }
 
 // Function that Calculate Root Mean Square
