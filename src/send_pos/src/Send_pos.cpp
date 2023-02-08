@@ -37,7 +37,9 @@ int main(int argc, char **argv)
     //Choose the position of the end effector {pos,quat}
     /* vector<vector<double>> traj_cart  = {{0.004663, 0.004663 ,1.298483,0,0,0.7,-0.7},                       
                                   {0,0,1.3,0,0,0.7,-0.7}};
-    // */ vector<vector<double>> traj_cart= CSVtoVectorVectorDouble();
+    // */ 
+    vector<vector<double>> traj_cart;
+    traj_cart = CSVtoVectorVectorDouble();
     int Len_vec =traj_cart.size();
 
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
@@ -156,7 +158,7 @@ vector<double> TakeLine(vector<vector<double>> Mat, int numB )
 
 vector<vector<double>> CSVtoVectorVectorDouble()
 {
-    string fname = "trajectory.csv";
+    string fname = "/home/bonato/catkin_ws/src/send_pos/src/trajectory.csv";
     
     vector<vector<string>> content;
     vector<vector<double>> Traj;
@@ -176,11 +178,13 @@ vector<vector<double>> CSVtoVectorVectorDouble()
                 row.push_back(word);
             content.push_back(row);
         }
+        cout<<"file well read";
+
     }
     else
         cout<<"Could not open the file\n";
 
-    for(int i=0;i<int(content.size());i++)
+    for(int i=0;i<10;i++) //int(content.size())
     {
         string::size_type sz;     // alias of size_t
         double pos_x = stod(content[i][0],&sz);

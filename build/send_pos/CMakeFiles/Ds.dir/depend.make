@@ -4,9 +4,6 @@
 send_pos/CMakeFiles/Ds.dir/src/Ds.cpp.o: /home/bonato/catkin_ws/devel/include/iiwa_tools/GetFK.h
 send_pos/CMakeFiles/Ds.dir/src/Ds.cpp.o: /home/bonato/catkin_ws/devel/include/iiwa_tools/GetFKRequest.h
 send_pos/CMakeFiles/Ds.dir/src/Ds.cpp.o: /home/bonato/catkin_ws/devel/include/iiwa_tools/GetFKResponse.h
-send_pos/CMakeFiles/Ds.dir/src/Ds.cpp.o: /home/bonato/catkin_ws/devel/include/iiwa_tools/GetIK.h
-send_pos/CMakeFiles/Ds.dir/src/Ds.cpp.o: /home/bonato/catkin_ws/devel/include/iiwa_tools/GetIKRequest.h
-send_pos/CMakeFiles/Ds.dir/src/Ds.cpp.o: /home/bonato/catkin_ws/devel/include/iiwa_tools/GetIKResponse.h
 send_pos/CMakeFiles/Ds.dir/src/Ds.cpp.o: /home/bonato/catkin_ws/src/send_pos/include/Send_pos_function.h
 send_pos/CMakeFiles/Ds.dir/src/Ds.cpp.o: /home/bonato/catkin_ws/src/send_pos/src/Ds.cpp
 send_pos/CMakeFiles/Ds.dir/src/Ds.cpp.o: /home/bonato/catkin_ws/src/trac_ik/trac_ik_lib/include/trac_ik/kdl_tl.hpp
