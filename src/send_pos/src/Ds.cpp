@@ -21,7 +21,7 @@ vector<double> eff(n);
 
 void CounterCallback(const sensor_msgs::JointState::ConstPtr msg);
 
- // Function that Calculate the speed with a DS
+/*  // Function that Calculate the speed with a DS
 Vector3d speed_func(vector<double> Pos);
 
 // Function that integrate the speed
@@ -33,7 +33,7 @@ bool mseValue(vector<double> v1, vector<double> v2);
 // Function that verify if goal is reached
 bool Send_pos_func(vector<double> pos,vector<double> posDes);
  
-
+ */
 
 //Define work space
 
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 
     iiwa_tools::GetFK  FK_state ;
 
-    double delta_t = 0.1;
+    double delta_t = 0.005;
    
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Ds");
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     string base_link = "iiwa_link_0";
     string tip_link = "iiwa_link_ee";
     string URDF_param="/robot_description";
-    double timeout_in_secs=0.005;
+    double timeout_in_secs=0.05;
     double error=1e-3; 
     TRAC_IK::SolveType type=TRAC_IK::Distance;
     TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
     {
         // Take joints state actual and convert to cartesian state
         // With the help of th FK service
-        ROS_INFO("Actual state");
+        //ROS_INFO("Actual state");
 
         Past_joint_pos.data = {pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]};
         FK_state.request.joints.data = Past_joint_pos.data;
@@ -105,8 +105,8 @@ int main(int argc, char **argv)
         Past_cart_pos = Past_cart.position;
         Past_cart_quat = Past_cart.orientation;
         
-        ROS_INFO("%f %f %f %f %f %f %f",pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]);
-        ROS_INFO("%f %f %f",Past_cart_pos.x, Past_cart_pos.y, Past_cart_pos.z);
+        //ROS_INFO("%f %f %f %f %f %f %f",pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]);
+        //ROS_INFO("%f %f %f",Past_cart_pos.x, Past_cart_pos.y, Past_cart_pos.z);
   
         Pos_cart_actual={Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z,Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w};
 
@@ -114,14 +114,14 @@ int main(int argc, char **argv)
         //Send the cartesian stat to Dynamical System (DS) to find desired speed
 
         // need to add the orientation
-        ROS_INFO("Desired speed");
+        //ROS_INFO("Desired speed");
 
         speed = speed_func(Pos_cart_actual);
-        ROS_INFO("%f %f %f",speed[0],speed[1],speed[2]);
+        //ROS_INFO("%f %f %f",speed[0],speed[1],speed[2]);
 
         //-----------------------------------------------------------------------
         //integrate the speed with the actual cartesian state to find new cartesian state
-        ROS_INFO("Desired cartesian position");
+        //ROS_INFO("Desired cartesian position");
         pos_cart_N = Integral_func(Pos_cart_actual, speed, delta_t);
         ROS_INFO("%f %f %f",pos_cart_N[0],pos_cart_N[1],pos_cart_N[2]);
 
@@ -149,18 +149,18 @@ int main(int argc, char **argv)
         int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
         pos_joint_next_eigen = Next_joint_task.data;
         for(int i = 0 ;i<7;++i){
-        pos_joint_next[i] =pos_joint_next_eigen(i);
+            pos_joint_next[i] =pos_joint_next_eigen(i);
         }
 
-        ROS_INFO("Next joint state:");
-        ROS_INFO("%f %f %f %f %f %f %f",pos_joint_next[0],pos_joint_next[1],pos_joint_next[2],pos_joint_next[3],pos_joint_next[4],pos_joint_next[5],pos_joint_next[6]);
+        //ROS_INFO("Next joint state:");
+        //ROS_INFO("%f %f %f %f %f %f %f",pos_joint_next[0],pos_joint_next[1],pos_joint_next[2],pos_joint_next[3],pos_joint_next[4],pos_joint_next[5],pos_joint_next[6]);
         
 
         //-----------------------------------------------------------------------
         //send next joint and wait
         if(count > 0){
-        msgP.data = pos_joint_next;
-        chatter_pub.publish(msgP);
+            msgP.data = pos_joint_next;
+            chatter_pub.publish(msgP);
         }
         //--------------------------------------------------------------------
         ros::spinOnce();        
@@ -176,7 +176,7 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
     vel = msg->velocity;
     eff = msg->effort;
 }
-
+/*
 Vector3d speed_func(vector<double> Pos)
 {
     //int num_gridpoints = 30;
@@ -187,10 +187,11 @@ Vector3d speed_func(vector<double> Pos)
     Matrix3d A;
     //Set a linear DS
     A << -1, 0, 0 ,0,-1,0,0,0,-1;
+    A =A*50;
     Vector3d x01,b1,w; 
     // Set the attracotr
     //x01 << 0.5,0.5,0.5;
-    x01 << 0,0,1.2;
+    x01 << 0,0.5,0.5;
 
     b1 =  -A*x01;
     w = A *Position +b1 ;
@@ -245,3 +246,4 @@ bool Send_pos_func(vector<double> pos,vector<double> posDes)
     return 0;
 
 }
+*/

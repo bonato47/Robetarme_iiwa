@@ -17,8 +17,6 @@ sstream
 -
 eigen3/Eigen/Dense
 -
-Send_pos_function.h
-/home/bonato/catkin_ws/src/send_pos/include/Send_pos_function.h
 
 /home/bonato/catkin_ws/src/send_pos/src/Send_pos_function.cpp
 sensor_msgs/JointState.h
@@ -33,6 +31,8 @@ eigen3/Eigen/Dense
 -
 Send_pos_function.h
 /home/bonato/catkin_ws/src/send_pos/src/Send_pos_function.h
+vector
+-
 
 /opt/ros/melodic/include/ros/builtin_message_traits.h
 message_traits.h

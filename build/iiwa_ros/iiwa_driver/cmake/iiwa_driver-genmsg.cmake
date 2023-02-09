@@ -19,7 +19,7 @@ add_custom_target(iiwa_driver_generate_messages ALL)
 
 get_filename_component(_filename "/home/bonato/catkin_ws/src/iiwa_ros/iiwa_driver/msg/AdditionalOutputs.msg" NAME_WE)
 add_custom_target(_iiwa_driver_generate_messages_check_deps_${_filename}
-  COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "iiwa_driver" "/home/bonato/catkin_ws/src/iiwa_ros/iiwa_driver/msg/AdditionalOutputs.msg" "std_msgs/Header:std_msgs/Float64MultiArray:std_msgs/MultiArrayLayout:std_msgs/MultiArrayDimension"
+  COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "iiwa_driver" "/home/bonato/catkin_ws/src/iiwa_ros/iiwa_driver/msg/AdditionalOutputs.msg" "std_msgs/Header:std_msgs/MultiArrayDimension:std_msgs/MultiArrayLayout:std_msgs/Float64MultiArray"
 )
 
 get_filename_component(_filename "/home/bonato/catkin_ws/src/iiwa_ros/iiwa_driver/msg/ConnectionQuality.msg" NAME_WE)
@@ -41,7 +41,7 @@ add_custom_target(_iiwa_driver_generate_messages_check_deps_${_filename}
 _generate_msg_cpp(iiwa_driver
   "/home/bonato/catkin_ws/src/iiwa_ros/iiwa_driver/msg/AdditionalOutputs.msg"
   "${MSG_I_FLAGS}"
-  "/opt/ros/melodic/share/std_msgs/cmake/../msg/Header.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/Float64MultiArray.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayLayout.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayDimension.msg"
+  "/opt/ros/melodic/share/std_msgs/cmake/../msg/Header.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayDimension.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayLayout.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/Float64MultiArray.msg"
   ${CATKIN_DEVEL_PREFIX}/${gencpp_INSTALL_DIR}/iiwa_driver
 )
 _generate_msg_cpp(iiwa_driver
@@ -90,7 +90,7 @@ list(APPEND ${PROJECT_NAME}_EXPORTED_TARGETS iiwa_driver_generate_messages_cpp)
 _generate_msg_eus(iiwa_driver
   "/home/bonato/catkin_ws/src/iiwa_ros/iiwa_driver/msg/AdditionalOutputs.msg"
   "${MSG_I_FLAGS}"
-  "/opt/ros/melodic/share/std_msgs/cmake/../msg/Header.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/Float64MultiArray.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayLayout.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayDimension.msg"
+  "/opt/ros/melodic/share/std_msgs/cmake/../msg/Header.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayDimension.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayLayout.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/Float64MultiArray.msg"
   ${CATKIN_DEVEL_PREFIX}/${geneus_INSTALL_DIR}/iiwa_driver
 )
 _generate_msg_eus(iiwa_driver
@@ -139,7 +139,7 @@ list(APPEND ${PROJECT_NAME}_EXPORTED_TARGETS iiwa_driver_generate_messages_eus)
 _generate_msg_lisp(iiwa_driver
   "/home/bonato/catkin_ws/src/iiwa_ros/iiwa_driver/msg/AdditionalOutputs.msg"
   "${MSG_I_FLAGS}"
-  "/opt/ros/melodic/share/std_msgs/cmake/../msg/Header.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/Float64MultiArray.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayLayout.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayDimension.msg"
+  "/opt/ros/melodic/share/std_msgs/cmake/../msg/Header.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayDimension.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayLayout.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/Float64MultiArray.msg"
   ${CATKIN_DEVEL_PREFIX}/${genlisp_INSTALL_DIR}/iiwa_driver
 )
 _generate_msg_lisp(iiwa_driver
@@ -188,7 +188,7 @@ list(APPEND ${PROJECT_NAME}_EXPORTED_TARGETS iiwa_driver_generate_messages_lisp)
 _generate_msg_nodejs(iiwa_driver
   "/home/bonato/catkin_ws/src/iiwa_ros/iiwa_driver/msg/AdditionalOutputs.msg"
   "${MSG_I_FLAGS}"
-  "/opt/ros/melodic/share/std_msgs/cmake/../msg/Header.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/Float64MultiArray.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayLayout.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayDimension.msg"
+  "/opt/ros/melodic/share/std_msgs/cmake/../msg/Header.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayDimension.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayLayout.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/Float64MultiArray.msg"
   ${CATKIN_DEVEL_PREFIX}/${gennodejs_INSTALL_DIR}/iiwa_driver
 )
 _generate_msg_nodejs(iiwa_driver
@@ -237,7 +237,7 @@ list(APPEND ${PROJECT_NAME}_EXPORTED_TARGETS iiwa_driver_generate_messages_nodej
 _generate_msg_py(iiwa_driver
   "/home/bonato/catkin_ws/src/iiwa_ros/iiwa_driver/msg/AdditionalOutputs.msg"
   "${MSG_I_FLAGS}"
-  "/opt/ros/melodic/share/std_msgs/cmake/../msg/Header.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/Float64MultiArray.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayLayout.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayDimension.msg"
+  "/opt/ros/melodic/share/std_msgs/cmake/../msg/Header.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayDimension.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/MultiArrayLayout.msg;/opt/ros/melodic/share/std_msgs/cmake/../msg/Float64MultiArray.msg"
   ${CATKIN_DEVEL_PREFIX}/${genpy_INSTALL_DIR}/iiwa_driver
 )
 _generate_msg_py(iiwa_driver

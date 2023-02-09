@@ -4,7 +4,7 @@
 #include <sstream>
 #include <eigen3/Eigen/Dense>
 #include "Send_pos_function.h"
-
+#include <vector>
 
 using namespace std;
 using namespace Eigen;
@@ -24,7 +24,7 @@ Vector3d speed_func(vector<double> Pos)
     x01 << 0.5,0.5,0.5;
     b1 =  -A*x01;
     w = A *Position +b1 ;
-    w = w.normalized()*0.1;
+    //w = w.normalized()*0.1;
     return w;
 }
 

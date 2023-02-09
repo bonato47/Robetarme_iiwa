@@ -206,7 +206,7 @@ gazebo_ros_diff_drive_EXTERNAL_OBJECTS =
 /home/bonato/catkin_ws/devel/lib/libgazebo_ros_diff_drive.so: /usr/lib/x86_64-linux-gnu/libOgreTerrain.so
 /home/bonato/catkin_ws/devel/lib/libgazebo_ros_diff_drive.so: /usr/lib/x86_64-linux-gnu/libOgrePaging.so
 /home/bonato/catkin_ws/devel/lib/libgazebo_ros_diff_drive.so: /usr/lib/x86_64-linux-gnu/libignition-transport8.so.8.4.0
-/home/bonato/catkin_ws/devel/lib/libgazebo_ros_diff_drive.so: /usr/lib/x86_64-linux-gnu/libignition-fuel_tools4.so.4.8.0
+/home/bonato/catkin_ws/devel/lib/libgazebo_ros_diff_drive.so: /usr/lib/x86_64-linux-gnu/libignition-fuel_tools4.so.4.8.1
 /home/bonato/catkin_ws/devel/lib/libgazebo_ros_diff_drive.so: /usr/lib/x86_64-linux-gnu/libignition-msgs5.so.5.11.0
 /home/bonato/catkin_ws/devel/lib/libgazebo_ros_diff_drive.so: /usr/lib/x86_64-linux-gnu/libignition-math6.so.6.13.0
 /home/bonato/catkin_ws/devel/lib/libgazebo_ros_diff_drive.so: /usr/lib/x86_64-linux-gnu/libprotobuf.so

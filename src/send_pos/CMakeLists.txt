@@ -111,7 +111,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-   LIBRARIES Send_pos
+   #LIBRARIES Send_pos
    CATKIN_DEPENDS roscpp rospy std_msgs message_runtime sensor_msgs geometry_msgs
 #  DEPENDS system_lib
 )
@@ -123,13 +123,14 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
+  include/
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
  #add_library(${PROJECT_NAME}
- # src/Send_pos_function.cpp
+# Send_pos_function
+#)
  #
 
 ## Add cmake target dependencies of the library
@@ -216,12 +217,12 @@ include_directories(
 
 add_executable(Ds src/Ds.cpp)
 target_link_libraries(Ds ${catkin_LIBRARIES})
-add_dependencies(Ds send_pos_generate_messages_cpp)
+#add_dependencies(Ds send_pos_generate_messages_cpp)
 
 add_executable(listener src/listener.cpp)
 target_link_libraries(listener ${catkin_LIBRARIES})
-add_dependencies(listener send_pos_generate_messages_cpp)
+#add_dependencies(listener send_pos_generate_messages_cpp)
 
 add_executable(Send_pos src/Send_pos.cpp)
 target_link_libraries(Send_pos ${catkin_LIBRARIES})
-add_dependencies(Send_pos send_pos_generate_messages_cpp)
+#add_dependencies(Send_pos send_pos_generate_messages_cpp)

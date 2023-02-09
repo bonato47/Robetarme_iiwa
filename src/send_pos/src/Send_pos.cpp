@@ -35,21 +35,21 @@ int main(int argc, char **argv)
     ros::Subscriber sub = Nh.subscribe("iiwa/joint_states", 1000, CounterCallback);
     ros::Publisher chatter_pub = Nh.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
     //Frequency of the Ros loop
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(200);
 
 
 /*     // Read trajectory from .csv 
     vector<vector<double>> traj_cart = CSVtoVectorVectorDouble();
     int Len_vec =traj_cart.size(); */
 
-    vector<vector<double>> traj_cart = {{0,0,1.2,0.7,-0.7,0,0},{0.5,0.5,0.5,0.7,-0.7,0,0}};
+    vector<vector<double>> traj_cart = {{0,0,1.2,0.7,-0.7,0,0},{0,0,1.2,0.7,-0.7,0,0},{0,0,1.2,0.7,-0.7,0,0},{0,0,1.2,0.7,-0.7,0,0},{0,0,1.2,0.7,-0.7,0,0},{0,0,1.2,0.7,-0.7,0,0},{0.5,0.5,0.5,0.7,-0.7,0,0}};
 
     //iniailization Invers Kinematics
     string base_link = "iiwa_link_0";
     string tip_link = "iiwa_link_ee";
     string URDF_param="/robot_description";
-    double timeout_in_secs=0.005;
-    double error=1e-5; // a voir la taille
+    double timeout_in_secs=0.05;
+    double error=1e-3; // a voir la taille
     TRAC_IK::SolveType type=TRAC_IK::Distance;
     TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
 
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
    
     vector<double> pos_joint_next(7);
     double* ptr;
-    for(int i = 0; i< Taille;i++)
+    for(int i = 0; i< int(traj_cart.size());i++)
     {
         KDL::JntArray Next_joint_task;
         KDL::JntArray actual_joint_task; 
@@ -112,9 +112,9 @@ int main(int argc, char **argv)
         pos_des_joint= traj_joint[Next];
 
         //ROS_INFO("%f", mseValue(pos,pos_des_joint,n));
-        if ((mseValue(pos_joint_actual,pos_des_joint,n) && (Next < Len_vec))  || (count >50)){
+        if ((mseValue(pos_joint_actual,pos_des_joint,n) && (Next < int(traj_cart.size()) )) || (count >50)){
             ++Next;
-            if(Next == Len_vec){
+            if(Next == int(traj_cart.size())){
                 ROS_INFO("Last target reached, stop ");
                 return 0; 
             }
