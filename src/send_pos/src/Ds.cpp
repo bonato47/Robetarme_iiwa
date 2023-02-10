@@ -21,28 +21,27 @@ vector<double> eff(n);
 
 void CounterCallback(const sensor_msgs::JointState::ConstPtr msg);
 
-/*  // Function that Calculate the speed with a DS
-Vector3d speed_func(vector<double> Pos);
+  // Function that Calculate the speed with a DS
+Vector3d speed_func(vector<double> Pos, Vector3d x01);
 
 // Function that integrate the speed
 Vector3d Integral_func(vector<double> Pos_actual, Vector3d speed_actual, double dt);
 
 // Function that Calculate Root Mean Square
-bool mseValue(vector<double> v1, vector<double> v2);
+bool mseValue_cart(vector<double> v1, vector<double> v2);
 
-// Function that verify if goal is reached
-bool Send_pos_func(vector<double> pos,vector<double> posDes);
+
  
- */
 
 //Define work space
 
 int main(int argc, char **argv)
 {
-
+    Vector3d Attractor;
+    Attractor << 0,0.5,0.5;
     iiwa_tools::GetFK  FK_state ;
 
-    double delta_t = 0.005;
+    double delta_t = 0.1;
    
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Ds");
@@ -77,7 +76,7 @@ int main(int argc, char **argv)
     }
 
     //initialization  Variable
-    Vector3d speed,speed2, pos_cart_N,pos_cart_N2;
+    Vector3d speed, pos_cart_N;
     std_msgs::Float64MultiArray msgP;
     std_msgs::Float64MultiArray Past_joint_pos;
     std_msgs::Float64MultiArray Next_joint_pos;
@@ -87,7 +86,6 @@ int main(int argc, char **argv)
     vector<double> Pos_cart_actual(n);
     vector<double> Quat_N(4);
     vector<double> pos_joint_next(n);
-    vector<double> Quat_N2(4);
     int count = 0;
 
     //begin the ros loop
@@ -116,8 +114,8 @@ int main(int argc, char **argv)
         // need to add the orientation
         //ROS_INFO("Desired speed");
 
-        speed = speed_func(Pos_cart_actual);
-        //ROS_INFO("%f %f %f",speed[0],speed[1],speed[2]);
+        speed = speed_func(Pos_cart_actual,Attractor);
+        ROS_INFO("%f", speed.norm());
 
         //-----------------------------------------------------------------------
         //integrate the speed with the actual cartesian state to find new cartesian state
@@ -129,8 +127,6 @@ int main(int argc, char **argv)
         Quat_N = {0,0,0.7,-0.7};
        
         
-        vector<double> Temp ={pos_cart_N[0],pos_cart_N[1],pos_cart_N[2],Quat_N[0],Quat_N[1],Quat_N[2],Quat_N[3]};
-
         //------------------------------------------------------------------------
         //Convert cartesian to joint space
         KDL::JntArray Next_joint_task;
@@ -140,26 +136,37 @@ int main(int argc, char **argv)
         Map<VectorXd> pos_joint_actual_eigen(ptr, 7); 
         actual_joint_task.data = pos_joint_actual_eigen;
 
-        KDL::Rotation Rot = KDL::Rotation::Quaternion(Quat_N[0],Quat_N[1],Quat_N[2],Quat_N[3]);
+       /*  KDL::Rotation Rot = KDL::Rotation::Quaternion(Quat_N[0],Quat_N[1],Quat_N[2],Quat_N[3]);
     
+        KDL::Vector Vec(pos_cart_N[0],pos_cart_N[1],pos_cart_N[2]); */
+
+        KDL::Rotation Rot = KDL::Rotation::Quaternion(1,1,1,1);
         KDL::Vector Vec(pos_cart_N[0],pos_cart_N[1],pos_cart_N[2]);
+
+
         KDL::Frame Next_joint_cartesian(Rot,Vec); 
 
         VectorXd pos_joint_next_eigen ;
         int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
+        //ROS_INFO("%d",rc);
+
         pos_joint_next_eigen = Next_joint_task.data;
         for(int i = 0 ;i<7;++i){
             pos_joint_next[i] =pos_joint_next_eigen(i);
         }
 
-        //ROS_INFO("Next joint state:");
-        //ROS_INFO("%f %f %f %f %f %f %f",pos_joint_next[0],pos_joint_next[1],pos_joint_next[2],pos_joint_next[3],pos_joint_next[4],pos_joint_next[5],pos_joint_next[6]);
-        
+        // Filter
+       
+        double alpha = 0.2;
+         vector<double> pos_joint_next_filter(7);
 
+        for(int i = 0;i<7;i++){
+            pos_joint_next_filter[i] = alpha*pos_joint_next[i] +(1-alpha)*pos_joint_actual[i];
+        }
         //-----------------------------------------------------------------------
         //send next joint and wait
-        if(count > 0){
-            msgP.data = pos_joint_next;
+        if(count > 0 && mseValue_cart({Attractor[0],Attractor[1],Attractor[2]},Pos_cart_actual)){
+            msgP.data = pos_joint_next_filter;
             chatter_pub.publish(msgP);
         }
         //--------------------------------------------------------------------
@@ -176,8 +183,8 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
     vel = msg->velocity;
     eff = msg->effort;
 }
-/*
-Vector3d speed_func(vector<double> Pos)
+
+Vector3d speed_func(vector<double> Pos,Vector3d x01 )
 {
     //int num_gridpoints = 30;
     Vector3d Position ;
@@ -187,12 +194,10 @@ Vector3d speed_func(vector<double> Pos)
     Matrix3d A;
     //Set a linear DS
     A << -1, 0, 0 ,0,-1,0,0,0,-1;
-    A =A*50;
-    Vector3d x01,b1,w; 
+    A =A;
+    Vector3d b1,w; 
     // Set the attracotr
     //x01 << 0.5,0.5,0.5;
-    x01 << 0,0.5,0.5;
-
     b1 =  -A*x01;
     w = A *Position +b1 ;
     //w = w.normalized()*0.1;
@@ -211,39 +216,22 @@ Vector3d Integral_func(vector<double> Pos_actual, Vector3d speed_actual, double 
 }
 
 // Function that Calculate Root Mean Square
-bool mseValue(vector<double> v1, vector<double> v2)
+bool mseValue_cart(vector<double> v1, vector<double> v2)
 {
     // tolerance of the errot between each point
-    float tol =0.1;
+    float tol =0.05;
     bool Reached = false;
     int crit =0;
     float err =0;
+    int Len = v1.size();
 
-    for (int i = 0; i < 7; i++) {
-        err = sqrt((v1[i]-v2[i])*(v1[i]-v2[i]));
-        if(err > tol){
-            ++crit;
-        }
-       // ROS_INFO("%f",err);
-
+    for (int i = 0; i < Len; i++) {
+        err = err + (v1[i]-v2[i])*(v1[i]-v2[i]);
     }
-    if(crit == 0){
+    if(sqrt(err) > tol){
         Reached =true;
     }
 
     return Reached;
 }
-bool Send_pos_func(vector<double> pos,vector<double> posDes)
-{
-    int count = 0 ;
-    while (count < 50)
-    {
-        if (mseValue(pos,posDes) || (count >50)){
-            return 0;
-        }   
-        ++count;
-    }
-    return 0;
 
-}
-*/

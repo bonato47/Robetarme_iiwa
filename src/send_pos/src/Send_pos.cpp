@@ -35,14 +35,20 @@ int main(int argc, char **argv)
     ros::Subscriber sub = Nh.subscribe("iiwa/joint_states", 1000, CounterCallback);
     ros::Publisher chatter_pub = Nh.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
     //Frequency of the Ros loop
-    ros::Rate loop_rate(200);
+    ros::Rate loop_rate(20);
 
 
 /*     // Read trajectory from .csv 
     vector<vector<double>> traj_cart = CSVtoVectorVectorDouble();
     int Len_vec =traj_cart.size(); */
 
-    vector<vector<double>> traj_cart = {{0,0,1.2,0.7,-0.7,0,0},{0,0,1.2,0.7,-0.7,0,0},{0,0,1.2,0.7,-0.7,0,0},{0,0,1.2,0.7,-0.7,0,0},{0,0,1.2,0.7,-0.7,0,0},{0,0,1.2,0.7,-0.7,0,0},{0.5,0.5,0.5,0.7,-0.7,0,0}};
+    vector<vector<double>> traj_cart = {{0,0,1.2,0.7,-0.7,0,0},
+    {0,0,1.2,0.7,-0.7,0,0},
+    {0,0,1.2,0.7,-0.7,0,0},
+    {0.5,0.5,0.5,0.7,-0.7,0,0},
+    {0.5,0.5,0.5,0.7,-0.7,0,0},
+    {0.5,0.5,0.5,0.7,-0.7,0,0},
+    {0.5,0.5,0.5,0.7,-0.7,0,0}};
 
     //iniailization Invers Kinematics
     string base_link = "iiwa_link_0";
@@ -83,13 +89,15 @@ int main(int argc, char **argv)
         }
        
         KDL::Vector Vec(traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
-        KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[i][4],traj_cart[i][5],traj_cart[i][6],traj_cart[i][7]);
+        //KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[i][4],traj_cart[i][5],traj_cart[i][6],traj_cart[i][7]);
+        KDL::Rotation Rot = KDL::Rotation::Quaternion(1,1,1,1);
         KDL::Frame Next_joint_cartesian(Rot,Vec); 
 
         //ROS_INFO("%f" "%f" "%f" ,traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
 
         Eigen::VectorXd pos_joint_next_eigen ;
         int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
+        ROS_INFO("%d",rc);
         pos_joint_next_eigen = Next_joint_task.data;
         for(int i = 0 ;i<7;++i){
             pos_joint_next[i] =pos_joint_next_eigen(i);
