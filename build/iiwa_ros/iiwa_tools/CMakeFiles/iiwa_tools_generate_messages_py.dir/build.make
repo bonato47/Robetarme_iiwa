@@ -64,38 +64,38 @@ iiwa_ros/iiwa_tools/CMakeFiles/iiwa_tools_generate_messages_py: /home/bonato/cat
 
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetFK.py: /opt/ros/melodic/lib/genpy/gensrv_py.py
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetFK.py: /home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetFK.srv
-/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetFK.py: /opt/ros/melodic/share/std_msgs/msg/Float64MultiArray.msg
-/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetFK.py: /opt/ros/melodic/share/geometry_msgs/msg/Quaternion.msg
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetFK.py: /opt/ros/melodic/share/std_msgs/msg/MultiArrayLayout.msg
-/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetFK.py: /opt/ros/melodic/share/geometry_msgs/msg/Pose.msg
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetFK.py: /opt/ros/melodic/share/geometry_msgs/msg/Point.msg
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetFK.py: /opt/ros/melodic/share/std_msgs/msg/MultiArrayDimension.msg
+/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetFK.py: /opt/ros/melodic/share/geometry_msgs/msg/Pose.msg
+/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetFK.py: /opt/ros/melodic/share/std_msgs/msg/Float64MultiArray.msg
+/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetFK.py: /opt/ros/melodic/share/geometry_msgs/msg/Quaternion.msg
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/bonato/catkin_ws/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating Python code from SRV iiwa_tools/GetFK"
 	cd /home/bonato/catkin_ws/build/iiwa_ros/iiwa_tools && ../../catkin_generated/env_cached.sh /usr/bin/python3 /opt/ros/melodic/share/genpy/cmake/../../../lib/genpy/gensrv_py.py /home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetFK.srv -Istd_msgs:/opt/ros/melodic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/melodic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/melodic/share/geometry_msgs/cmake/../msg -p iiwa_tools -o /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv
 
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetIK.py: /opt/ros/melodic/lib/genpy/gensrv_py.py
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetIK.py: /home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetIK.srv
-/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetIK.py: /opt/ros/melodic/share/std_msgs/msg/Float64MultiArray.msg
-/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetIK.py: /opt/ros/melodic/share/geometry_msgs/msg/Quaternion.msg
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetIK.py: /opt/ros/melodic/share/std_msgs/msg/MultiArrayLayout.msg
-/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetIK.py: /opt/ros/melodic/share/geometry_msgs/msg/Pose.msg
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetIK.py: /opt/ros/melodic/share/geometry_msgs/msg/Point.msg
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetIK.py: /opt/ros/melodic/share/std_msgs/msg/MultiArrayDimension.msg
+/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetIK.py: /opt/ros/melodic/share/geometry_msgs/msg/Pose.msg
+/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetIK.py: /opt/ros/melodic/share/std_msgs/msg/Float64MultiArray.msg
+/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetIK.py: /opt/ros/melodic/share/geometry_msgs/msg/Quaternion.msg
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/bonato/catkin_ws/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Generating Python code from SRV iiwa_tools/GetIK"
 	cd /home/bonato/catkin_ws/build/iiwa_ros/iiwa_tools && ../../catkin_generated/env_cached.sh /usr/bin/python3 /opt/ros/melodic/share/genpy/cmake/../../../lib/genpy/gensrv_py.py /home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetIK.srv -Istd_msgs:/opt/ros/melodic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/melodic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/melodic/share/geometry_msgs/cmake/../msg -p iiwa_tools -o /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv
 
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetJacobian.py: /opt/ros/melodic/lib/genpy/gensrv_py.py
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetJacobian.py: /home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetJacobian.srv
-/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetJacobian.py: /opt/ros/melodic/share/std_msgs/msg/Float64MultiArray.msg
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetJacobian.py: /opt/ros/melodic/share/std_msgs/msg/MultiArrayDimension.msg
+/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetJacobian.py: /opt/ros/melodic/share/std_msgs/msg/Float64MultiArray.msg
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetJacobian.py: /opt/ros/melodic/share/std_msgs/msg/MultiArrayLayout.msg
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/bonato/catkin_ws/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Generating Python code from SRV iiwa_tools/GetJacobian"
 	cd /home/bonato/catkin_ws/build/iiwa_ros/iiwa_tools && ../../catkin_generated/env_cached.sh /usr/bin/python3 /opt/ros/melodic/share/genpy/cmake/../../../lib/genpy/gensrv_py.py /home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetJacobian.srv -Istd_msgs:/opt/ros/melodic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/melodic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/melodic/share/geometry_msgs/cmake/../msg -p iiwa_tools -o /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv
 
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetJacobians.py: /opt/ros/melodic/lib/genpy/gensrv_py.py
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetJacobians.py: /home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetJacobians.srv
-/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetJacobians.py: /opt/ros/melodic/share/std_msgs/msg/Float64MultiArray.msg
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetJacobians.py: /opt/ros/melodic/share/std_msgs/msg/MultiArrayDimension.msg
+/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetJacobians.py: /opt/ros/melodic/share/std_msgs/msg/Float64MultiArray.msg
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetJacobians.py: /opt/ros/melodic/share/std_msgs/msg/MultiArrayLayout.msg
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/bonato/catkin_ws/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Generating Python code from SRV iiwa_tools/GetJacobians"
 	cd /home/bonato/catkin_ws/build/iiwa_ros/iiwa_tools && ../../catkin_generated/env_cached.sh /usr/bin/python3 /opt/ros/melodic/share/genpy/cmake/../../../lib/genpy/gensrv_py.py /home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetJacobians.srv -Istd_msgs:/opt/ros/melodic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/melodic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/melodic/share/geometry_msgs/cmake/../msg -p iiwa_tools -o /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv
@@ -107,8 +107,8 @@ iiwa_ros/iiwa_tools/CMakeFiles/iiwa_tools_generate_messages_py: /home/bonato/cat
 
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetMassMatrix.py: /opt/ros/melodic/lib/genpy/gensrv_py.py
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetMassMatrix.py: /home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetMassMatrix.srv
-/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetMassMatrix.py: /opt/ros/melodic/share/std_msgs/msg/Float64MultiArray.msg
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetMassMatrix.py: /opt/ros/melodic/share/std_msgs/msg/MultiArrayDimension.msg
+/home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetMassMatrix.py: /opt/ros/melodic/share/std_msgs/msg/Float64MultiArray.msg
 /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv/_GetMassMatrix.py: /opt/ros/melodic/share/std_msgs/msg/MultiArrayLayout.msg
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/bonato/catkin_ws/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Generating Python code from SRV iiwa_tools/GetMassMatrix"
 	cd /home/bonato/catkin_ws/build/iiwa_ros/iiwa_tools && ../../catkin_generated/env_cached.sh /usr/bin/python3 /opt/ros/melodic/share/genpy/cmake/../../../lib/genpy/gensrv_py.py /home/bonato/catkin_ws/src/iiwa_ros/iiwa_tools/srv/GetMassMatrix.srv -Istd_msgs:/opt/ros/melodic/share/std_msgs/cmake/../msg -Isensor_msgs:/opt/ros/melodic/share/sensor_msgs/cmake/../msg -Igeometry_msgs:/opt/ros/melodic/share/geometry_msgs/cmake/../msg -p iiwa_tools -o /home/bonato/catkin_ws/devel/lib/python3/dist-packages/iiwa_tools/srv

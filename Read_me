@@ -7,4 +7,8 @@ These files has to purpose to run the iiwa arm robot by following:
 In src/send_pose you have one node for the dynamical system (Ds.cpp) and one node for the path (Send_pos). 
 
 
+Installing process:
 
+You need to install the following git hub into your Ros_folder:
+
+- 

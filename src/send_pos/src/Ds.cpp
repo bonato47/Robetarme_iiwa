@@ -121,7 +121,7 @@ int main(int argc, char **argv)
         //integrate the speed with the actual cartesian state to find new cartesian state
         //ROS_INFO("Desired cartesian position");
         pos_cart_N = Integral_func(Pos_cart_actual, speed, delta_t);
-        ROS_INFO("%f %f %f",pos_cart_N[0],pos_cart_N[1],pos_cart_N[2]);
+        //ROS_INFO("%f %f %f",pos_cart_N[0],pos_cart_N[1],pos_cart_N[2]);
 
         // need to add the orientation
         Quat_N = {0,0,0.7,-0.7};
@@ -194,7 +194,7 @@ Vector3d speed_func(vector<double> Pos,Vector3d x01 )
     Matrix3d A;
     //Set a linear DS
     A << -1, 0, 0 ,0,-1,0,0,0,-1;
-    A =A;
+    A =10*A;
     Vector3d b1,w; 
     // Set the attracotr
     //x01 << 0.5,0.5,0.5;
