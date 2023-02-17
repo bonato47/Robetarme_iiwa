@@ -27,7 +27,6 @@ int main(int argc, char **argv)
 {
     std_msgs::Float64MultiArray msgP;
     vector<double> pos_des_joint(n);
-    vector<vector<double>> traj_joint;
 
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Send_pos");
@@ -35,20 +34,11 @@ int main(int argc, char **argv)
     ros::Subscriber sub = Nh.subscribe("iiwa/joint_states", 1000, CounterCallback);
     ros::Publisher chatter_pub = Nh.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
     //Frequency of the Ros loop
-    ros::Rate loop_rate(20);
+    ros::Rate loop_rate(200);
 
+    vector<double> traj_cart({0,0,1.3,0,0,0,1});
 
-/*     // Read trajectory from .csv 
-    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble();
-    int Len_vec =traj_cart.size(); */
-
-    vector<vector<double>> traj_cart = {{0,0,1.2,0.7,-0.7,0,0},
-    {0,0,1.2,0.7,-0.7,0,0},
-    {0,0,1.2,0.7,-0.7,0,0},
-    {0.5,0.5,0.5,0.7,-0.7,0,0},
-    {0.5,0.5,0.5,0.7,-0.7,0,0},
-    {0.5,0.5,0.5,0.7,-0.7,0,0},
-    {0.5,0.5,0.5,0.7,-0.7,0,0}};
+    ros::param::set("send_pos/Nextpos",traj_cart);
 
     //iniailization Invers Kinematics
     string base_link = "iiwa_link_0";
@@ -67,70 +57,79 @@ int main(int argc, char **argv)
         ROS_ERROR("There was no valid KDL chain found");
     }
 
-    //Convert cartesian to joint space
-
-   
-    vector<double> pos_joint_next(7);
-    double* ptr;
-    for(int i = 0; i< int(traj_cart.size());i++)
-    {
-        KDL::JntArray Next_joint_task;
-        KDL::JntArray actual_joint_task; 
-        if(i == 0){
-            ptr = &pos_joint_actual[0];
-            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7); 
-            actual_joint_task.data = pos_joint_actual_eigen; 
-        }
-        else {
-            ptr = &pos_joint_next[0];
-            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7); 
-            actual_joint_task.data = pos_joint_actual_eigen; 
-            std::fill(pos_joint_next.begin(), pos_joint_next.end(), 0);
-        }
-       
-        KDL::Vector Vec(traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
-        //KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[i][4],traj_cart[i][5],traj_cart[i][6],traj_cart[i][7]);
-        KDL::Rotation Rot = KDL::Rotation::Quaternion(1,1,1,1);
-        KDL::Frame Next_joint_cartesian(Rot,Vec); 
-
-        //ROS_INFO("%f" "%f" "%f" ,traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
-
-        Eigen::VectorXd pos_joint_next_eigen ;
-        int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
-        ROS_INFO("%d",rc);
-        pos_joint_next_eigen = Next_joint_task.data;
-        for(int i = 0 ;i<7;++i){
-            pos_joint_next[i] =pos_joint_next_eigen(i);
-        }
-        traj_joint.push_back(pos_joint_next);
-        ROS_INFO("%f" "%f" "%f" "%f" "%f" "%f" "%f" ,traj_joint[i][0],traj_joint[i][1],traj_joint[i][2],traj_joint[i][3],traj_joint[i][4],traj_joint[i][5],traj_joint[i][6]);
-  
-    }
-   
-    //-----------------------------------------
-
-    ROS_INFO("Let'move on");
-    int Len_vec =2;
-    //begin the Ros loop
-    int Next  = 0;
     int count = 0 ;
+    int loop = 0;
+    vector<double> past_traj(7);
+
     while (ros::ok())
     {
-        msgP.data = traj_joint[Next];
-        pos_des_joint= traj_joint[Next];
-
-        //ROS_INFO("%f", mseValue(pos,pos_des_joint,n));
-        if ((mseValue(pos_joint_actual,pos_des_joint,n) && (Next < int(traj_cart.size()) )) || (count >50)){
-            ++Next;
-            if(Next == int(traj_cart.size())){
-                ROS_INFO("Last target reached, stop ");
-                return 0; 
+        if(pos_joint_actual[0] != 0 && count == 0){
+            ROS_INFO("Set up Ready");
+            ++count;
+        }
+        if (count == 1 ){
+            if (mseValue(pos_joint_actual,past_traj,n) ){
+                ROS_INFO("origine reached, please give a target");
+                ros::param::set("send_pos/Nextpos",pos_joint_actual);
+                past_traj = pos_joint_actual;
+                ++count;
+            }   
+            msgP.data = past_traj;
+            chatter_pub.publish(msgP);
+        }
+        if(count > 1){
+            ros::param::get("send_pos/Nextpos",traj_cart);
+            if(traj_cart == past_traj){
+                continue;
             }
-            ROS_INFO("target reached, go next one ");
-            count = 0;
-        }   
-        ++count;
-        chatter_pub.publish(msgP);
+            vector<double> pos_joint_next(7);
+            double* ptr;
+            KDL::JntArray Next_joint_task;
+            KDL::JntArray actual_joint_task; 
+
+            if(count == 0){
+                ptr = &pos_joint_actual[0];
+                Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7); 
+                actual_joint_task.data = pos_joint_actual_eigen; 
+            }
+            else {
+                ptr = &pos_joint_next[0];
+                Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7); 
+                actual_joint_task.data = pos_joint_actual_eigen; 
+                std::fill(pos_joint_next.begin(), pos_joint_next.end(), 0);
+            }
+            
+            KDL::Vector Vec(traj_cart[0],traj_cart[1],traj_cart[2]);
+            KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[3],traj_cart[4],traj_cart[5],traj_cart[6]);
+            KDL::Frame Next_joint_cartesian(Rot,Vec); 
+
+            Eigen::VectorXd pos_joint_next_eigen ;
+            int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
+        
+            pos_joint_next_eigen = Next_joint_task.data;
+            for(int i = 0 ;i<7;++i){
+                pos_joint_next[i] =pos_joint_next_eigen(i);
+            }
+            //-----------------------------------------
+            if(rc < 0){
+                ROS_INFO("this point is not achivable, please give another");
+                past_traj = traj_cart;
+            }
+            else{
+                do{
+                    msgP.data = pos_joint_next;
+                    pos_des_joint= pos_joint_next;
+                    chatter_pub.publish(msgP);
+                }while (mseValue(pos_joint_actual,pos_des_joint,n));
+               
+                ROS_INFO("target reached, please give another one ");
+                past_traj.clear();
+                past_traj =  traj_cart;
+                   
+                
+            }            
+        } 
+
         ros::spinOnce();
         loop_rate.sleep();
     }
@@ -149,7 +148,7 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
 bool mseValue(vector<double> v1, vector<double> v2,int Num)
 {
     // tolerance of the errot between each point
-    float tol =0.1;
+    float tol =0.01;
     bool Reached = false;
     int crit =0;
     float err =0;

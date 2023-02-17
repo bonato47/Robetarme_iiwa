@@ -75,14 +75,14 @@ vector<double> eff(n);
 int main(int argc, char **argv)
 {
     Vector4d Orientation_des;
-    Orientation_des << 0.7,-0.7,0,0;
+    Orientation_des << -0.091691 ,0.823997 ,0.460200 ,0.317549 ;
     Vector3d Position_des;
     Position_des << 0.5,0.5,0.5;
 
     iiwa_tools::GetFK  FK_state ;
     iiwa_tools::GetJacobian  Jac_state ;
 
-    double delta_t = 0.1;
+    double delta_t = 0.01;
    
     //Initialisation of the Ros Node (Service, subscriber and publisher)
     ros::init(argc, argv, "Ds_Tikhonov");
@@ -125,30 +125,35 @@ int main(int argc, char **argv)
         Robot_position.cart = {Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w,Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z};
 
         //-----------------------------------------------------------------------
-        //Send the cartesian stat to Dynamical System (DS) to find desired speed
-
-        // need to add the orientation
-        //ROS_INFO("Desired speed");
-
+        //Find the desired speed ( omega_dot ,x_dot) size 6x1
+        
+        //Send the cartesian stat to Dynamical System (DS) to find x_dot
+        // use quatertion to speed algoritm to omega_dot
         Robot_speed.cart_next = speed_func(Robot_position.cart,Orientation_des,Position_des);
         Robot_speed.State_robot_next_cart(Robot_speed.cart_next);
 
-        //ROS_INFO("%f", Robot_speed.cart_next_eigen.norm());
+        //ROS_INFO("%f %f %f ", Robot_speed.cart_next_eigen[3],Robot_speed.cart_next_eigen[4],Robot_speed.cart_next_eigen[5]);
 
-        // use Tkihonov optimization norm(J*q_dot-V)²+ norm(q_dot)²
+        // use Tkihonov optimization norm(J*q_dot-V)²+ norm(w*I*q_dot)²
+        //q_dot = inv(J_transpose*J+ W_transpose*W)*J_transpose*Speed
+
         Jac_state.request.joint_angles = Robot_position.joint_std64.data;
         Jac_state.request.joint_velocities =  Robot_speed.joint_std64.data;;
         client_J.call(Jac_state);
 
         std_msgs::Float64MultiArray Jacobian = Jac_state.response.jacobian;
         double* ptr = &Jacobian.data[0];    
-
         Map<MatrixXd> Eigen_Jac(ptr, 6, 7);
 
  
-       //x = inv(J_transpose*J+ W_transpose*W)*J_transpose*Speed
-    
-        double W = 0.2;
+     /*    for(int  j= 0;j<3;j++){     
+            for(int i = 0;i<6;i++){  
+                Eigen_Jac(j,i)= 0;
+            }
+        }      */  
+
+
+        double W = 2;
         MatrixXd eigen_Weight(7,7);
         eigen_Weight << W,0,0,0,0,0,0,
                         0,W,0,0,0,0,0,
@@ -165,8 +170,8 @@ int main(int argc, char **argv)
             ROS_INFO("%f", Jacobian.data[i]);
         } */
         Robot_position.joint_next =  Integral_func_V2(Robot_position.joint_eigen, Robot_speed.joint_next_eigen, delta_t);
-        ROS_INFO("%f %f %f",Robot_speed.joint_next_eigen[0],Robot_speed.joint_next_eigen[1],Robot_speed.joint_next_eigen[2]);
-
+        //ROS_INFO("%f %f %f",Robot_position.joint_next[0],Robot_position.joint_next[1],Robot_position.joint_next[2]);
+        //ROS_INFO("%f %f %f %f %f %f ",Position_des[0],Position_des[1],Position_des[2],Robot_position.cart[4],Robot_position.cart[5],Robot_position.cart[6]);
        /*
 
         // Filter
@@ -180,7 +185,7 @@ int main(int argc, char **argv)
          */
         //-----------------------------------------------------------------------
         //send next joint and wait
-        if(count > 0 && mseValue_cart({Position_des[0],Position_des[1],Position_des[2]},Robot_position.cart)){
+        if(count > 0 && mseValue_cart({Position_des[0],Position_des[1],Position_des[2]},{Robot_position.cart[4],Robot_position.cart[5],Robot_position.cart[6]})){
             msgP.data = Robot_position.joint_next;
             chatter_pub.publish(msgP);
         }
@@ -223,16 +228,17 @@ vector<double> speed_func(vector<double> pos, Vector4d q2 ,Vector3d x01)
     Vector3d Omega_out  = 2 * dsGain_ori*(1+std::exp(theta_gq)) * tmp_angular_vel;
 
     //position
-     Matrix3d A;
+    Matrix3d A;
     Vector3d b1,w,cart_actual; 
     cart_actual << pos[4],pos[5],pos[6];
 
     //Set a linear DS
-    A << -1, 0, 0 ,0,-1,0,0,0,-1;
-    A = 10*A;
+    A << -1, 0, 0,
+          0,-1, 0,
+          0, 0,-1;
     // Set the Position_des
-    b1 =  -A*x01;
-    w = A * cart_actual +b1 ;
+    b1 = -A * x01;
+    w  =  A * cart_actual + b1 ;
 
     //out
     vector<double> Vout = {Omega_out[0],Omega_out[1],Omega_out[2],w[0],w[1],w[2]};

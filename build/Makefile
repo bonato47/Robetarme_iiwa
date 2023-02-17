@@ -3951,6 +3951,19 @@ Ds_Tikhonov/fast:
 .PHONY : Ds_Tikhonov/fast
 
 #=============================================================================
+# Target rules for targets named Follow_traj
+
+# Build rule for target.
+Follow_traj: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 Follow_traj
+.PHONY : Follow_traj
+
+# fast build rule for target.
+Follow_traj/fast:
+	$(MAKE) -f send_pos/CMakeFiles/Follow_traj.dir/build.make send_pos/CMakeFiles/Follow_traj.dir/build
+.PHONY : Follow_traj/fast
+
+#=============================================================================
 # Target rules for targets named ik_tests
 
 # Build rule for target.
@@ -4618,6 +4631,7 @@ help:
 	@echo "... Ds"
 	@echo "... send_pos_genpy"
 	@echo "... Ds_Tikhonov"
+	@echo "... Follow_traj"
 	@echo "... ik_tests"
 	@echo "... octomap_msgs_generate_messages_py"
 	@echo "... octomap_msgs_generate_messages_nodejs"

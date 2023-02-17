@@ -215,7 +215,7 @@ include_directories(
 
 
 
-add_executable(Ds src/Ds.cpp)
+add_executable(Ds src/Ds.cpp include/thirdparty/Utils.cpp)
 target_link_libraries(Ds ${catkin_LIBRARIES})
 
 add_executable(Ds_Tikhonov src/Ds_Tikhonov.cpp include/thirdparty/Utils.cpp)
@@ -223,8 +223,10 @@ target_link_libraries(Ds_Tikhonov ${catkin_LIBRARIES})
 
 add_executable(listener src/listener.cpp )
 target_link_libraries(listener ${catkin_LIBRARIES})
-#add_dependencies(listener send_pos_generate_messages_cpp)
+
+add_executable(Follow_traj src/Follow_traj.cpp)
+target_link_libraries(Follow_traj ${catkin_LIBRARIES})
 
 add_executable(Send_pos src/Send_pos.cpp)
 target_link_libraries(Send_pos ${catkin_LIBRARIES})
-#add_dependencies(Send_pos send_pos_generate_messages_cpp)
+
