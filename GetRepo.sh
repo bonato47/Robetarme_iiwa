@@ -7,8 +7,8 @@ git clone --recursive https://github.com/jrl-umi3218/RBDyn.git
 git clone --recursive https://github.com/jrl-umi3218/mc_rbdyn_urdf.git
 git clone https://github.com/mosra/corrade.git
 git clone https://github.com/epfl-lasa/robot_controllers.git
-
+git clone  --branch feature/dockerise https://github.com/epfl-lasa/iiwa_ros.git
 cd ..
-source devel/setup.bash
+source devel /setup.bash
 catkin_make
 read terminate
