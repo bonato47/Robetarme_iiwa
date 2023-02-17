@@ -7,15 +7,17 @@ df = pd.read_csv(Name, sep= ",")
 df_reduced = pd.DataFrame()
 #df_reduced["time_stamp"] = df["time_stamp"]
 
-Pos = [0.5,0.5,0.5]
+Pos = [0,0.5,0.5]
 
 df_reduced["quat_x"] = df["pos_z"]
 df_reduced["quat_y"] = df["pos_z"]
 df_reduced["quat_z"] = df["pos_z"]
 df_reduced["quat_w"] = df["pos_z"]
-df_reduced["pos_x"] = df["pos_x"] + 0.5
-df_reduced["pos_y"] = df["pos_y"] + 0.5
+df_reduced["pos_x"] = df["pos_x"]  + 0.5
+df_reduced["pos_y"] = df["pos_y"]
 df_reduced["pos_z"] = df["pos_z"] + 0.5
+
+df["ang_y"] = df["ang_y"]+(3.14/2)
 
 
 i = 1

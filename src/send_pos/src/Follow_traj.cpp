@@ -30,13 +30,12 @@ int main(int argc, char **argv)
     vector<vector<double>> traj_joint;
 
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
-    ros::init(argc, argv, "Send_pos");
+    ros::init(argc, argv, "Follow_traj");
     ros::NodeHandle Nh;
     ros::Subscriber sub = Nh.subscribe("iiwa/joint_states", 1000, CounterCallback);
     ros::Publisher chatter_pub = Nh.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
     //Frequency of the Ros loop
     ros::Rate loop_rate(200);
-
 
     // Read trajectory from .csv 
     vector<vector<double>> traj_cart = CSVtoVectorVectorDouble();
@@ -57,10 +56,9 @@ int main(int argc, char **argv)
     {
         ROS_ERROR("There was no valid KDL chain found");
     }
+    ROS_INFO("Preparing trajectory...");
 
     //Convert cartesian to joint space
-
-   
     vector<double> pos_joint_next(7);
     double* ptr;
     for(int i = 0; i< int(traj_cart.size());i++)
@@ -94,13 +92,19 @@ int main(int argc, char **argv)
             pos_joint_next[i] =pos_joint_next_eigen(i);
         }
         traj_joint.push_back(pos_joint_next);
-        //ROS_INFO("%f" "%f" "%f" "%f" "%f" "%f" "%f" ,traj_joint[i][0],traj_joint[i][1],traj_joint[i][2],traj_joint[i][3],traj_joint[i][4],traj_joint[i][5],traj_joint[i][6]);
-  
+        if(i == round(int(traj_cart.size())/2)){
+            ROS_INFO("Half of the the trajectory load, please wait... ");
+        }
     }
    
     //-----------------------------------------
 
-    ROS_INFO("Let'move on");
+    ROS_INFO("Trajectory well load, When you are ready press GO");
+    string UserInput = "stop";
+    while( UserInput != "GO"){
+        cin >> UserInput;
+    }
+
     //begin the Ros loop
     int Next  = 0;
     int count = 0 ;
@@ -113,7 +117,7 @@ int main(int argc, char **argv)
         if ((mseValue(pos_joint_actual,pos_des_joint,n) && (Next < int(traj_cart.size()) )) || (count >50)){
             ++Next;
             if(Next == int(traj_cart.size())){
-                ROS_INFO("Last target reached, stop ");
+                ROS_INFO("Last point reached, stop ");
                 return 0; 
             }
             //ROS_INFO("target reached, go next one ");
@@ -139,7 +143,7 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
 bool mseValue(vector<double> v1, vector<double> v2,int Num)
 {
     // tolerance of the errot between each point
-    float tol =0.01;
+    float tol =0.1;
     bool Reached = false;
     int crit =0;
     float err =0;
@@ -191,11 +195,11 @@ vector<vector<double>> CSVtoVectorVectorDouble()
                 row.push_back(word);
             content.push_back(row);
         }
-        cout<<"file well read";
+        ROS_INFO("file well readed");
 
     }
     else
-        cout<<"Could not open the file\n";
+        ROS_ERROR("Could not open the file\n");
 
     for(int i=0;i<Taille;i++) //int(content.size())
     {

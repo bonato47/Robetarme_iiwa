@@ -145,13 +145,11 @@ int main(int argc, char **argv)
         double* ptr = &Jacobian.data[0];    
         Map<MatrixXd> Eigen_Jac(ptr, 6, 7);
 
- 
-     /*    for(int  j= 0;j<3;j++){     
-            for(int i = 0;i<6;i++){  
+       /*  for(int  j= 0;j<3;j++){     
+            for(int i = 0;i<7;i++){  
                 Eigen_Jac(j,i)= 0;
             }
-        }      */  
-
+        } */      
 
         double W = 2;
         MatrixXd eigen_Weight(7,7);
@@ -164,7 +162,8 @@ int main(int argc, char **argv)
                         0,0,0,0,0,0,W;
 
         Robot_speed.joint_next_eigen =  (Eigen_Jac.transpose()*Eigen_Jac +eigen_Weight.transpose()*eigen_Weight).inverse()*Eigen_Jac.transpose()*Robot_speed.cart_next_eigen;
-    
+        ROS_INFO("%f %f %f %f %f %f ",Robot_speed.joint_next_eigen[0],Robot_speed.joint_next_eigen[1],Robot_speed.joint_next_eigen[2],Robot_speed.joint_next_eigen[4],Robot_speed.joint_next_eigen[5],Robot_speed.joint_next_eigen[6]);
+
 
   /*       for(int i = 0;i<6*7;i++){
             ROS_INFO("%f", Jacobian.data[i]);
@@ -208,7 +207,6 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
 vector<double> speed_func(vector<double> pos, Vector4d q2 ,Vector3d x01)
 {   
     //orientation
-
     Vector4d q1 ;
     q1 << pos[0],pos[1],pos[2],pos[3];
     Vector4d dqd = Utils<double>::slerpQuaternion(q1, q2 ,0.5);    
