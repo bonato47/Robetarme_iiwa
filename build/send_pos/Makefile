@@ -91,17 +91,6 @@ edit_cache/fast: edit_cache
 
 .PHONY : edit_cache/fast
 
-# Special rule for the target test
-test:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running tests..."
-	/usr/bin/ctest --force-new-ctest-process $(ARGS)
-.PHONY : test
-
-# Special rule for the target test
-test/fast: test
-
-.PHONY : test/fast
-
 # Special rule for the target list_install_components
 list_install_components:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Available install components are: \"Unspecified\""
@@ -134,6 +123,17 @@ install/local/fast: preinstall/fast
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
 	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
 .PHONY : install/local/fast
+
+# Special rule for the target test
+test:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running tests..."
+	/usr/bin/ctest --force-new-ctest-process $(ARGS)
+.PHONY : test
+
+# Special rule for the target test
+test/fast: test
+
+.PHONY : test/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -286,21 +286,6 @@ send_pos_generate_messages_cpp: send_pos/CMakeFiles/send_pos_generate_messages_c
 send_pos_generate_messages_cpp/fast:
 	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/send_pos_generate_messages_cpp.dir/build.make send_pos/CMakeFiles/send_pos_generate_messages_cpp.dir/build
 .PHONY : send_pos_generate_messages_cpp/fast
-
-# Convenience name for target.
-send_pos/CMakeFiles/listener.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/listener.dir/rule
-.PHONY : send_pos/CMakeFiles/listener.dir/rule
-
-# Convenience name for target.
-listener: send_pos/CMakeFiles/listener.dir/rule
-
-.PHONY : listener
-
-# fast build rule for target.
-listener/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/listener.dir/build.make send_pos/CMakeFiles/listener.dir/build
-.PHONY : listener/fast
 
 # Convenience name for target.
 send_pos/CMakeFiles/Send_pos.dir/rule:
@@ -545,33 +530,6 @@ src/Send_pos.cpp.s:
 	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Send_pos.dir/build.make send_pos/CMakeFiles/Send_pos.dir/src/Send_pos.cpp.s
 .PHONY : src/Send_pos.cpp.s
 
-src/listener.o: src/listener.cpp.o
-
-.PHONY : src/listener.o
-
-# target to build an object file
-src/listener.cpp.o:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/listener.dir/build.make send_pos/CMakeFiles/listener.dir/src/listener.cpp.o
-.PHONY : src/listener.cpp.o
-
-src/listener.i: src/listener.cpp.i
-
-.PHONY : src/listener.i
-
-# target to preprocess a source file
-src/listener.cpp.i:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/listener.dir/build.make send_pos/CMakeFiles/listener.dir/src/listener.cpp.i
-.PHONY : src/listener.cpp.i
-
-src/listener.s: src/listener.cpp.s
-
-.PHONY : src/listener.s
-
-# target to generate assembly for a file
-src/listener.cpp.s:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/listener.dir/build.make send_pos/CMakeFiles/listener.dir/src/listener.cpp.s
-.PHONY : src/listener.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -581,7 +539,6 @@ help:
 	@echo "... install/strip"
 	@echo "... install"
 	@echo "... edit_cache"
-	@echo "... test"
 	@echo "... send_pos_generate_messages_lisp"
 	@echo "... send_pos_gennodejs"
 	@echo "... list_install_components"
@@ -591,7 +548,6 @@ help:
 	@echo "... send_pos_genlisp"
 	@echo "... send_pos_generate_messages"
 	@echo "... send_pos_generate_messages_cpp"
-	@echo "... listener"
 	@echo "... rebuild_cache"
 	@echo "... Send_pos"
 	@echo "... send_pos_generate_messages_nodejs"
@@ -601,6 +557,7 @@ help:
 	@echo "... send_pos_genpy"
 	@echo "... Ds_Tikhonov"
 	@echo "... Follow_traj"
+	@echo "... test"
 	@echo "... include/thirdparty/Utils.o"
 	@echo "... include/thirdparty/Utils.i"
 	@echo "... include/thirdparty/Utils.s"
@@ -616,9 +573,6 @@ help:
 	@echo "... src/Send_pos.o"
 	@echo "... src/Send_pos.i"
 	@echo "... src/Send_pos.s"
-	@echo "... src/listener.o"
-	@echo "... src/listener.i"
-	@echo "... src/listener.s"
 .PHONY : help
 
 

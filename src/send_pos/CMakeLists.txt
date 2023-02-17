@@ -221,8 +221,8 @@ target_link_libraries(Ds ${catkin_LIBRARIES})
 add_executable(Ds_Tikhonov src/Ds_Tikhonov.cpp include/thirdparty/Utils.cpp)
 target_link_libraries(Ds_Tikhonov ${catkin_LIBRARIES})
 
-add_executable(listener src/listener.cpp )
-target_link_libraries(listener ${catkin_LIBRARIES})
+#add_executable(listener src/listener.cpp )
+#target_link_libraries(listener ${catkin_LIBRARIES})
 
 add_executable(Follow_traj src/Follow_traj.cpp)
 target_link_libraries(Follow_traj ${catkin_LIBRARIES})

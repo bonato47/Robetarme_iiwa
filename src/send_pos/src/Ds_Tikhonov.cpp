@@ -29,17 +29,8 @@ bool mseValue_cart(vector<double> v1, vector<double> v2);
 
 class State_robot {       // The class
   public:             // Access specifier
-    vector<double> cart;
-    vector<double> joint ;
-    vector<double> cart_next;
-    vector<double> joint_next ;
-
-    VectorXd cart_eigen ;
-    VectorXd joint_eigen ;
-    VectorXd joint_next_eigen ;
-    VectorXd cart_next_eigen ;
-
-
+    vector<double> cart,joint,cart_next,joint_next;
+    VectorXd cart_eigen, joint_eigen ,cart_next_eigen, joint_next_eigen ;
     std_msgs::Float64MultiArray joint_std64;
 
     void State_robot_actual(vector<double> V) {  // Method/function defined inside the class
@@ -55,14 +46,12 @@ class State_robot {       // The class
         int L = V.size();
         double* pt = &V[0];
         joint_next_eigen = Map<VectorXd>(pt, L);
-        //joint_std64.data = {joint[0],joint[1],joint[2],joint[3],joint[4],joint[5],joint[6]};
     }
     void State_robot_next_cart(vector<double> V) {  // Method/function defined inside the class
         cart_next = V;
         int L = V.size();
         double* pt = &V[0];
         cart_next_eigen = Map<VectorXd>(pt, L);
-        //joint_std64.data = {joint[0],joint[1],joint[2],joint[3],joint[4],joint[5],joint[6]};
     }
 };
 
@@ -109,7 +98,7 @@ int main(int argc, char **argv)
     int count = 0;
     while (ros::ok())
     {
-        //define object Position and speed
+        //define object position and speed
         State_robot Robot_position;
         Robot_position.State_robot_actual(pos_joint_actual);
 
@@ -126,15 +115,10 @@ int main(int argc, char **argv)
 
         //-----------------------------------------------------------------------
         //Find the desired speed ( omega_dot ,x_dot) size 6x1
-        
-        //Send the cartesian stat to Dynamical System (DS) to find x_dot
-        // use quatertion to speed algoritm to omega_dot
         Robot_speed.cart_next = speed_func(Robot_position.cart,Orientation_des,Position_des);
         Robot_speed.State_robot_next_cart(Robot_speed.cart_next);
 
-        //ROS_INFO("%f %f %f ", Robot_speed.cart_next_eigen[3],Robot_speed.cart_next_eigen[4],Robot_speed.cart_next_eigen[5]);
-
-        // use Tkihonov optimization norm(J*q_dot-V)²+ norm(w*I*q_dot)²
+        // Use Tkihonov optimization norm(J*q_dot-V)²+ norm(w*I*q_dot)²
         //q_dot = inv(J_transpose*J+ W_transpose*W)*J_transpose*Speed
 
         Jac_state.request.joint_angles = Robot_position.joint_std64.data;
@@ -162,16 +146,9 @@ int main(int argc, char **argv)
                         0,0,0,0,0,0,W;
 
         Robot_speed.joint_next_eigen =  (Eigen_Jac.transpose()*Eigen_Jac +eigen_Weight.transpose()*eigen_Weight).inverse()*Eigen_Jac.transpose()*Robot_speed.cart_next_eigen;
-        ROS_INFO("%f %f %f %f %f %f ",Robot_speed.joint_next_eigen[0],Robot_speed.joint_next_eigen[1],Robot_speed.joint_next_eigen[2],Robot_speed.joint_next_eigen[4],Robot_speed.joint_next_eigen[5],Robot_speed.joint_next_eigen[6]);
 
-
-  /*       for(int i = 0;i<6*7;i++){
-            ROS_INFO("%f", Jacobian.data[i]);
-        } */
         Robot_position.joint_next =  Integral_func_V2(Robot_position.joint_eigen, Robot_speed.joint_next_eigen, delta_t);
-        //ROS_INFO("%f %f %f",Robot_position.joint_next[0],Robot_position.joint_next[1],Robot_position.joint_next[2]);
-        //ROS_INFO("%f %f %f %f %f %f ",Position_des[0],Position_des[1],Position_des[2],Robot_position.cart[4],Robot_position.cart[5],Robot_position.cart[6]);
-       /*
+    /*
 
         // Filter
        
@@ -182,13 +159,13 @@ int main(int argc, char **argv)
             pos_joint_next_filter[i] = alpha*pos_joint_next[i] +(1-alpha)*Robot_position.joint[i];
         }
          */
+
         //-----------------------------------------------------------------------
-        //send next joint and wait
+        //send next joint 
         if(count > 0 && mseValue_cart({Position_des[0],Position_des[1],Position_des[2]},{Robot_position.cart[4],Robot_position.cart[5],Robot_position.cart[6]})){
             msgP.data = Robot_position.joint_next;
             chatter_pub.publish(msgP);
         }
-
         //--------------------------------------------------------------------
         ros::spinOnce();        
         loop_rate.sleep();  
@@ -206,6 +183,9 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
 
 vector<double> speed_func(vector<double> pos, Vector4d q2 ,Vector3d x01)
 {   
+    //Send the cartesian stat to Dynamical System (DS) to find x_dot
+    // use quatertion to speed algoritm to omega_dot
+
     //orientation
     Vector4d q1 ;
     q1 << pos[0],pos[1],pos[2],pos[3];

@@ -3626,19 +3626,6 @@ send_pos_generate_messages_cpp/fast:
 .PHONY : send_pos_generate_messages_cpp/fast
 
 #=============================================================================
-# Target rules for targets named listener
-
-# Build rule for target.
-listener: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 listener
-.PHONY : listener
-
-# fast build rule for target.
-listener/fast:
-	$(MAKE) -f send_pos/CMakeFiles/listener.dir/build.make send_pos/CMakeFiles/listener.dir/build
-.PHONY : listener/fast
-
-#=============================================================================
 # Target rules for targets named Send_pos
 
 # Build rule for target.
@@ -4372,7 +4359,6 @@ help:
 	@echo "... send_pos_genlisp"
 	@echo "... send_pos_generate_messages"
 	@echo "... send_pos_generate_messages_cpp"
-	@echo "... listener"
 	@echo "... Send_pos"
 	@echo "... send_pos_generate_messages_nodejs"
 	@echo "... send_pos_generate_messages_py"
