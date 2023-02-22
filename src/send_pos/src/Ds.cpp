@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <trac_ik/trac_ik.hpp>
 #include "Send_pos_function.h"
-#include "thirdparty/Utils.h"
+#include "Utils.h"
 
 
 using namespace Eigen;

@@ -177,7 +177,7 @@ foreach(library ${libraries})
   endif()
 endforeach()
 
-set(send_pos_EXPORTED_TARGETS "send_pos_generate_messages_cpp;send_pos_generate_messages_eus;send_pos_generate_messages_lisp;send_pos_generate_messages_nodejs;send_pos_generate_messages_py")
+set(send_pos_EXPORTED_TARGETS "")
 # create dummy targets for exported code generation targets to make life of users easier
 foreach(t ${send_pos_EXPORTED_TARGETS})
   if(NOT TARGET ${t})
@@ -214,7 +214,7 @@ foreach(depend ${depends})
   list(APPEND send_pos_EXPORTED_TARGETS ${${send_pos_dep}_EXPORTED_TARGETS})
 endforeach()
 
-set(pkg_cfg_extras "send_pos-msg-extras.cmake")
+set(pkg_cfg_extras "")
 foreach(extra ${pkg_cfg_extras})
   if(NOT IS_ABSOLUTE ${extra})
     set(extra ${send_pos_DIR}/${extra})

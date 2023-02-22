@@ -3522,108 +3522,17 @@ trac_ik/fast:
 .PHONY : trac_ik/fast
 
 #=============================================================================
-# Target rules for targets named send_pos_generate_messages_lisp
+# Target rules for targets named Ds
 
 # Build rule for target.
-send_pos_generate_messages_lisp: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 send_pos_generate_messages_lisp
-.PHONY : send_pos_generate_messages_lisp
+Ds: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 Ds
+.PHONY : Ds
 
 # fast build rule for target.
-send_pos_generate_messages_lisp/fast:
-	$(MAKE) -f send_pos/CMakeFiles/send_pos_generate_messages_lisp.dir/build.make send_pos/CMakeFiles/send_pos_generate_messages_lisp.dir/build
-.PHONY : send_pos_generate_messages_lisp/fast
-
-#=============================================================================
-# Target rules for targets named send_pos_gennodejs
-
-# Build rule for target.
-send_pos_gennodejs: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 send_pos_gennodejs
-.PHONY : send_pos_gennodejs
-
-# fast build rule for target.
-send_pos_gennodejs/fast:
-	$(MAKE) -f send_pos/CMakeFiles/send_pos_gennodejs.dir/build.make send_pos/CMakeFiles/send_pos_gennodejs.dir/build
-.PHONY : send_pos_gennodejs/fast
-
-#=============================================================================
-# Target rules for targets named send_pos_generate_messages_eus
-
-# Build rule for target.
-send_pos_generate_messages_eus: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 send_pos_generate_messages_eus
-.PHONY : send_pos_generate_messages_eus
-
-# fast build rule for target.
-send_pos_generate_messages_eus/fast:
-	$(MAKE) -f send_pos/CMakeFiles/send_pos_generate_messages_eus.dir/build.make send_pos/CMakeFiles/send_pos_generate_messages_eus.dir/build
-.PHONY : send_pos_generate_messages_eus/fast
-
-#=============================================================================
-# Target rules for targets named send_pos_geneus
-
-# Build rule for target.
-send_pos_geneus: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 send_pos_geneus
-.PHONY : send_pos_geneus
-
-# fast build rule for target.
-send_pos_geneus/fast:
-	$(MAKE) -f send_pos/CMakeFiles/send_pos_geneus.dir/build.make send_pos/CMakeFiles/send_pos_geneus.dir/build
-.PHONY : send_pos_geneus/fast
-
-#=============================================================================
-# Target rules for targets named send_pos_gencpp
-
-# Build rule for target.
-send_pos_gencpp: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 send_pos_gencpp
-.PHONY : send_pos_gencpp
-
-# fast build rule for target.
-send_pos_gencpp/fast:
-	$(MAKE) -f send_pos/CMakeFiles/send_pos_gencpp.dir/build.make send_pos/CMakeFiles/send_pos_gencpp.dir/build
-.PHONY : send_pos_gencpp/fast
-
-#=============================================================================
-# Target rules for targets named send_pos_genlisp
-
-# Build rule for target.
-send_pos_genlisp: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 send_pos_genlisp
-.PHONY : send_pos_genlisp
-
-# fast build rule for target.
-send_pos_genlisp/fast:
-	$(MAKE) -f send_pos/CMakeFiles/send_pos_genlisp.dir/build.make send_pos/CMakeFiles/send_pos_genlisp.dir/build
-.PHONY : send_pos_genlisp/fast
-
-#=============================================================================
-# Target rules for targets named send_pos_generate_messages
-
-# Build rule for target.
-send_pos_generate_messages: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 send_pos_generate_messages
-.PHONY : send_pos_generate_messages
-
-# fast build rule for target.
-send_pos_generate_messages/fast:
-	$(MAKE) -f send_pos/CMakeFiles/send_pos_generate_messages.dir/build.make send_pos/CMakeFiles/send_pos_generate_messages.dir/build
-.PHONY : send_pos_generate_messages/fast
-
-#=============================================================================
-# Target rules for targets named send_pos_generate_messages_cpp
-
-# Build rule for target.
-send_pos_generate_messages_cpp: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 send_pos_generate_messages_cpp
-.PHONY : send_pos_generate_messages_cpp
-
-# fast build rule for target.
-send_pos_generate_messages_cpp/fast:
-	$(MAKE) -f send_pos/CMakeFiles/send_pos_generate_messages_cpp.dir/build.make send_pos/CMakeFiles/send_pos_generate_messages_cpp.dir/build
-.PHONY : send_pos_generate_messages_cpp/fast
+Ds/fast:
+	$(MAKE) -f send_pos/CMakeFiles/Ds.dir/build.make send_pos/CMakeFiles/Ds.dir/build
+.PHONY : Ds/fast
 
 #=============================================================================
 # Target rules for targets named Send_pos
@@ -3639,56 +3548,17 @@ Send_pos/fast:
 .PHONY : Send_pos/fast
 
 #=============================================================================
-# Target rules for targets named send_pos_generate_messages_nodejs
+# Target rules for targets named Follow_traj
 
 # Build rule for target.
-send_pos_generate_messages_nodejs: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 send_pos_generate_messages_nodejs
-.PHONY : send_pos_generate_messages_nodejs
+Follow_traj: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 Follow_traj
+.PHONY : Follow_traj
 
 # fast build rule for target.
-send_pos_generate_messages_nodejs/fast:
-	$(MAKE) -f send_pos/CMakeFiles/send_pos_generate_messages_nodejs.dir/build.make send_pos/CMakeFiles/send_pos_generate_messages_nodejs.dir/build
-.PHONY : send_pos_generate_messages_nodejs/fast
-
-#=============================================================================
-# Target rules for targets named send_pos_generate_messages_py
-
-# Build rule for target.
-send_pos_generate_messages_py: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 send_pos_generate_messages_py
-.PHONY : send_pos_generate_messages_py
-
-# fast build rule for target.
-send_pos_generate_messages_py/fast:
-	$(MAKE) -f send_pos/CMakeFiles/send_pos_generate_messages_py.dir/build.make send_pos/CMakeFiles/send_pos_generate_messages_py.dir/build
-.PHONY : send_pos_generate_messages_py/fast
-
-#=============================================================================
-# Target rules for targets named Ds
-
-# Build rule for target.
-Ds: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 Ds
-.PHONY : Ds
-
-# fast build rule for target.
-Ds/fast:
-	$(MAKE) -f send_pos/CMakeFiles/Ds.dir/build.make send_pos/CMakeFiles/Ds.dir/build
-.PHONY : Ds/fast
-
-#=============================================================================
-# Target rules for targets named send_pos_genpy
-
-# Build rule for target.
-send_pos_genpy: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 send_pos_genpy
-.PHONY : send_pos_genpy
-
-# fast build rule for target.
-send_pos_genpy/fast:
-	$(MAKE) -f send_pos/CMakeFiles/send_pos_genpy.dir/build.make send_pos/CMakeFiles/send_pos_genpy.dir/build
-.PHONY : send_pos_genpy/fast
+Follow_traj/fast:
+	$(MAKE) -f send_pos/CMakeFiles/Follow_traj.dir/build.make send_pos/CMakeFiles/Follow_traj.dir/build
+.PHONY : Follow_traj/fast
 
 #=============================================================================
 # Target rules for targets named Ds_Tikhonov
@@ -3702,19 +3572,6 @@ Ds_Tikhonov: cmake_check_build_system
 Ds_Tikhonov/fast:
 	$(MAKE) -f send_pos/CMakeFiles/Ds_Tikhonov.dir/build.make send_pos/CMakeFiles/Ds_Tikhonov.dir/build
 .PHONY : Ds_Tikhonov/fast
-
-#=============================================================================
-# Target rules for targets named Follow_traj
-
-# Build rule for target.
-Follow_traj: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 Follow_traj
-.PHONY : Follow_traj
-
-# fast build rule for target.
-Follow_traj/fast:
-	$(MAKE) -f send_pos/CMakeFiles/Follow_traj.dir/build.make send_pos/CMakeFiles/Follow_traj.dir/build
-.PHONY : Follow_traj/fast
 
 #=============================================================================
 # Target rules for targets named ik_tests
@@ -4351,21 +4208,10 @@ help:
 	@echo "... control_msgs_generate_messages_py"
 	@echo "... iiwa_gazebo_gravity_compensation_hw_sim"
 	@echo "... trac_ik"
-	@echo "... send_pos_generate_messages_lisp"
-	@echo "... send_pos_gennodejs"
-	@echo "... send_pos_generate_messages_eus"
-	@echo "... send_pos_geneus"
-	@echo "... send_pos_gencpp"
-	@echo "... send_pos_genlisp"
-	@echo "... send_pos_generate_messages"
-	@echo "... send_pos_generate_messages_cpp"
-	@echo "... Send_pos"
-	@echo "... send_pos_generate_messages_nodejs"
-	@echo "... send_pos_generate_messages_py"
 	@echo "... Ds"
-	@echo "... send_pos_genpy"
-	@echo "... Ds_Tikhonov"
+	@echo "... Send_pos"
 	@echo "... Follow_traj"
+	@echo "... Ds_Tikhonov"
 	@echo "... ik_tests"
 	@echo "... octomap_msgs_generate_messages_py"
 	@echo "... octomap_msgs_generate_messages_nodejs"

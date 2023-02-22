@@ -56,18 +56,6 @@ CMAKE_BINARY_DIR = /home/bonato/catkin_ws/build
 #=============================================================================
 # Targets provided globally by CMake.
 
-# Special rule for the target install/strip
-install/strip: preinstall
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
-	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
-.PHONY : install/strip
-
-# Special rule for the target install/strip
-install/strip/fast: preinstall/fast
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
-	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
-.PHONY : install/strip/fast
-
 # Special rule for the target install
 install: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Install the project..."
@@ -79,17 +67,6 @@ install/fast: preinstall/fast
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Install the project..."
 	/usr/bin/cmake -P cmake_install.cmake
 .PHONY : install/fast
-
-# Special rule for the target edit_cache
-edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	/usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
-.PHONY : edit_cache
-
-# Special rule for the target edit_cache
-edit_cache/fast: edit_cache
-
-.PHONY : edit_cache/fast
 
 # Special rule for the target list_install_components
 list_install_components:
@@ -111,6 +88,18 @@ rebuild_cache:
 rebuild_cache/fast: rebuild_cache
 
 .PHONY : rebuild_cache/fast
+
+# Special rule for the target install/strip
+install/strip: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip
+
+# Special rule for the target install/strip
+install/strip/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip/fast
 
 # Special rule for the target install/local
 install/local: preinstall
@@ -134,6 +123,17 @@ test:
 test/fast: test
 
 .PHONY : test/fast
+
+# Special rule for the target edit_cache
+edit_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
+	/usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+.PHONY : edit_cache
+
+# Special rule for the target edit_cache
+edit_cache/fast: edit_cache
+
+.PHONY : edit_cache/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -168,124 +168,19 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
-send_pos/CMakeFiles/send_pos_generate_messages_lisp.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/send_pos_generate_messages_lisp.dir/rule
-.PHONY : send_pos/CMakeFiles/send_pos_generate_messages_lisp.dir/rule
+send_pos/CMakeFiles/Ds.dir/rule:
+	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/Ds.dir/rule
+.PHONY : send_pos/CMakeFiles/Ds.dir/rule
 
 # Convenience name for target.
-send_pos_generate_messages_lisp: send_pos/CMakeFiles/send_pos_generate_messages_lisp.dir/rule
+Ds: send_pos/CMakeFiles/Ds.dir/rule
 
-.PHONY : send_pos_generate_messages_lisp
+.PHONY : Ds
 
 # fast build rule for target.
-send_pos_generate_messages_lisp/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/send_pos_generate_messages_lisp.dir/build.make send_pos/CMakeFiles/send_pos_generate_messages_lisp.dir/build
-.PHONY : send_pos_generate_messages_lisp/fast
-
-# Convenience name for target.
-send_pos/CMakeFiles/send_pos_gennodejs.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/send_pos_gennodejs.dir/rule
-.PHONY : send_pos/CMakeFiles/send_pos_gennodejs.dir/rule
-
-# Convenience name for target.
-send_pos_gennodejs: send_pos/CMakeFiles/send_pos_gennodejs.dir/rule
-
-.PHONY : send_pos_gennodejs
-
-# fast build rule for target.
-send_pos_gennodejs/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/send_pos_gennodejs.dir/build.make send_pos/CMakeFiles/send_pos_gennodejs.dir/build
-.PHONY : send_pos_gennodejs/fast
-
-# Convenience name for target.
-send_pos/CMakeFiles/send_pos_generate_messages_eus.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/send_pos_generate_messages_eus.dir/rule
-.PHONY : send_pos/CMakeFiles/send_pos_generate_messages_eus.dir/rule
-
-# Convenience name for target.
-send_pos_generate_messages_eus: send_pos/CMakeFiles/send_pos_generate_messages_eus.dir/rule
-
-.PHONY : send_pos_generate_messages_eus
-
-# fast build rule for target.
-send_pos_generate_messages_eus/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/send_pos_generate_messages_eus.dir/build.make send_pos/CMakeFiles/send_pos_generate_messages_eus.dir/build
-.PHONY : send_pos_generate_messages_eus/fast
-
-# Convenience name for target.
-send_pos/CMakeFiles/send_pos_geneus.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/send_pos_geneus.dir/rule
-.PHONY : send_pos/CMakeFiles/send_pos_geneus.dir/rule
-
-# Convenience name for target.
-send_pos_geneus: send_pos/CMakeFiles/send_pos_geneus.dir/rule
-
-.PHONY : send_pos_geneus
-
-# fast build rule for target.
-send_pos_geneus/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/send_pos_geneus.dir/build.make send_pos/CMakeFiles/send_pos_geneus.dir/build
-.PHONY : send_pos_geneus/fast
-
-# Convenience name for target.
-send_pos/CMakeFiles/send_pos_gencpp.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/send_pos_gencpp.dir/rule
-.PHONY : send_pos/CMakeFiles/send_pos_gencpp.dir/rule
-
-# Convenience name for target.
-send_pos_gencpp: send_pos/CMakeFiles/send_pos_gencpp.dir/rule
-
-.PHONY : send_pos_gencpp
-
-# fast build rule for target.
-send_pos_gencpp/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/send_pos_gencpp.dir/build.make send_pos/CMakeFiles/send_pos_gencpp.dir/build
-.PHONY : send_pos_gencpp/fast
-
-# Convenience name for target.
-send_pos/CMakeFiles/send_pos_genlisp.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/send_pos_genlisp.dir/rule
-.PHONY : send_pos/CMakeFiles/send_pos_genlisp.dir/rule
-
-# Convenience name for target.
-send_pos_genlisp: send_pos/CMakeFiles/send_pos_genlisp.dir/rule
-
-.PHONY : send_pos_genlisp
-
-# fast build rule for target.
-send_pos_genlisp/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/send_pos_genlisp.dir/build.make send_pos/CMakeFiles/send_pos_genlisp.dir/build
-.PHONY : send_pos_genlisp/fast
-
-# Convenience name for target.
-send_pos/CMakeFiles/send_pos_generate_messages.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/send_pos_generate_messages.dir/rule
-.PHONY : send_pos/CMakeFiles/send_pos_generate_messages.dir/rule
-
-# Convenience name for target.
-send_pos_generate_messages: send_pos/CMakeFiles/send_pos_generate_messages.dir/rule
-
-.PHONY : send_pos_generate_messages
-
-# fast build rule for target.
-send_pos_generate_messages/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/send_pos_generate_messages.dir/build.make send_pos/CMakeFiles/send_pos_generate_messages.dir/build
-.PHONY : send_pos_generate_messages/fast
-
-# Convenience name for target.
-send_pos/CMakeFiles/send_pos_generate_messages_cpp.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/send_pos_generate_messages_cpp.dir/rule
-.PHONY : send_pos/CMakeFiles/send_pos_generate_messages_cpp.dir/rule
-
-# Convenience name for target.
-send_pos_generate_messages_cpp: send_pos/CMakeFiles/send_pos_generate_messages_cpp.dir/rule
-
-.PHONY : send_pos_generate_messages_cpp
-
-# fast build rule for target.
-send_pos_generate_messages_cpp/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/send_pos_generate_messages_cpp.dir/build.make send_pos/CMakeFiles/send_pos_generate_messages_cpp.dir/build
-.PHONY : send_pos_generate_messages_cpp/fast
+Ds/fast:
+	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds.dir/build.make send_pos/CMakeFiles/Ds.dir/build
+.PHONY : Ds/fast
 
 # Convenience name for target.
 send_pos/CMakeFiles/Send_pos.dir/rule:
@@ -303,64 +198,19 @@ Send_pos/fast:
 .PHONY : Send_pos/fast
 
 # Convenience name for target.
-send_pos/CMakeFiles/send_pos_generate_messages_nodejs.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/send_pos_generate_messages_nodejs.dir/rule
-.PHONY : send_pos/CMakeFiles/send_pos_generate_messages_nodejs.dir/rule
+send_pos/CMakeFiles/Follow_traj.dir/rule:
+	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/Follow_traj.dir/rule
+.PHONY : send_pos/CMakeFiles/Follow_traj.dir/rule
 
 # Convenience name for target.
-send_pos_generate_messages_nodejs: send_pos/CMakeFiles/send_pos_generate_messages_nodejs.dir/rule
+Follow_traj: send_pos/CMakeFiles/Follow_traj.dir/rule
 
-.PHONY : send_pos_generate_messages_nodejs
+.PHONY : Follow_traj
 
 # fast build rule for target.
-send_pos_generate_messages_nodejs/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/send_pos_generate_messages_nodejs.dir/build.make send_pos/CMakeFiles/send_pos_generate_messages_nodejs.dir/build
-.PHONY : send_pos_generate_messages_nodejs/fast
-
-# Convenience name for target.
-send_pos/CMakeFiles/send_pos_generate_messages_py.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/send_pos_generate_messages_py.dir/rule
-.PHONY : send_pos/CMakeFiles/send_pos_generate_messages_py.dir/rule
-
-# Convenience name for target.
-send_pos_generate_messages_py: send_pos/CMakeFiles/send_pos_generate_messages_py.dir/rule
-
-.PHONY : send_pos_generate_messages_py
-
-# fast build rule for target.
-send_pos_generate_messages_py/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/send_pos_generate_messages_py.dir/build.make send_pos/CMakeFiles/send_pos_generate_messages_py.dir/build
-.PHONY : send_pos_generate_messages_py/fast
-
-# Convenience name for target.
-send_pos/CMakeFiles/Ds.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/Ds.dir/rule
-.PHONY : send_pos/CMakeFiles/Ds.dir/rule
-
-# Convenience name for target.
-Ds: send_pos/CMakeFiles/Ds.dir/rule
-
-.PHONY : Ds
-
-# fast build rule for target.
-Ds/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds.dir/build.make send_pos/CMakeFiles/Ds.dir/build
-.PHONY : Ds/fast
-
-# Convenience name for target.
-send_pos/CMakeFiles/send_pos_genpy.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/send_pos_genpy.dir/rule
-.PHONY : send_pos/CMakeFiles/send_pos_genpy.dir/rule
-
-# Convenience name for target.
-send_pos_genpy: send_pos/CMakeFiles/send_pos_genpy.dir/rule
-
-.PHONY : send_pos_genpy
-
-# fast build rule for target.
-send_pos_genpy/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/send_pos_genpy.dir/build.make send_pos/CMakeFiles/send_pos_genpy.dir/build
-.PHONY : send_pos_genpy/fast
+Follow_traj/fast:
+	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Follow_traj.dir/build.make send_pos/CMakeFiles/Follow_traj.dir/build
+.PHONY : Follow_traj/fast
 
 # Convenience name for target.
 send_pos/CMakeFiles/Ds_Tikhonov.dir/rule:
@@ -376,51 +226,6 @@ Ds_Tikhonov: send_pos/CMakeFiles/Ds_Tikhonov.dir/rule
 Ds_Tikhonov/fast:
 	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds_Tikhonov.dir/build.make send_pos/CMakeFiles/Ds_Tikhonov.dir/build
 .PHONY : Ds_Tikhonov/fast
-
-# Convenience name for target.
-send_pos/CMakeFiles/Follow_traj.dir/rule:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 send_pos/CMakeFiles/Follow_traj.dir/rule
-.PHONY : send_pos/CMakeFiles/Follow_traj.dir/rule
-
-# Convenience name for target.
-Follow_traj: send_pos/CMakeFiles/Follow_traj.dir/rule
-
-.PHONY : Follow_traj
-
-# fast build rule for target.
-Follow_traj/fast:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Follow_traj.dir/build.make send_pos/CMakeFiles/Follow_traj.dir/build
-.PHONY : Follow_traj/fast
-
-include/thirdparty/Utils.o: include/thirdparty/Utils.cpp.o
-
-.PHONY : include/thirdparty/Utils.o
-
-# target to build an object file
-include/thirdparty/Utils.cpp.o:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds.dir/build.make send_pos/CMakeFiles/Ds.dir/include/thirdparty/Utils.cpp.o
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds_Tikhonov.dir/build.make send_pos/CMakeFiles/Ds_Tikhonov.dir/include/thirdparty/Utils.cpp.o
-.PHONY : include/thirdparty/Utils.cpp.o
-
-include/thirdparty/Utils.i: include/thirdparty/Utils.cpp.i
-
-.PHONY : include/thirdparty/Utils.i
-
-# target to preprocess a source file
-include/thirdparty/Utils.cpp.i:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds.dir/build.make send_pos/CMakeFiles/Ds.dir/include/thirdparty/Utils.cpp.i
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds_Tikhonov.dir/build.make send_pos/CMakeFiles/Ds_Tikhonov.dir/include/thirdparty/Utils.cpp.i
-.PHONY : include/thirdparty/Utils.cpp.i
-
-include/thirdparty/Utils.s: include/thirdparty/Utils.cpp.s
-
-.PHONY : include/thirdparty/Utils.s
-
-# target to generate assembly for a file
-include/thirdparty/Utils.cpp.s:
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds.dir/build.make send_pos/CMakeFiles/Ds.dir/include/thirdparty/Utils.cpp.s
-	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds_Tikhonov.dir/build.make send_pos/CMakeFiles/Ds_Tikhonov.dir/include/thirdparty/Utils.cpp.s
-.PHONY : include/thirdparty/Utils.cpp.s
 
 src/Ds.o: src/Ds.cpp.o
 
@@ -530,37 +335,53 @@ src/Send_pos.cpp.s:
 	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Send_pos.dir/build.make send_pos/CMakeFiles/Send_pos.dir/src/Send_pos.cpp.s
 .PHONY : src/Send_pos.cpp.s
 
+src/Utils.o: src/Utils.cpp.o
+
+.PHONY : src/Utils.o
+
+# target to build an object file
+src/Utils.cpp.o:
+	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds.dir/build.make send_pos/CMakeFiles/Ds.dir/src/Utils.cpp.o
+	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds_Tikhonov.dir/build.make send_pos/CMakeFiles/Ds_Tikhonov.dir/src/Utils.cpp.o
+.PHONY : src/Utils.cpp.o
+
+src/Utils.i: src/Utils.cpp.i
+
+.PHONY : src/Utils.i
+
+# target to preprocess a source file
+src/Utils.cpp.i:
+	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds.dir/build.make send_pos/CMakeFiles/Ds.dir/src/Utils.cpp.i
+	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds_Tikhonov.dir/build.make send_pos/CMakeFiles/Ds_Tikhonov.dir/src/Utils.cpp.i
+.PHONY : src/Utils.cpp.i
+
+src/Utils.s: src/Utils.cpp.s
+
+.PHONY : src/Utils.s
+
+# target to generate assembly for a file
+src/Utils.cpp.s:
+	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds.dir/build.make send_pos/CMakeFiles/Ds.dir/src/Utils.cpp.s
+	cd /home/bonato/catkin_ws/build && $(MAKE) -f send_pos/CMakeFiles/Ds_Tikhonov.dir/build.make send_pos/CMakeFiles/Ds_Tikhonov.dir/src/Utils.cpp.s
+.PHONY : src/Utils.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
-	@echo "... install/strip"
 	@echo "... install"
-	@echo "... edit_cache"
-	@echo "... send_pos_generate_messages_lisp"
-	@echo "... send_pos_gennodejs"
 	@echo "... list_install_components"
-	@echo "... send_pos_generate_messages_eus"
-	@echo "... send_pos_geneus"
-	@echo "... send_pos_gencpp"
-	@echo "... send_pos_genlisp"
-	@echo "... send_pos_generate_messages"
-	@echo "... send_pos_generate_messages_cpp"
 	@echo "... rebuild_cache"
-	@echo "... Send_pos"
-	@echo "... send_pos_generate_messages_nodejs"
-	@echo "... send_pos_generate_messages_py"
-	@echo "... install/local"
 	@echo "... Ds"
-	@echo "... send_pos_genpy"
-	@echo "... Ds_Tikhonov"
+	@echo "... Send_pos"
+	@echo "... install/strip"
 	@echo "... Follow_traj"
+	@echo "... install/local"
 	@echo "... test"
-	@echo "... include/thirdparty/Utils.o"
-	@echo "... include/thirdparty/Utils.i"
-	@echo "... include/thirdparty/Utils.s"
+	@echo "... Ds_Tikhonov"
+	@echo "... edit_cache"
 	@echo "... src/Ds.o"
 	@echo "... src/Ds.i"
 	@echo "... src/Ds.s"
@@ -573,6 +394,9 @@ help:
 	@echo "... src/Send_pos.o"
 	@echo "... src/Send_pos.i"
 	@echo "... src/Send_pos.s"
+	@echo "... src/Utils.o"
+	@echo "... src/Utils.i"
+	@echo "... src/Utils.s"
 .PHONY : help
 
 

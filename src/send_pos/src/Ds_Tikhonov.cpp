@@ -9,7 +9,8 @@
 #include "iiwa_tools/GetJacobian.h"
 #include "std_srvs/Empty.h"
 #include <stdio.h>
-#include "thirdparty/Utils.h"
+#include "Utils.h"
+#include "qpOASES.hpp"
 
 //#include "Send_pos_function.h"
 
@@ -60,11 +61,12 @@ int n =7;
 vector<double> pos_joint_actual(n);
 vector<double> vel_joint_actual(n);
 vector<double> eff(n);
+VectorXd Past_speed(n);
 
 int main(int argc, char **argv)
 {
     Vector4d Orientation_des;
-    Orientation_des << -0.091691 ,0.823997 ,0.460200 ,0.317549 ;
+    Orientation_des << 0,0.5,0.5,1 ;
     Vector3d Position_des;
     Position_des << 0.5,0.5,0.5;
 
@@ -135,7 +137,7 @@ int main(int argc, char **argv)
             }
         } */      
 
-        double W = 2;
+        double W = 0.1;
         MatrixXd eigen_Weight(7,7);
         eigen_Weight << W,0,0,0,0,0,0,
                         0,W,0,0,0,0,0,
@@ -145,7 +147,58 @@ int main(int argc, char **argv)
                         0,0,0,0,0,W,0,
                         0,0,0,0,0,0,W;
 
-        Robot_speed.joint_next_eigen =  (Eigen_Jac.transpose()*Eigen_Jac +eigen_Weight.transpose()*eigen_Weight).inverse()*Eigen_Jac.transpose()*Robot_speed.cart_next_eigen;
+
+	    USING_NAMESPACE_QPOASES
+
+        // Setup data of first QP. 
+
+        MatrixXd H_eigen = Eigen_Jac.transpose()* Eigen_Jac;
+        VectorXd g_eigen = -Eigen_Jac.transpose()* Robot_speed.cart_next_eigen;
+        //g_eigen = g_eigen.transpose();
+
+    	real_t H[7*7] ={H_eigen(0,0),H_eigen(0,1),H_eigen(0,2),H_eigen(0,3),H_eigen(0,4),H_eigen(0,5),H_eigen(0,6),
+                        H_eigen(1,0),H_eigen(1,1),H_eigen(1,2),H_eigen(1,3),H_eigen(1,4),H_eigen(1,5),H_eigen(1,6),
+                        H_eigen(2,0),H_eigen(2,1),H_eigen(2,2),H_eigen(2,3),H_eigen(2,4),H_eigen(2,5),H_eigen(2,6),
+                        H_eigen(3,0),H_eigen(3,1),H_eigen(3,2),H_eigen(3,3),H_eigen(3,4),H_eigen(3,5),H_eigen(3,6),
+                        H_eigen(4,0),H_eigen(4,1),H_eigen(4,2),H_eigen(4,3),H_eigen(4,4),H_eigen(4,5),H_eigen(4,6),
+                        H_eigen(5,0),H_eigen(5,1),H_eigen(5,2),H_eigen(5,3),H_eigen(5,4),H_eigen(5,5),H_eigen(5,6),
+                        H_eigen(6,0),H_eigen(6,1),H_eigen(6,2),H_eigen(6,3),H_eigen(6,4),H_eigen(6,5),H_eigen(6,6)
+                        };
+
+	    real_t g[7] = { g_eigen(0), g_eigen(1),g_eigen(2),g_eigen(3),g_eigen(4),g_eigen(5),g_eigen(6) };
+        real_t lb[7] = {-3.14/180*85, -3.14/180*85, -3.14/180*100, -3.14/180*75, -3.14/180*130, -3.14/180*135, -3.14/180*135 };// { 0, 0, 0, 0, 0, 0, 0 };
+        real_t ub[7] = { 3.14/180*85, 3.14/180*85, 3.14/180*100, 3.14/180*75, 3.14/180*130, 3.14/180*135, 3.14/180*135 };
+
+        // Setting up QProblem object. 
+        QProblemB example( 7);
+
+        Options options;
+        example.setOptions( options );
+        //options.enableFlippingBounds = BT_FALSE;
+	    options.initialStatusBounds = ST_INACTIVE;
+	    options.numRefinementSteps = 1;
+	    options.enableCholeskyRefactorisation = 1;
+	    example.setOptions( options );
+
+	    // Solve first QP. 
+	    int_t nWSR = 10;
+	    example.init( H,g,lb,ub, nWSR,0 ); 
+        real_t xOpt[7];
+	    example.getPrimalSolution( xOpt );
+	    printf( "\nxOpt = [ %e, %e ];  objVal = %e\n\n", xOpt[0],xOpt[1],example.getObjVal() );
+
+        if(example.getObjVal() > 0.1){
+            double* pt = &xOpt[0];
+            Robot_speed.joint_next_eigen = Map<VectorXd>(pt, 7);
+            Past_speed = Robot_speed.joint_next_eigen;
+        }
+        else{
+            Robot_speed.joint_next_eigen = Past_speed;
+        }
+
+        //Robot_speed.joint_next_eigen =  (Eigen_Jac.transpose()*Eigen_Jac +eigen_Weight.transpose()*eigen_Weight).inverse()*Eigen_Jac.transpose()*Robot_speed.cart_next_eigen;
+
+        //Robot_speed.joint_next_eigen = Eigen_Jac.colPivHouseholderQr().solve(Robot_speed.cart_next_eigen);
 
         Robot_position.joint_next =  Integral_func_V2(Robot_position.joint_eigen, Robot_speed.joint_next_eigen, delta_t);
     /*

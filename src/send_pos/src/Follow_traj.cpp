@@ -143,7 +143,7 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
 bool mseValue(vector<double> v1, vector<double> v2,int Num)
 {
     // tolerance of the errot between each point
-    float tol =0.1;
+    float tol =0.2;
     bool Reached = false;
     int crit =0;
     float err =0;

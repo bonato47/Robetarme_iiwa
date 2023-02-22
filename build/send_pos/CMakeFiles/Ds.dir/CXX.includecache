@@ -62,15 +62,11 @@ sstream
 eigen3/Eigen/Dense
 -
 
-/home/bonato/catkin_ws/src/send_pos/include/thirdparty/Utils.cpp
-thirdparty/Utils.h
-/home/bonato/catkin_ws/src/send_pos/include/thirdparty/thirdparty/Utils.h
-
-/home/bonato/catkin_ws/src/send_pos/include/thirdparty/Utils.h
+/home/bonato/catkin_ws/src/send_pos/include/Utils.h
 ros/ros.h
-/home/bonato/catkin_ws/src/send_pos/include/thirdparty/ros/ros.h
+/home/bonato/catkin_ws/src/send_pos/include/ros/ros.h
 Eigen/Eigen
-/home/bonato/catkin_ws/src/send_pos/include/thirdparty/Eigen/Eigen
+/home/bonato/catkin_ws/src/send_pos/include/Eigen/Eigen
 
 /home/bonato/catkin_ws/src/send_pos/src/Ds.cpp
 ros/ros.h
@@ -97,8 +93,12 @@ trac_ik/trac_ik.hpp
 -
 Send_pos_function.h
 /home/bonato/catkin_ws/src/send_pos/src/Send_pos_function.h
-thirdparty/Utils.h
-/home/bonato/catkin_ws/src/send_pos/src/thirdparty/Utils.h
+Utils.h
+/home/bonato/catkin_ws/src/send_pos/src/Utils.h
+
+/home/bonato/catkin_ws/src/send_pos/src/Utils.cpp
+Utils.h
+/home/bonato/catkin_ws/src/send_pos/src/Utils.h
 
 /home/bonato/catkin_ws/src/trac_ik/trac_ik_lib/include/trac_ik/kdl_tl.hpp
 kdl/chainfksolverpos_recursive.hpp
