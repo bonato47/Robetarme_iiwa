@@ -66,7 +66,7 @@ VectorXd Past_speed(n);
 int main(int argc, char **argv)
 {
     Vector4d Orientation_des;
-    Orientation_des << 0,0.5,0.5,1 ;
+    Orientation_des << 0.5,0.5,0.5,1 ;
     Vector3d Position_des;
     Position_des << 0.5,0.5,0.5;
 
@@ -119,10 +119,12 @@ int main(int argc, char **argv)
         //Find the desired speed ( omega_dot ,x_dot) size 6x1
         Robot_speed.cart_next = speed_func(Robot_position.cart,Orientation_des,Position_des);
         Robot_speed.State_robot_next_cart(Robot_speed.cart_next);
-
+        //ROS_INFO(" %f %f %f", Robot_speed.cart_next[0],Robot_speed.cart_next[1],Robot_speed.cart_next[2]);
+//ROS_INFO(" %f %f %f %f %f %f %f", Robot_position.cart[0],Robot_position.cart[1],Robot_position.cart[2],Robot_position.cart[3],Robot_position.cart[4],Robot_position.cart[5],Robot_position.cart[6]);
         // Use Tkihonov optimization norm(J*q_dot-V)²+ norm(w*I*q_dot)²
         //q_dot = inv(J_transpose*J+ W_transpose*W)*J_transpose*Speed
 
+        //Calculate Jacobian
         Jac_state.request.joint_angles = Robot_position.joint_std64.data;
         Jac_state.request.joint_velocities =  Robot_speed.joint_std64.data;;
         client_J.call(Jac_state);
@@ -135,7 +137,7 @@ int main(int argc, char **argv)
             for(int i = 0;i<7;i++){  
                 Eigen_Jac(j,i)= 0;
             }
-        } */      
+        } 
 
         double W = 0.1;
         MatrixXd eigen_Weight(7,7);
@@ -147,7 +149,7 @@ int main(int argc, char **argv)
                         0,0,0,0,0,W,0,
                         0,0,0,0,0,0,W;
 
-
+        */      
 	    USING_NAMESPACE_QPOASES
 
         // Setup data of first QP. 
@@ -264,9 +266,9 @@ vector<double> speed_func(vector<double> pos, Vector4d q2 ,Vector3d x01)
     cart_actual << pos[4],pos[5],pos[6];
 
     //Set a linear DS
-    A << -1, 0, 0,
-          0,-1, 0,
-          0, 0,-1;
+    A << -0.1, 0, 0,
+          0,-0.1, 0,
+          0, 0,-0.1;
     // Set the Position_des
     b1 = -A * x01;
     w  =  A * cart_actual + b1 ;

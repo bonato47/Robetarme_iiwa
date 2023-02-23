@@ -32,16 +32,13 @@ VectorXd Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double 
 // Function that Calculate Root Mean Square
 bool mseValue_cart(vector<double> v1, vector<double> v2);
 
-
- 
-
 //Define work space
 
 int main(int argc, char **argv)
 {
 
     Vector4d Orientation_des;
-    Orientation_des << 0.7,-0.7,0,0;
+    Orientation_des << 0.5,0.5,0.5,1.0 ;
     Vector3d Position_des;
     Position_des << 0.5,0.5,0.5;
 
@@ -55,7 +52,7 @@ int main(int argc, char **argv)
     ros::ServiceClient client_FK = Nh_.serviceClient<iiwa_tools::GetFK>("iiwa/iiwa_fk_server");
     ros::Subscriber sub = Nh_.subscribe("iiwa/joint_states", 1000, CounterCallback);
     ros::Publisher chatter_pub = Nh_.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
-    ros::Rate loop_rate(1/delta_t);
+    ros::Rate loop_rate(1/0.01);//1/delta_t);
 
     //iniailization Forward Kinematics
 
@@ -110,9 +107,9 @@ int main(int argc, char **argv)
         Past_cart_quat = Past_cart.orientation;
         
         //ROS_INFO("%f %f %f %f %f %f %f",pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]);
-        //ROS_INFO("%f %f %f",Past_cart_pos.x, Past_cart_pos.y, Past_cart_pos.z);
+        ROS_INFO("%f %f %f %f",Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w);
   
-        Pos_cart_actual={Past_cart_quat.w,Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z};
+        Pos_cart_actual={Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w,Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z};
 
         //-----------------------------------------------------------------------
         //Send the cartesian stat to Dynamical System (DS) to find desired speed
@@ -121,7 +118,7 @@ int main(int argc, char **argv)
         //ROS_INFO("Desired speed");
 
         speed = speed_func(Pos_cart_actual,Position_des, Orientation_des);
-        ROS_INFO("%f", speed.norm());
+        //ROS_INFO("%f %f %f", speed[0],speed[1],speed[2]);
 
         //-----------------------------------------------------------------------
         //integrate the speed with the actual cartesian state to find new cartesian state
@@ -144,7 +141,7 @@ int main(int argc, char **argv)
     
         KDL::Vector Vec(pos_cart_N[0],pos_cart_N[1],pos_cart_N[2]); */
 
-        KDL::Rotation Rot = KDL::Rotation::EulerZYX(pos_cart_N[0],pos_cart_N[1],pos_cart_N[2]);
+        KDL::Rotation Rot = KDL::Rotation::EulerZYX(pos_cart_N[2],pos_cart_N[1],pos_cart_N[0]);
         KDL::Vector Vec(pos_cart_N[3],pos_cart_N[4],pos_cart_N[5]);
 
 
@@ -162,7 +159,7 @@ int main(int argc, char **argv)
         // Filter
        
         double alpha = 0.2;
-         vector<double> pos_joint_next_filter(7);
+        vector<double> pos_joint_next_filter(7);
 
         for(int i = 0;i<7;i++){
             pos_joint_next_filter[i] = alpha*pos_joint_next[i] +(1-alpha)*pos_joint_actual[i];
@@ -174,7 +171,7 @@ int main(int argc, char **argv)
             chatter_pub.publish(msgP);
         }
         //--------------------------------------------------------------------
-        ROS_INFO("%f %f %f %f %f %f %f ", Pos_cart_actual[0],Pos_cart_actual[1],Pos_cart_actual[2],Pos_cart_actual[3],Pos_cart_actual[4],Pos_cart_actual[5],Pos_cart_actual[6]);
+        //ROS_INFO("%f %f %f %f %f %f %f ", Pos_cart_actual[0],Pos_cart_actual[1],Pos_cart_actual[2],Pos_cart_actual[3],Pos_cart_actual[4],Pos_cart_actual[5],Pos_cart_actual[6]);
 
         ros::spinOnce();        
         loop_rate.sleep();  
@@ -199,8 +196,10 @@ VectorXd speed_func(vector<double> Pos,Vector3d x01, Vector4d q2)
     Position[2]= Pos[6];
     Matrix3d A;
     //Set a linear DS
-    A << -1, 0, 0 ,0,-1,0,0,0,-1;
-    A =10*A;
+    A << -1, 0, 0 ,
+          0,-1, 0 ,
+          0, 0,-1;
+    A =0.1*A;
     Vector3d b1,w; 
     // Set the attracotr
     //x01 << 0.5,0.5,0.5;
@@ -226,10 +225,10 @@ VectorXd speed_func(vector<double> Pos,Vector3d x01, Vector4d q2)
     double dsGain_ori = 2.50;
     double theta_gq = (-.5/(4*maxDq*maxDq)) * tmp_angular_vel.transpose() * tmp_angular_vel;
     Vector3d Omega_out  = 2 * dsGain_ori*(1+std::exp(theta_gq)) * tmp_angular_vel;
-    ROS_INFO("%f %f ",Omega_out[0], w[0] );
+    
 
-//    vector<double> V = {Omega_out[0],Omega_out[1],Omega_out[2],w[0],w[1],w[2]};
-    vector<double> V = {0,0,0,w[0],w[1],w[2]};
+    vector<double> V = {Omega_out[0],Omega_out[1],Omega_out[2],w[0],w[1],w[2]};
+    //vector<double> V = {0,0,0,w[0],w[1],w[2]};
 
     double* pt = &V[0];
     VectorXd VOut = Map<VectorXd>(pt, 6);
