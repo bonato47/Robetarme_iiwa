@@ -31,6 +31,8 @@ VectorXd Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double 
 // Function that Calculate Root Mean Square
 bool mseValue_cart(vector<double> v1, vector<double> v2);
 
+vector<double> DS_basic(class State_robot &Position, class State_robot &Speed, double dt);
+
 
 class State_robot {       // The class
   public:             // Access specifier
@@ -149,6 +151,7 @@ int main(int argc, char **argv)
         Robot_speed.cart_next = speed_func(Pos_cart_actual,Position_des, Orientation_des);
         Robot_speed.State_robot_next_cart(Robot_speed.cart_next);
         //-----------------------------------------------------------------------
+
         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
         pos_cart_N = Integral_func(Pos_cart_actual, speed, delta_t);
         Robot_position.cart_next = Integral_func(Pos_cart_actual, speed, delta_t);
@@ -311,5 +314,36 @@ bool mseValue_cart(vector<double> v1, vector<double> v2)
     }
 
     return Reached;
+}
+
+vector<double> DS_basic(class State_robot &Position, class State_robot &Speed, double dt){
+    //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
+
+    Position.cart_next = Integral_func(Position.cart, Speed.cart, delta_t);
+    Positiion.State_robot_next_cart(Position.cart_next);
+    //------------------------------------------------------------------------
+    //Convert cartesian to joint space
+    KDL::JntArray Next_joint_task;
+    KDL::JntArray actual_joint_task;   
+
+    double* ptr = &pos_joint_actual[0];
+    Map<VectorXd> pos_joint_actual_eigen(ptr, 7); 
+    actual_joint_task.data = pos_joint_actual_eigen;
+
+    //Position.joint_std64
+
+    KDL::Rotation Rot = KDL::Rotation::Quaternion(Position.cart_next[0],Position.cart_next[1],Position.cart_next[2],Position.cart_next[3]);
+    KDL::Vector Vec(Position.cart_next[4],Position.cart_next[5],Position.cart_next[6]);
+    KDL::Frame Next_joint_cartesian(Rot,Vec); 
+
+    VectorXd pos_joint_next_eigen ;
+    int rc = ik_solver.CartToJnt(Position.joint_std64, Next_joint_cartesian, Next_joint_task);
+
+    Position.Next_joint_eigen = Next_joint_task.data;
+    for(int i = 0 ;i<7;++i){
+        Position.Next_joint[i] =Position.joint_eigen(i);
+    }
+    return Position.Next_joint;
+
 }
 
