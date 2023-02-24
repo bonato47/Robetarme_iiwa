@@ -12,7 +12,6 @@
 #include "Send_pos_function.h"
 #include "Utils.h"
 
-
 using namespace Eigen;
 using namespace std;
 
@@ -36,9 +35,11 @@ bool mseValue_cart(vector<double> v1, vector<double> v2);
 
 int main(int argc, char **argv)
 {
+    Quaterniond QuatOrientation_des = {0.5,0.5,0.5,1.0};
+    QuatOrientation_des.normalize();
 
     Vector4d Orientation_des;
-    Orientation_des << 0.5,0.5,0.5,1.0 ;
+    Orientation_des << QuatOrientation_des.x(),QuatOrientation_des.y(),QuatOrientation_des.z(),QuatOrientation_des.w();
     Vector3d Position_des;
     Position_des << 0.5,0.5,0.5;
 
@@ -52,7 +53,7 @@ int main(int argc, char **argv)
     ros::ServiceClient client_FK = Nh_.serviceClient<iiwa_tools::GetFK>("iiwa/iiwa_fk_server");
     ros::Subscriber sub = Nh_.subscribe("iiwa/joint_states", 1000, CounterCallback);
     ros::Publisher chatter_pub = Nh_.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
-    ros::Rate loop_rate(1/0.01);//1/delta_t);
+    ros::Rate loop_rate(1/delta_t);
 
     //iniailization Forward Kinematics
 
@@ -79,7 +80,6 @@ int main(int argc, char **argv)
     }
 
     //initialization  Variable
-    VectorXd speed,pos_cart_N;
     std_msgs::Float64MultiArray msgP;
     std_msgs::Float64MultiArray Past_joint_pos;
     std_msgs::Float64MultiArray Next_joint_pos;
@@ -94,6 +94,8 @@ int main(int argc, char **argv)
     //begin the ros loop
     while (ros::ok())
     {
+        VectorXd speed,pos_cart_N;
+
         // Take joints state actual and convert to cartesian state
         // With the help of th FK service
         //ROS_INFO("Actual state");
@@ -107,7 +109,7 @@ int main(int argc, char **argv)
         Past_cart_quat = Past_cart.orientation;
         
         //ROS_INFO("%f %f %f %f %f %f %f",pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]);
-        ROS_INFO("%f %f %f %f",Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w);
+        //ROS_INFO("%f %f %f %f",Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w);
   
         Pos_cart_actual={Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w,Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z};
 
@@ -118,15 +120,16 @@ int main(int argc, char **argv)
         //ROS_INFO("Desired speed");
 
         speed = speed_func(Pos_cart_actual,Position_des, Orientation_des);
-        //ROS_INFO("%f %f %f", speed[0],speed[1],speed[2]);
+        //ROS_INFO("%s %f %f %f %f %f %f", "speed",speed[0],speed[1],speed[2],speed[3],speed[4],speed[5]);
 
         //-----------------------------------------------------------------------
         //integrate the speed with the actual cartesian state to find new cartesian state
         //ROS_INFO("Desired cartesian position");
 
-
         pos_cart_N = Integral_func(Pos_cart_actual, speed, delta_t);
-        //ROS_INFO("%f %f %f",pos_cart_N[0],pos_cart_N[1],pos_cart_N[2]);
+
+        //ROS_INFO("%s %f %f %f %f %f %f %f", "Pos_cart_actual",Pos_cart_actual[4],Pos_cart_actual[5],Pos_cart_actual[6]);
+        //ROS_INFO("%s %f %f %f ","out_int",pos_cart_N[3],pos_cart_N[4],pos_cart_N[5]);
 
         //------------------------------------------------------------------------
         //Convert cartesian to joint space
@@ -141,9 +144,10 @@ int main(int argc, char **argv)
     
         KDL::Vector Vec(pos_cart_N[0],pos_cart_N[1],pos_cart_N[2]); */
 
-        KDL::Rotation Rot = KDL::Rotation::EulerZYX(pos_cart_N[2],pos_cart_N[1],pos_cart_N[0]);
-        KDL::Vector Vec(pos_cart_N[3],pos_cart_N[4],pos_cart_N[5]);
+        //KDL::Rotation Rot = KDL::Rotation::EulerZYX(pos_cart_N[2],pos_cart_N[1],pos_cart_N[0]);
+        KDL::Rotation Rot = KDL::Rotation::Quaternion(pos_cart_N[0],pos_cart_N[1],pos_cart_N[2],pos_cart_N[3]);
 
+        KDL::Vector Vec(pos_cart_N[4],pos_cart_N[5],pos_cart_N[6]);
 
         KDL::Frame Next_joint_cartesian(Rot,Vec); 
 
@@ -158,17 +162,23 @@ int main(int argc, char **argv)
 
         // Filter
        
-        double alpha = 0.2;
+/*         double alpha = 0.2;
         vector<double> pos_joint_next_filter(7);
 
         for(int i = 0;i<7;i++){
             pos_joint_next_filter[i] = alpha*pos_joint_next[i] +(1-alpha)*pos_joint_actual[i];
-        }
+        } */
         //-----------------------------------------------------------------------
         //send next joint and wait
-        if(count > 0 && mseValue_cart({Position_des[0],Position_des[1],Position_des[2]},Pos_cart_actual)){
-            msgP.data = pos_joint_next_filter;
+        if(count > 0 && mseValue_cart({Position_des[0],Position_des[1],Position_des[2]},{Pos_cart_actual[4],Pos_cart_actual[5],Pos_cart_actual[6]})){
+            msgP.data = pos_joint_next;
             chatter_pub.publish(msgP);
+        }
+        else{
+            if(count > 0){
+                ROS_INFO(" Attractor Reached, Exit");
+                return 0;
+            }
         }
         //--------------------------------------------------------------------
         //ROS_INFO("%f %f %f %f %f %f %f ", Pos_cart_actual[0],Pos_cart_actual[1],Pos_cart_actual[2],Pos_cart_actual[3],Pos_cart_actual[4],Pos_cart_actual[5],Pos_cart_actual[6]);
@@ -199,7 +209,7 @@ VectorXd speed_func(vector<double> Pos,Vector3d x01, Vector4d q2)
     A << -1, 0, 0 ,
           0,-1, 0 ,
           0, 0,-1;
-    A =0.1*A;
+    A =50*A;
     Vector3d b1,w; 
     // Set the attracotr
     //x01 << 0.5,0.5,0.5;
@@ -222,11 +232,10 @@ VectorXd speed_func(vector<double> Pos,Vector3d x01, Vector4d q2)
     if (tmp_angular_vel.norm() > maxDq)
         tmp_angular_vel = maxDq * tmp_angular_vel.normalized();
 
-    double dsGain_ori = 2.50;
+    double dsGain_ori = 0.50;
     double theta_gq = (-.5/(4*maxDq*maxDq)) * tmp_angular_vel.transpose() * tmp_angular_vel;
     Vector3d Omega_out  = 2 * dsGain_ori*(1+std::exp(theta_gq)) * tmp_angular_vel;
     
-
     vector<double> V = {Omega_out[0],Omega_out[1],Omega_out[2],w[0],w[1],w[2]};
     //vector<double> V = {0,0,0,w[0],w[1],w[2]};
 
@@ -238,19 +247,36 @@ VectorXd speed_func(vector<double> Pos,Vector3d x01, Vector4d q2)
 
 VectorXd Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double dt)
 {
-    Quaterniond q ={Pos_actual[0],Pos_actual[1],Pos_actual[2],Pos_actual[3]};
-    Vector3d euler = q.toRotationMatrix().eulerAngles(0, 1, 2);
-    VectorXd Position_cart_euler(6) ;
-    Position_cart_euler[0]= euler[0];
-    Position_cart_euler[1]= euler[1];
-    Position_cart_euler[2]= euler[2];
-    Position_cart_euler[3]= Pos_actual[3];
-    Position_cart_euler[4]= Pos_actual[4];
-    Position_cart_euler[5]= Pos_actual[5];
+    //Speed orientation integration
+    
+    Quaterniond q2 ={Pos_actual[0],Pos_actual[1],Pos_actual[2],Pos_actual[3]};
+    //Vector3d euler = q.toRotationMatrix().eulerAngles(0, 1, 2);
+    Vector3d Speedbis ={dt*speed_actual[0]/2,dt*speed_actual[1]/2,dt*speed_actual[2]/2};
+    Quaterniond q1 ={Speedbis[0],Speedbis[1],Speedbis[2],1};
 
+    Quaterniond resultQ;
+    resultQ.setIdentity();
 
-    VectorXd pos_cart_Next;
-    pos_cart_Next = speed_actual * dt + Position_cart_euler;
+    resultQ.w() = q1.w() * q2.w() - q1.vec().dot(q2.vec());
+    resultQ.vec() = q1.w() * q2.vec() + q2.w() * q1.vec() + q1.vec().cross(q2.vec());
+    resultQ.normalize();
+    resultQ.w() = q2.w() + resultQ.w();
+    resultQ.vec() = q2.vec() + resultQ.vec();
+    
+    ////ROS_INFO(" %f %f %f %f ", q2.x(),q2.y(),q2.z(),q2.w());
+    //ROS_INFO(" %f %f %f %f ", resultQ.x(),resultQ.y(),resultQ.z(),resultQ.w());
+  
+    //Speed position integration
+    Vector3d speed_bis,past_bis,next_bis;
+    speed_bis << speed_actual[3],speed_actual[4],speed_actual[5];
+    past_bis << Pos_actual[4],Pos_actual[5],Pos_actual[6];
+    next_bis =speed_bis*dt+ past_bis ;
+
+    VectorXd pos_cart_Next(7);
+
+    pos_cart_Next<< resultQ.x(),resultQ.y(),resultQ.z(),resultQ.w(),next_bis;
+    //pos_cart_Next<< 0,0,0,1,next_bis;
+
     return pos_cart_Next;
 }
 
