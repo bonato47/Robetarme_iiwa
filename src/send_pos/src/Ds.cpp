@@ -35,6 +35,7 @@ bool mseValue_cart(vector<double> v1, vector<double> v2);
 
 int main(int argc, char **argv)
 {
+    //choose the attractor and the final orientation
     Quaterniond QuatOrientation_des = {0.5,0.5,0.5,1.0};
     QuatOrientation_des.normalize();
 
@@ -42,9 +43,8 @@ int main(int argc, char **argv)
     Orientation_des << QuatOrientation_des.x(),QuatOrientation_des.y(),QuatOrientation_des.z(),QuatOrientation_des.w();
     Vector3d Position_des;
     Position_des << 0.5,0.5,0.5;
-
-    iiwa_tools::GetFK  FK_state ;
-
+    
+    //choose the time step
     double delta_t = 0.01;
    
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     ros::Rate loop_rate(1/delta_t);
 
     //iniailization Forward Kinematics
-
+    iiwa_tools::GetFK  FK_state ;
     FK_state.request.joints.layout.dim.push_back(std_msgs::MultiArrayDimension());
     FK_state.request.joints.layout.dim.push_back(std_msgs::MultiArrayDimension());
     FK_state.request.joints.layout.dim[0].size = 1;
@@ -96,10 +96,7 @@ int main(int argc, char **argv)
     {
         VectorXd speed,pos_cart_N;
 
-        // Take joints state actual and convert to cartesian state
-        // With the help of th FK service
-        //ROS_INFO("Actual state");
-
+        // Take joints state actual and convert to cartesian state with the help of th FK service
         Past_joint_pos.data = {pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]};
         FK_state.request.joints.data = Past_joint_pos.data;
 
@@ -107,30 +104,16 @@ int main(int argc, char **argv)
         Past_cart = FK_state.response.poses[0], FK_state.response.poses[1];
         Past_cart_pos = Past_cart.position;
         Past_cart_quat = Past_cart.orientation;
-        
-        //ROS_INFO("%f %f %f %f %f %f %f",pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]);
-        //ROS_INFO("%f %f %f %f",Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w);
-  
         Pos_cart_actual={Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w,Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z};
 
         //-----------------------------------------------------------------------
-        //Send the cartesian stat to Dynamical System (DS) to find desired speed
-
-        // need to add the orientation
-        //ROS_INFO("Desired speed");
-
+        //Send the cartesian stat to Dynamical System (DS) to find desired speed ( wx,wy,wz,px,py,pz)
         speed = speed_func(Pos_cart_actual,Position_des, Orientation_des);
-        //ROS_INFO("%s %f %f %f %f %f %f", "speed",speed[0],speed[1],speed[2],speed[3],speed[4],speed[5]);
-
+        
         //-----------------------------------------------------------------------
-        //integrate the speed with the actual cartesian state to find new cartesian state
-        //ROS_INFO("Desired cartesian position");
-
+        //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
         pos_cart_N = Integral_func(Pos_cart_actual, speed, delta_t);
-
-        //ROS_INFO("%s %f %f %f %f %f %f %f", "Pos_cart_actual",Pos_cart_actual[4],Pos_cart_actual[5],Pos_cart_actual[6]);
-        //ROS_INFO("%s %f %f %f ","out_int",pos_cart_N[3],pos_cart_N[4],pos_cart_N[5]);
-
+      
         //------------------------------------------------------------------------
         //Convert cartesian to joint space
         KDL::JntArray Next_joint_task;
@@ -140,26 +123,18 @@ int main(int argc, char **argv)
         Map<VectorXd> pos_joint_actual_eigen(ptr, 7); 
         actual_joint_task.data = pos_joint_actual_eigen;
 
-       /*  KDL::Rotation Rot = KDL::Rotation::Quaternion(Quat_N[0],Quat_N[1],Quat_N[2],Quat_N[3]);
-    
-        KDL::Vector Vec(pos_cart_N[0],pos_cart_N[1],pos_cart_N[2]); */
-
-        //KDL::Rotation Rot = KDL::Rotation::EulerZYX(pos_cart_N[2],pos_cart_N[1],pos_cart_N[0]);
         KDL::Rotation Rot = KDL::Rotation::Quaternion(pos_cart_N[0],pos_cart_N[1],pos_cart_N[2],pos_cart_N[3]);
-
         KDL::Vector Vec(pos_cart_N[4],pos_cart_N[5],pos_cart_N[6]);
-
         KDL::Frame Next_joint_cartesian(Rot,Vec); 
 
         VectorXd pos_joint_next_eigen ;
         int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
-        //ROS_INFO("%d",rc);
 
         pos_joint_next_eigen = Next_joint_task.data;
         for(int i = 0 ;i<7;++i){
             pos_joint_next[i] =pos_joint_next_eigen(i);
         }
-
+        //-----------------------------------------------------------------------
         // Filter
        
 /*         double alpha = 0.2;
@@ -169,7 +144,7 @@ int main(int argc, char **argv)
             pos_joint_next_filter[i] = alpha*pos_joint_next[i] +(1-alpha)*pos_joint_actual[i];
         } */
         //-----------------------------------------------------------------------
-        //send next joint and wait
+        //send next joint and exit if arrived to the attractor
         if(count > 0 && mseValue_cart({Position_des[0],Position_des[1],Position_des[2]},{Pos_cart_actual[4],Pos_cart_actual[5],Pos_cart_actual[6]})){
             msgP.data = pos_joint_next;
             chatter_pub.publish(msgP);
@@ -181,8 +156,6 @@ int main(int argc, char **argv)
             }
         }
         //--------------------------------------------------------------------
-        //ROS_INFO("%f %f %f %f %f %f %f ", Pos_cart_actual[0],Pos_cart_actual[1],Pos_cart_actual[2],Pos_cart_actual[3],Pos_cart_actual[4],Pos_cart_actual[5],Pos_cart_actual[6]);
-
         ros::spinOnce();        
         loop_rate.sleep();  
         ++count;      
