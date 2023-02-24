@@ -8,7 +8,11 @@ git clone --recursive https://github.com/jrl-umi3218/mc_rbdyn_urdf.git
 git clone https://github.com/mosra/corrade.git
 git clone https://github.com/epfl-lasa/robot_controllers.git
 git clone  --branch feature/dockerise https://github.com/epfl-lasa/iiwa_ros.git
-cd ..
+cd send_pose
+mkdir Third_party
+cd Third_party
+git clone https://github.com/coin-or/qpOASES.git
+cd ../..
 source devel /setup.bash
 catkin_make
 read terminate
