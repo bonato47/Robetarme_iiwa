@@ -24,6 +24,7 @@ src/trac_ik
 src/gazebo_ros_pkgs
 src/kuka_fri
 src/mc_rbdyn_urdf
+src/send_pose/Third_party
 iiwa_toolkit
 
 
