@@ -17,8 +17,8 @@ using namespace std;
 
 int n =7;
 vector<double> pos_joint_actual(n);
-vector<double> vel(n);
-vector<double> eff(n);
+vector<double> vel_joint_actual(n);
+//vector<double> eff(n);
 
 void CounterCallback(const sensor_msgs::JointState::ConstPtr msg);
 
@@ -31,7 +31,34 @@ VectorXd Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double 
 // Function that Calculate Root Mean Square
 bool mseValue_cart(vector<double> v1, vector<double> v2);
 
-//Define work space
+
+class State_robot {       // The class
+  public:             // Access specifier
+    vector<double> cart,joint,cart_next,joint_next;
+    VectorXd cart_eigen, joint_eigen ,cart_next_eigen, joint_next_eigen ;
+    std_msgs::Float64MultiArray joint_std64;
+
+    void State_robot_actual(vector<double> V) {  // Method/function defined inside the class
+        joint = V;
+        int L = V.size();
+        double* pt = &V[0];
+        joint_eigen = Map<VectorXd>(pt, L);
+        joint_std64.data = {joint[0],joint[1],joint[2],joint[3],joint[4],joint[5],joint[6]};
+    }
+
+    void State_robot_next(vector<double> V) {  // Method/function defined inside the class
+        joint_next = V;
+        int L = V.size();
+        double* pt = &V[0];
+        joint_next_eigen = Map<VectorXd>(pt, L);
+    }
+    void State_robot_next_cart(vector<double> V) {  // Method/function defined inside the class
+        cart_next = V;
+        int L = V.size();
+        double* pt = &V[0];
+        cart_next_eigen = Map<VectorXd>(pt, L);
+    }
+};
 
 int main(int argc, char **argv)
 {
@@ -46,7 +73,7 @@ int main(int argc, char **argv)
     
     //choose the time step
     double delta_t = 0.01;
-   
+
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Ds");
     ros::NodeHandle Nh_;
@@ -70,7 +97,6 @@ int main(int argc, char **argv)
     double error=1e-3; 
     TRAC_IK::SolveType type=TRAC_IK::Distance;
     TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
-
     KDL::Chain chain;
 
     bool valid = ik_solver.getKDLChain(chain);
@@ -80,6 +106,8 @@ int main(int argc, char **argv)
     }
 
     //initialization  Variable
+
+
     std_msgs::Float64MultiArray msgP;
     std_msgs::Float64MultiArray Past_joint_pos;
     std_msgs::Float64MultiArray Next_joint_pos;
@@ -94,6 +122,13 @@ int main(int argc, char **argv)
     //begin the ros loop
     while (ros::ok())
     {
+        //define object position and speed
+        State_robot Robot_position;
+        Robot_position.State_robot_actual(pos_joint_actual);
+
+        State_robot Robot_speed;
+        Robot_speed.State_robot_actual(vel_joint_actual);
+ 
         VectorXd speed,pos_cart_N;
 
         // Take joints state actual and convert to cartesian state with the help of th FK service
@@ -105,15 +140,18 @@ int main(int argc, char **argv)
         Past_cart_pos = Past_cart.position;
         Past_cart_quat = Past_cart.orientation;
         Pos_cart_actual={Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w,Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z};
-
+        
+        Robot_position.cart = {Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w,Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z};
+        
         //-----------------------------------------------------------------------
         //Send the cartesian stat to Dynamical System (DS) to find desired speed ( wx,wy,wz,px,py,pz)
         speed = speed_func(Pos_cart_actual,Position_des, Orientation_des);
-        
+        Robot_speed.cart_next = speed_func(Pos_cart_actual,Position_des, Orientation_des);
+        Robot_speed.State_robot_next_cart(Robot_speed.cart_next);
         //-----------------------------------------------------------------------
         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
         pos_cart_N = Integral_func(Pos_cart_actual, speed, delta_t);
-      
+        Robot_position.cart_next = Integral_func(Pos_cart_actual, speed, delta_t);
         //------------------------------------------------------------------------
         //Convert cartesian to joint space
         KDL::JntArray Next_joint_task;
@@ -122,6 +160,8 @@ int main(int argc, char **argv)
         double* ptr = &pos_joint_actual[0];
         Map<VectorXd> pos_joint_actual_eigen(ptr, 7); 
         actual_joint_task.data = pos_joint_actual_eigen;
+
+        //Robot_position.joint_next_eigen;
 
         KDL::Rotation Rot = KDL::Rotation::Quaternion(pos_cart_N[0],pos_cart_N[1],pos_cart_N[2],pos_cart_N[3]);
         KDL::Vector Vec(pos_cart_N[4],pos_cart_N[5],pos_cart_N[6]);
@@ -166,8 +206,8 @@ int main(int argc, char **argv)
 void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
 {
     pos_joint_actual = msg->position;
-    vel = msg->velocity;
-    eff = msg->effort;
+    vel_joint_actual = msg->velocity;
+    //eff = msg->effort;
 }
 
 VectorXd speed_func(vector<double> Pos,Vector3d x01, Vector4d q2)
