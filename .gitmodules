@@ -1,7 +1,0 @@
-[submodule "KUKA FRI"]
-	path = src
-	url = https://github.com/epfl-lasa/kuka_fri.git
-
-[submodule "SpaceVecAlg"]
-	path = src
-	url = https://github.com/jrl-umi3218/SpaceVecAlg.git
