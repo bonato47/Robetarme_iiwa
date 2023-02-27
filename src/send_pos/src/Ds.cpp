@@ -31,7 +31,7 @@ VectorXd Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double 
 // Function that Calculate Root Mean Square
 bool mseValue_cart(vector<double> v1, vector<double> v2);
 
-vector<double> DS_basic(class State_robot &Position, class State_robot &Speed, double dt);
+//vector<double> DS_basic(class State_robot &Position, class State_robot &Speed, double dt);
 
 
 class State_robot {       // The class
@@ -108,75 +108,57 @@ int main(int argc, char **argv)
     }
 
     //initialization  Variable
-
-
     std_msgs::Float64MultiArray msgP;
-    std_msgs::Float64MultiArray Past_joint_pos;
-    std_msgs::Float64MultiArray Next_joint_pos;
     geometry_msgs::Quaternion Past_cart_quat;
     geometry_msgs::Pose Past_cart;
     geometry_msgs::Point Past_cart_pos;
-    vector<double> Pos_cart_actual(n);
-    vector<double> Quat_N(4);
-    vector<double> pos_joint_next(n);
     int count = 0;
 
     //begin the ros loop
     while (ros::ok())
     {
-        //define object position and speed
+        //Define object position and speed
         State_robot Robot_position;
         Robot_position.State_robot_actual(pos_joint_actual);
 
         State_robot Robot_speed;
         Robot_speed.State_robot_actual(vel_joint_actual);
  
-        VectorXd speed,pos_cart_N;
-
         // Take joints state actual and convert to cartesian state with the help of th FK service
-        Past_joint_pos.data = {pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]};
-        FK_state.request.joints.data = Past_joint_pos.data;
-
+        FK_state.request.joints.data =  Robot_position.joint_std64.data;
         client_FK.call(FK_state);
         Past_cart = FK_state.response.poses[0], FK_state.response.poses[1];
         Past_cart_pos = Past_cart.position;
         Past_cart_quat = Past_cart.orientation;
-        Pos_cart_actual={Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w,Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z};
-        
+
         Robot_position.cart = {Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w,Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z};
         
         //-----------------------------------------------------------------------
         //Send the cartesian stat to Dynamical System (DS) to find desired speed ( wx,wy,wz,px,py,pz)
-        speed = speed_func(Pos_cart_actual,Position_des, Orientation_des);
-        Robot_speed.cart_next = speed_func(Pos_cart_actual,Position_des, Orientation_des);
-        Robot_speed.State_robot_next_cart(Robot_speed.cart_next);
+        Robot_speed.cart_next_eigen = speed_func(Robot_position.cart,Position_des, Orientation_des);
         //-----------------------------------------------------------------------
 
         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
-        pos_cart_N = Integral_func(Pos_cart_actual, speed, delta_t);
-        Robot_position.cart_next = Integral_func(Pos_cart_actual, speed, delta_t);
+        Robot_position.cart_next_eigen = Integral_func(Robot_position.cart, Robot_speed.cart_next_eigen, delta_t);
+        
         //------------------------------------------------------------------------
         //Convert cartesian to joint space
         KDL::JntArray Next_joint_task;
         KDL::JntArray actual_joint_task;   
+        actual_joint_task.data = Robot_position.joint_eigen;
 
-        double* ptr = &pos_joint_actual[0];
-        Map<VectorXd> pos_joint_actual_eigen(ptr, 7); 
-        actual_joint_task.data = pos_joint_actual_eigen;
-
-        //Robot_position.joint_next_eigen;
-
-        KDL::Rotation Rot = KDL::Rotation::Quaternion(pos_cart_N[0],pos_cart_N[1],pos_cart_N[2],pos_cart_N[3]);
-        KDL::Vector Vec(pos_cart_N[4],pos_cart_N[5],pos_cart_N[6]);
+        KDL::Rotation Rot = KDL::Rotation::Quaternion(Robot_position.cart_next_eigen[0],Robot_position.cart_next_eigen[1],Robot_position.cart_next_eigen[2],Robot_position.cart_next_eigen[3]);
+        KDL::Vector Vec(Robot_position.cart_next_eigen[4],Robot_position.cart_next_eigen[5],Robot_position.cart_next_eigen[6]);
         KDL::Frame Next_joint_cartesian(Rot,Vec); 
 
-        VectorXd pos_joint_next_eigen ;
         int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
 
-        pos_joint_next_eigen = Next_joint_task.data;
+        vector<double> pos_joint_next(n);
+        Robot_position.joint_next_eigen = Next_joint_task.data;
         for(int i = 0 ;i<7;++i){
-            pos_joint_next[i] =pos_joint_next_eigen(i);
+            pos_joint_next[i] = Robot_position.joint_next_eigen(i);
         }
+        Robot_position.joint_next = pos_joint_next;
         //-----------------------------------------------------------------------
         // Filter
        
@@ -188,8 +170,8 @@ int main(int argc, char **argv)
         } */
         //-----------------------------------------------------------------------
         //send next joint and exit if arrived to the attractor
-        if(count > 0 && mseValue_cart({Position_des[0],Position_des[1],Position_des[2]},{Pos_cart_actual[4],Pos_cart_actual[5],Pos_cart_actual[6]})){
-            msgP.data = pos_joint_next;
+        if(count > 0 && mseValue_cart({Position_des[0],Position_des[1],Position_des[2]},{Robot_position.cart[4],Robot_position.cart[5],Robot_position.cart[6]})){
+            msgP.data = Robot_position.joint_next;
             chatter_pub.publish(msgP);
         }
         else{
@@ -315,12 +297,11 @@ bool mseValue_cart(vector<double> v1, vector<double> v2)
 
     return Reached;
 }
-
-vector<double> DS_basic(class State_robot &Position, class State_robot &Speed, double dt){
+/* 
+vector<double> DS_basic(class State_robot &Position, class State_robot &Speed, double dt,TRAC_IK::TRAC_IK &ik){
     //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
 
-    Position.cart_next = Integral_func(Position.cart, Speed.cart, delta_t);
-    Positiion.State_robot_next_cart(Position.cart_next);
+    Position.cart_next_eigen = Integral_func(Position.cart, Speed.cart_eigen, dt);
     //------------------------------------------------------------------------
     //Convert cartesian to joint space
     KDL::JntArray Next_joint_task;
@@ -337,7 +318,7 @@ vector<double> DS_basic(class State_robot &Position, class State_robot &Speed, d
     KDL::Frame Next_joint_cartesian(Rot,Vec); 
 
     VectorXd pos_joint_next_eigen ;
-    int rc = ik_solver.CartToJnt(Position.joint_std64, Next_joint_cartesian, Next_joint_task);
+    int rc = ik.CartToJnt(Position.joint_std64, Next_joint_cartesian, Next_joint_task);
 
     Position.Next_joint_eigen = Next_joint_task.data;
     for(int i = 0 ;i<7;++i){
@@ -345,5 +326,5 @@ vector<double> DS_basic(class State_robot &Position, class State_robot &Speed, d
     }
     return Position.Next_joint;
 
-}
+} */
 
