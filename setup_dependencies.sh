@@ -8,6 +8,11 @@ cd send_pos
 mkdir Third_party
 cd Third_party
 git clone https://github.com/coin-or/qpOASES.git
+#mkdir build
+#cd build
+#cmake ..
+#make
+#sudo make install
 cd ../../..
 
 catkin_make
