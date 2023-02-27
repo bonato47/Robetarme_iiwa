@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC -O2 -g -DNDEBUG  -shared -Wl,-soname,libsend_pos.so -o /home/bonato/catkin_ws/devel/lib/libsend_pos.so CMakeFiles/send_pos.dir/src/Send_pos_function.cpp.o 
