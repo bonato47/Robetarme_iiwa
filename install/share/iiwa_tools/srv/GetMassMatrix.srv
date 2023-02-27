@@ -1,3 +1,0 @@
-float64[] joint_angles
----
-std_msgs/Float64MultiArray mass_matrix
