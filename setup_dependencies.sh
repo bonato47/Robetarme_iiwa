@@ -13,7 +13,7 @@ cd send_pos
 mkdir Third_party
 cd Third_party
 git clone https://github.com/coin-or/qpOASES.git
-cd ../..
+cd ../../..
 catkin_make
 source devel /setup.bash
 read terminate
