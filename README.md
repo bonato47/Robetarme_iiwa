@@ -16,10 +16,9 @@ You need to install the following:
 - Docker
 - Github with a Valid SSH key
 
-
 Installing process: 
 You need to run the setup_dependencies.sh from Robetarme_iiwa.
-
+Then, Install the library qpOASES by following the guide on:  https://www.coin-or.org/qpOASES/doc/3.0/manual.pdf
 
 Simulation:
 To launch the simulation, you need to run the docker.
