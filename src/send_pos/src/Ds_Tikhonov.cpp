@@ -20,7 +20,7 @@ using namespace std;
 void CounterCallback(const sensor_msgs::JointState::ConstPtr msg);
 
   // Function that Calculate the speed with a DS
-vector<double> speed_func(vector<double> pos, Vector4d q01,Vector3d x01);
+VectorXd speed_func(vector<double> Pos,Vector3d x01, Vector4d q2);
 
 // Function that integrate the speed
 vector<double> Integral_func_V2(VectorXd Pos_f, VectorXd speed_f, double dt);
@@ -65,8 +65,12 @@ VectorXd Past_speed(n);
 
 int main(int argc, char **argv)
 {
+     //choose the attractor and the final orientation
+    Quaterniond QuatOrientation_des = {0.5,0.5,0.5,1.0};
+    QuatOrientation_des.normalize();
+
     Vector4d Orientation_des;
-    Orientation_des << 0.5,0.5,0.5,1 ;
+    Orientation_des << QuatOrientation_des.x(),QuatOrientation_des.y(),QuatOrientation_des.z(),QuatOrientation_des.w();
     Vector3d Position_des;
     Position_des << 0.5,0.5,0.5;
 
@@ -117,15 +121,14 @@ int main(int argc, char **argv)
 
         //-----------------------------------------------------------------------
         //Find the desired speed ( omega_dot ,x_dot) size 6x1
-        Robot_speed.cart_next = speed_func(Robot_position.cart,Orientation_des,Position_des);
-        Robot_speed.State_robot_next_cart(Robot_speed.cart_next);
-        //ROS_INFO(" %f %f %f", Robot_speed.cart_next[0],Robot_speed.cart_next[1],Robot_speed.cart_next[2]);
-//ROS_INFO(" %f %f %f %f %f %f %f", Robot_position.cart[0],Robot_position.cart[1],Robot_position.cart[2],Robot_position.cart[3],Robot_position.cart[4],Robot_position.cart[5],Robot_position.cart[6]);
+        Robot_speed.cart_next_eigen  = speed_func(Robot_position.cart,Position_des,Orientation_des);
+
+
         // Use Tkihonov optimization norm(J*q_dot-V)²+ norm(w*I*q_dot)²
         //q_dot = inv(J_transpose*J+ W_transpose*W)*J_transpose*Speed
 
         //Calculate Jacobian
-        Jac_state.request.joint_angles = Robot_position.joint_std64.data;
+        Jac_state.request.joint_angles     = Robot_position.joint_std64.data;
         Jac_state.request.joint_velocities =  Robot_speed.joint_std64.data;;
         client_J.call(Jac_state);
 
@@ -133,30 +136,21 @@ int main(int argc, char **argv)
         double* ptr = &Jacobian.data[0];    
         Map<MatrixXd> Eigen_Jac(ptr, 6, 7);
 
-       /*  for(int  j= 0;j<3;j++){     
-            for(int i = 0;i<7;i++){  
-                Eigen_Jac(j,i)= 0;
-            }
-        } 
+        double w = 1;
+        DiagonalMatrix<double, 7> m;
+        m.diagonal() << w,w,w,w,w,w,w;
+        MatrixXd eigen_Weight = m;
 
-        double W = 0.1;
-        MatrixXd eigen_Weight(7,7);
-        eigen_Weight << W,0,0,0,0,0,0,
-                        0,W,0,0,0,0,0,
-                        0,0,W,0,0,0,0,
-                        0,0,0,W,0,0,0,
-                        0,0,0,0,W,0,0,
-                        0,0,0,0,0,W,0,
-                        0,0,0,0,0,0,W;
 
-        */      
+       
+        // QP optimization
 	    USING_NAMESPACE_QPOASES
 
         // Setup data of first QP. 
 
         MatrixXd H_eigen = Eigen_Jac.transpose()* Eigen_Jac;
         VectorXd g_eigen = -Eigen_Jac.transpose()* Robot_speed.cart_next_eigen;
-        //g_eigen = g_eigen.transpose();
+        g_eigen = g_eigen.transpose();
 
     	real_t H[7*7] ={H_eigen(0,0),H_eigen(0,1),H_eigen(0,2),H_eigen(0,3),H_eigen(0,4),H_eigen(0,5),H_eigen(0,6),
                         H_eigen(1,0),H_eigen(1,1),H_eigen(1,2),H_eigen(1,3),H_eigen(1,4),H_eigen(1,5),H_eigen(1,6),
@@ -187,22 +181,24 @@ int main(int argc, char **argv)
 	    example.init( H,g,lb,ub, nWSR,0 ); 
         real_t xOpt[7];
 	    example.getPrimalSolution( xOpt );
-	    printf( "\nxOpt = [ %e, %e ];  objVal = %e\n\n", xOpt[0],xOpt[1],example.getObjVal() );
+        // printf( "\nxOpt = [ %e, %e ];  objVal = %e\n\n", xOpt[0],xOpt[1],example.getObjVal() );
 
-        if(example.getObjVal() > 0.1){
+         if(example.getObjVal() > 0.1){
             double* pt = &xOpt[0];
             Robot_speed.joint_next_eigen = Map<VectorXd>(pt, 7);
             Past_speed = Robot_speed.joint_next_eigen;
         }
         else{
             Robot_speed.joint_next_eigen = Past_speed;
-        }
+        } 
 
         //Robot_speed.joint_next_eigen =  (Eigen_Jac.transpose()*Eigen_Jac +eigen_Weight.transpose()*eigen_Weight).inverse()*Eigen_Jac.transpose()*Robot_speed.cart_next_eigen;
 
         //Robot_speed.joint_next_eigen = Eigen_Jac.colPivHouseholderQr().solve(Robot_speed.cart_next_eigen);
 
         Robot_position.joint_next =  Integral_func_V2(Robot_position.joint_eigen, Robot_speed.joint_next_eigen, delta_t);
+        
+    
     /*
 
         // Filter
@@ -236,14 +232,29 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
     eff = msg->effort;
 }
 
-vector<double> speed_func(vector<double> pos, Vector4d q2 ,Vector3d x01)
-{   
-    //Send the cartesian stat to Dynamical System (DS) to find x_dot
-    // use quatertion to speed algoritm to omega_dot
+VectorXd speed_func(vector<double> Pos,Vector3d x01, Vector4d q2)
+{
+    //int num_gridpoints = 30;
+    Vector3d Position ;
+    Position[0]= Pos[4];
+    Position[1]= Pos[5];
+    Position[2]= Pos[6];
+    Matrix3d A;
+    //Set a linear DS
+    A << -1, 0, 0 ,
+          0,-1, 0 ,
+          0, 0,-1;
+    A =50*A;
+    Vector3d b1,w; 
+    // Set the attracotr
+    //x01 << 0.5,0.5,0.5;
+    b1 =  -A*x01;
+    w = A *Position +b1 ;
+    //w = w.normalized()*0.1;
 
-    //orientation
+     //orientation
     Vector4d q1 ;
-    q1 << pos[0],pos[1],pos[2],pos[3];
+    q1 << Pos[0],Pos[1],Pos[2],Pos[3];
     Vector4d dqd = Utils<double>::slerpQuaternion(q1, q2 ,0.5);    
     Vector4d deltaQ = dqd -  q1;
 
@@ -256,26 +267,16 @@ vector<double> speed_func(vector<double> pos, Vector4d q2 ,Vector3d x01)
     if (tmp_angular_vel.norm() > maxDq)
         tmp_angular_vel = maxDq * tmp_angular_vel.normalized();
 
-    double dsGain_ori = 2.50;
+    double dsGain_ori = 0.50;
     double theta_gq = (-.5/(4*maxDq*maxDq)) * tmp_angular_vel.transpose() * tmp_angular_vel;
     Vector3d Omega_out  = 2 * dsGain_ori*(1+std::exp(theta_gq)) * tmp_angular_vel;
+    
+    vector<double> V = {Omega_out[0],Omega_out[1],Omega_out[2],w[0],w[1],w[2]};
 
-    //position
-    Matrix3d A;
-    Vector3d b1,w,cart_actual; 
-    cart_actual << pos[4],pos[5],pos[6];
+    double* pt = &V[0];
+    VectorXd VOut = Map<VectorXd>(pt, 6);
 
-    //Set a linear DS
-    A << -0.1, 0, 0,
-          0,-0.1, 0,
-          0, 0,-0.1;
-    // Set the Position_des
-    b1 = -A * x01;
-    w  =  A * cart_actual + b1 ;
-
-    //out
-    vector<double> Vout = {Omega_out[0],Omega_out[1],Omega_out[2],w[0],w[1],w[2]};
-    return Vout;
+    return VOut;
 }
 
 vector<double> Integral_func_V2(VectorXd Pos_f, VectorXd speed_f, double dt)

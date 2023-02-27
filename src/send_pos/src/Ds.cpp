@@ -235,7 +235,6 @@ VectorXd speed_func(vector<double> Pos,Vector3d x01, Vector4d q2)
     Vector3d Omega_out  = 2 * dsGain_ori*(1+std::exp(theta_gq)) * tmp_angular_vel;
     
     vector<double> V = {Omega_out[0],Omega_out[1],Omega_out[2],w[0],w[1],w[2]};
-    //vector<double> V = {0,0,0,w[0],w[1],w[2]};
 
     double* pt = &V[0];
     VectorXd VOut = Map<VectorXd>(pt, 6);
