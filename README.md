@@ -8,9 +8,17 @@ These files has to purpose to run the iiwa arm robot by following:
 In src/send_pose you have one node for the dynamical system (Ds.cpp) , one node to follow the path (Follow_traj) and one node to send the robot to the desired position (quat,pos) by ROSParam. 
 
 
-Installing process:
-You need to install docker. 
-then you need to run the setup_dependencies.sh from Robetarme_iiwa.
+Prerequisite :
+You need to install the following:
+
+- ROS (melodic)
+- catkin
+- Docker
+- Github with a Valid SSH key
+
+
+Installing process: 
+You need to run the setup_dependencies.sh from Robetarme_iiwa.
 
 
 Simulation:
@@ -23,15 +31,13 @@ bash install_docker.bash
 bash build_docker.bash
 
 Now to open your container run :
-
 bash start_docker.bash interactive
 
 And to launch the simulation run :
-
 roslaunch iiwa_gazebo iiwa_gazebo.launch controller:=PositionController
 
-Then to run the Ds node, opena terminal in your workspace, 
-write source devel_/setup.bash
+Then to run the Ds node, open a new terminal in your workspace and write:
+source devel_/setup.bash
 rosrun send_pos Ds
 
 To replace it at initialize pos you can then run :
