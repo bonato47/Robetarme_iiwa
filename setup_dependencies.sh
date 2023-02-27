@@ -8,6 +8,7 @@ git clone --recursive https://github.com/jrl-umi3218/mc_rbdyn_urdf.git
 git clone https://github.com/mosra/corrade.git
 git clone https://github.com/epfl-lasa/robot_controllers.git
 git clone  --branch feature/dockerise https://github.com/epfl-lasa/iiwa_ros.git
+git clone https://github.com/ros-simulation/gazebo_ros_pkgs.git
 cd send_pos
 mkdir Third_party
 cd Third_party
