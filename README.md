@@ -11,32 +11,25 @@ In src/send_pose you have one node for the dynamical system (Ds.cpp) , one node 
 Prerequisite :
 You need to install the following:
 
-- ROS (melodic)
-- catkin
 - Docker
-- Github with a Valid SSH key
+- aica-technology/docker-images : https://github.com/aica-technology/docker-images
 
-Installing process: 
-You need to run the setup_dependencies.sh from Robetarme_iiwa.
-Then, Install the library qpOASES by following the guide on:  https://www.coin-or.org/qpOASES/doc/3.0/manual.pdf
+Docker process: 
+You need first to build the docker from the folder docker:
+bash build_docker.sh
+
+Then activate the container in a server mode.
+bash start_docker.sh server
+
+Here you can open different terminal with the line:
+bash start_docker.sh connect
 
 Simulation:
-To launch the simulation, you need to run the docker.
+To launch the simulation, you need to run in the docker terminal.
 
-open a terminal at Robetarme_iiwa, and run:
-
-cd src/iiwa_ros/src/docker
-bash install_docker.bash
-bash build_docker.bash
-
-Now to open your container run :
-bash start_docker.bash interactive
-
-And to launch the simulation run :
 roslaunch iiwa_gazebo iiwa_gazebo.launch controller:=PositionController
 
-Then to run the Ds node, open a new terminal in your workspace and write:
-source devel_/setup.bash
+Then to run the Ds node, open a new terminal in another docker terminal and write:
 rosrun send_pos Ds
 
 To replace it at initialize pos you can then run :
