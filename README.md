@@ -13,7 +13,6 @@ You need to install the following:
 
 - Docker
 - aica-technology/docker-images : https://github.com/aica-technology/docker-images
-- doxygen
 
 Docker process: 
 You need first to build the docker from the folder docker:
