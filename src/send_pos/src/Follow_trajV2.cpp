@@ -208,6 +208,7 @@ vector<vector<double>> CSVtoVectorVectorDouble()
             content.push_back(row);
         }
         ROS_INFO("file well readed");
+        ROS_INFO("%d", row.size());
 
     }
     else

@@ -9,19 +9,17 @@
 #include "std_srvs/Empty.h"
 #include <trac_ik/trac_ik.hpp>
 #include <eigen3/Eigen/Dense>
-#include <filesystem>
-#include <unistd.h>
 
 using namespace std;
+
 
 void CounterCallback(const sensor_msgs::JointState::ConstPtr);
 bool mseValue(vector<double> , vector<double> , int);
 vector<double> TakeLine(vector<vector<double>> , int );
 vector<vector<double>> CSVtoVectorVectorDouble();
-
+void saveData(string fileName, MatrixXd  matrix);
 
 int n =7;
-int Taille = 5000;
 vector<double> eff(n);
 vector<double> vel(n);
 vector<double> pos_joint_actual(n);
@@ -42,6 +40,7 @@ int main(int argc, char **argv)
 
     // Read trajectory from .csv 
     vector<vector<double>> traj_cart = CSVtoVectorVectorDouble();
+    /*int Taille = 5000;
 
     //iniailization Invers Kinematics
     string base_link = "iiwa_link_0";
@@ -53,15 +52,13 @@ int main(int argc, char **argv)
     TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
 
     KDL::Chain chain;
+
     bool valid = ik_solver.getKDLChain(chain);
     if (!valid)
     {
         ROS_ERROR("There was no valid KDL chain found");
     }
     ROS_INFO("Preparing trajectory...");
-
-    std::ofstream myfile;
-    myfile.open ("example.csv");
 
     //Convert cartesian to joint space
     vector<double> pos_joint_next(7);
@@ -84,36 +81,31 @@ int main(int argc, char **argv)
        
         KDL::Vector Vec(traj_cart[i][4],traj_cart[i][5],traj_cart[i][6]);
         KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[i][0],traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
+        //KDL::Rotation Rot = KDL::Rotation::Quaternion(1,1,1,1);
         KDL::Frame Next_joint_cartesian(Rot,Vec); 
+
+        //ROS_INFO("%f" "%f" "%f" ,traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
 
         Eigen::VectorXd pos_joint_next_eigen ;
         int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
+        //ROS_INFO("%d",rc);
         pos_joint_next_eigen = Next_joint_task.data;
         for(int i = 0 ;i<7;++i){
             pos_joint_next[i] =pos_joint_next_eigen(i);
         }
         traj_joint.push_back(pos_joint_next);
-        std::stringstream ss;
-        for (auto it = pos_joint_next.begin(); it != pos_joint_next.end(); it++)    {
-            if (it != pos_joint_next.begin()) {
-                ss << ", ";
-            }
-            ss << *it;
-        }
-        myfile << ss.str();
-        myfile <<", /n ";
-
         if(i == round(int(traj_cart.size())/2)){
             ROS_INFO("Half of the the trajectory load, please wait... ");
         }
     }
-
    
     //-----------------------------------------
-    myfile.close();
 
     ROS_INFO("Trajectory well load, When you are ready press GO");
-    string UserInput = "stop";
+
+    
+
+     string UserInput = "stop";
     while( UserInput != "GO"){
         cin >> UserInput;
     }
@@ -141,7 +133,7 @@ int main(int argc, char **argv)
         ros::spinOnce();
         loop_rate.sleep();
     }
-    return 0;
+    return 0;                            */
 }
 
 
@@ -188,10 +180,11 @@ vector<double> TakeLine(vector<vector<double>> Mat, int numB )
 
 vector<vector<double>> CSVtoVectorVectorDouble()
 {
-    //string fname = "/home/bonato/catkin_ws/src/send_pos/src/trajectory.csv";
-    string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory.csv";
-    vector<vector<double>> Traj;
+    string fname = "/home/bonato/catkin_ws/src/send_pos/src/trajectory.csv";
+    
     vector<vector<string>> content;
+    vector<vector<double>> Traj;
+
     vector<string> row;
     string line, word;
 
@@ -227,6 +220,17 @@ vector<vector<double>> CSVtoVectorVectorDouble()
         vector<double> Line = {pos_x,pos_y,pos_z,quad_x,quad_y,quad_z,quad_w};//, Pos_y, Pos_z;
         Traj.push_back(Line);
     }
-
     return Traj;
+}
+void saveData(string fileName, Eigen::MatrixXd  matrix)
+{
+    //https://eigen.tuxfamily.org/dox/structEigen_1_1IOFormat.html
+    const static IOFormat CSVFormat(FullPrecision, DontAlignCols, ", ", "\n");
+ 
+    ofstream file(fileName);
+    if (file.is_open())
+    {
+        file << matrix.format(CSVFormat);
+        file.close();
+    }
 }
