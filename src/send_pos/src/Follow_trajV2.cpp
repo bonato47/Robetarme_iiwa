@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     vector<vector<double>> traj_joint;
 
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
-    ros::init(argc, argv, "Follow_traj");
+    ros::init(argc, argv, "Follow_trajV2");
     ros::NodeHandle Nh;
     ros::Subscriber sub = Nh.subscribe("iiwa/joint_states", 1000, CounterCallback);
     ros::Publisher chatter_pub = Nh.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
@@ -41,8 +41,8 @@ int main(int argc, char **argv)
     ros::Rate loop_rate(200);
 
     // Read trajectory from .csv 
-    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble();
-
+    vector<vector<double>> traj_joint = CSVtoVectorVectorDouble();
+/* 
     //iniailization Invers Kinematics
     string base_link = "iiwa_link_0";
     string tip_link = "iiwa_link_ee";
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 
    
     //-----------------------------------------
-    myfile.close();
+    myfile.close(); */
 
     ROS_INFO("Trajectory well load, When you are ready press GO");
     string UserInput = "stop";
@@ -127,9 +127,9 @@ int main(int argc, char **argv)
         pos_des_joint= traj_joint[Next];
 
         //ROS_INFO("%f", mseValue(pos,pos_des_joint,n));
-        if ((mseValue(pos_joint_actual,pos_des_joint,n) && (Next < int(traj_cart.size()) )) || (count >50)){
+        if ((mseValue(pos_joint_actual,pos_des_joint,n) && (Next < int(traj_joint.size()) )) || (count >50)){
             ++Next;
-            if(Next == int(traj_cart.size())){
+            if(Next == int(traj_joint.size())){
                 ROS_INFO("Last point reached, stop ");
                 return 0; 
             }

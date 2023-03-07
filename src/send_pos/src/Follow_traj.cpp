@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     string base_link = "iiwa_link_0";
     string tip_link = "iiwa_link_ee";
     string URDF_param="/robot_description";
-    double timeout_in_secs=0.05;
+    double timeout_in_secs=0.5;
     double error=1e-3; // a voir la taille
     TRAC_IK::SolveType type=TRAC_IK::Distance;
     TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     ROS_INFO("Preparing trajectory...");
 
     std::ofstream myfile;
-    myfile.open ("example.csv");
+    myfile.open ("trajectory_joints.csv");
 
     //Convert cartesian to joint space
     vector<double> pos_joint_next(7);
@@ -213,7 +213,7 @@ vector<vector<double>> CSVtoVectorVectorDouble()
     else
         ROS_ERROR("Could not open the file\n");
 
-    for(int i=0;i<Taille;i++) //int(content.size())
+    for(int i=0;i<int(content.size());i++) 
     {
         string::size_type sz;     // alias of size_t
         double pos_x = stod(content[i][0],&sz);
