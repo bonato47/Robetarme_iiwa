@@ -31,6 +31,7 @@ RUN if [ "${ROS_DISTRO}" == "noetic" ] ; \
     then sudo apt install python-is-python3 ; fi
 
 
+
 ### Add a few tools
 RUN sudo apt-get update && sudo apt-get install -y \
     bash-completion \
