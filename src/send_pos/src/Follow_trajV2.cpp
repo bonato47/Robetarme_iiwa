@@ -30,7 +30,6 @@ int main(int argc, char **argv)
 {
     std_msgs::Float64MultiArray msgP;
     vector<double> pos_des_joint(n);
-    vector<vector<double>> traj_joint;
 
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Follow_trajV2");
