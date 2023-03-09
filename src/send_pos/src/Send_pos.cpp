@@ -98,9 +98,12 @@ int main(int argc, char **argv)
                 actual_joint_task.data = pos_joint_actual_eigen; 
                 std::fill(pos_joint_next.begin(), pos_joint_next.end(), 0);
             }
-            
+            Eigen::VectorXd quat;
+            quat << traj_cart[3],traj_cart[4],traj_cart[5],traj_cart[6];
+            quat.normalize();
+            KDL::Rotation Rot = KDL::Rotation::Quaternion(quat[3],quat[4],quat[5],quat[6]);
+
             KDL::Vector Vec(traj_cart[0],traj_cart[1],traj_cart[2]);
-            KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[3],traj_cart[4],traj_cart[5],traj_cart[6]);
             KDL::Frame Next_joint_cartesian(Rot,Vec); 
 
             Eigen::VectorXd pos_joint_next_eigen ;

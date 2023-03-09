@@ -16,7 +16,6 @@ using namespace std;
 
 void CounterCallback(const sensor_msgs::JointState::ConstPtr);
 bool mseValue(vector<double> , vector<double> , int);
-vector<double> TakeLine(vector<vector<double>> , int );
 vector<vector<double>> CSVtoVectorVectorDouble();
 
 
@@ -61,7 +60,7 @@ int main(int argc, char **argv)
     ROS_INFO("Preparing trajectory...");
 
     std::ofstream myfile;
-    myfile.open ("trajectory_joints.csv");
+    myfile.open ("src/send_pos/src/trajectory_joints.csv");
 
     //Convert cartesian to joint space
     vector<double> pos_joint_next(7);
@@ -82,8 +81,10 @@ int main(int argc, char **argv)
             std::fill(pos_joint_next.begin(), pos_joint_next.end(), 0);
         }
        
-        KDL::Vector Vec(traj_cart[i][4],traj_cart[i][5],traj_cart[i][6]);
-        KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[i][0],traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
+        KDL::Vector Vec(traj_cart[i][3],traj_cart[i][4],traj_cart[i][5]);
+        //KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[i][0],traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
+        KDL::Rotation Rot = KDL::Rotation::EulerZYX(traj_cart[i][2],traj_cart[i][1],traj_cart[i][0]);
+
         KDL::Frame Next_joint_cartesian(Rot,Vec); 
 
         Eigen::VectorXd pos_joint_next_eigen ;
@@ -94,14 +95,17 @@ int main(int argc, char **argv)
         }
         traj_joint.push_back(pos_joint_next);
         std::stringstream ss;
-        for (auto it = pos_joint_next.begin(); it != pos_joint_next.end(); it++)    {
-            if (it != pos_joint_next.begin()) {
-                ss << ", ";
+        if(i > 15){
+            for (auto it = pos_joint_next.begin(); it != pos_joint_next.end(); it++)    {
+                if (it != pos_joint_next.begin()) {
+                    ss << ",";
+                }
+                ss << *it;
             }
-            ss << *it;
+            myfile << ss.str();
+            myfile <<"\n";
         }
-        myfile << ss.str();
-        myfile <<", /n ";
+ 
 
         if(i == round(int(traj_cart.size())/2)){
             ROS_INFO("Half of the the trajectory load, please wait... ");
@@ -176,15 +180,6 @@ bool mseValue(vector<double> v1, vector<double> v2,int Num)
     return Reached;
 }
 
-vector<double> TakeLine(vector<vector<double>> Mat, int numB )
-{
-    vector<double> vector(7);
-    for (int i = 0; i < 7; i++) {
-        vector[i] = Mat[numB][i];
-    }
-
-    return vector;
-}
 
 vector<vector<double>> CSVtoVectorVectorDouble()
 {
@@ -213,18 +208,17 @@ vector<vector<double>> CSVtoVectorVectorDouble()
     else
         ROS_ERROR("Could not open the file\n");
 
-    for(int i=0;i<int(content.size());i++) 
+    for(int i=0;i<int(content.size());i++) //
     {
         string::size_type sz;     // alias of size_t
-        double pos_x = stod(content[i][0],&sz);
-        double pos_y = stod(content[i][1],&sz);
-        double pos_z = stod(content[i][2],&sz);
-        double quad_x = stod(content[i][3],&sz);
-        double quad_y = stod(content[i][4],&sz);
-        double quad_z = stod(content[i][5],&sz);
-        double quad_w = stod(content[i][6],&sz);
+        double euler_x = stod(content[i][0],&sz);
+        double euler_y = stod(content[i][1],&sz);
+        double euler_z = stod(content[i][2],&sz);
+        double pos_x = stod(content[i][3],&sz);
+        double pos_y = stod(content[i][4],&sz);
+        double pos_z = stod(content[i][5],&sz);
 
-        vector<double> Line = {pos_x,pos_y,pos_z,quad_x,quad_y,quad_z,quad_w};//, Pos_y, Pos_z;
+        vector<double> Line = {euler_x,euler_y,euler_z,pos_x,pos_y,pos_z};
         Traj.push_back(Line);
     }
 

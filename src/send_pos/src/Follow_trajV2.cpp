@@ -111,15 +111,26 @@ int main(int argc, char **argv)
     //-----------------------------------------
     myfile.close(); */
 
-    ROS_INFO("Trajectory well load, When you are ready press GO");
+    ROS_INFO("Trajectory well load, For first position press GO");
     string UserInput = "stop";
     while( UserInput != "GO"){
         cin >> UserInput;
     }
+    UserInput = "stop";
 
+    msgP.data = traj_joint[0];
+    pos_des_joint= traj_joint[0];
+
+    while(mseValue(pos_joint_actual,pos_des_joint,n)){
+        ROS_INFO("first position reached, please Press GO when ready to shotcreet");
+    }   
+
+    while( UserInput != "GO"){
+        cin >> UserInput;
+    }
     //begin the Ros loop
-    int Next  = 0;
-    int count = 0 ;
+    int Next  = 1;
+    int count = 0;
     while (ros::ok())
     {
         msgP.data = traj_joint[Next];
@@ -188,7 +199,7 @@ vector<double> TakeLine(vector<vector<double>> Mat, int numB )
 vector<vector<double>> CSVtoVectorVectorDouble()
 {
     //string fname = "/home/bonato/catkin_ws/src/send_pos/src/trajectory.csv";
-    string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory.csv";
+    string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory_joints.csv";
     vector<vector<double>> Traj;
     vector<vector<string>> content;
     vector<string> row;
@@ -212,18 +223,18 @@ vector<vector<double>> CSVtoVectorVectorDouble()
     else
         ROS_ERROR("Could not open the file\n");
 
-    for(int i=0;i<Taille;i++) //int(content.size())
+    for(int i=0;i<int(content.size());i++) //
     {
         string::size_type sz;     // alias of size_t
-        double pos_x = stod(content[i][0],&sz);
-        double pos_y = stod(content[i][1],&sz);
-        double pos_z = stod(content[i][2],&sz);
-        double quad_x = stod(content[i][3],&sz);
-        double quad_y = stod(content[i][4],&sz);
-        double quad_z = stod(content[i][5],&sz);
-        double quad_w = stod(content[i][6],&sz);
+        double J1 = stod(content[i][0],&sz);
+        double J2 = stod(content[i][1],&sz);
+        double J3 = stod(content[i][2],&sz);
+        double J4 = stod(content[i][3],&sz);
+        double J5 = stod(content[i][4],&sz);
+        double J6 = stod(content[i][5],&sz);
+        double J7 = stod(content[i][6],&sz);
 
-        vector<double> Line = {pos_x,pos_y,pos_z,quad_x,quad_y,quad_z,quad_w};//, Pos_y, Pos_z;
+        vector<double> Line = {J1,J2,J3,J4,J5,J6,J7};//, Pos_y, Pos_z;
         Traj.push_back(Line);
     }
 
