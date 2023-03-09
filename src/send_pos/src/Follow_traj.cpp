@@ -60,7 +60,7 @@ int main(int argc, char **argv)
     ROS_INFO("Preparing trajectory...");
 
     std::ofstream myfile;
-    myfile.open ("src/send_pos/src/trajectory_joints.csv");
+    myfile.open ("src/send_pos/src/trajectory_joints2.csv");
 
     //Convert cartesian to joint space
     vector<double> pos_joint_next(7);

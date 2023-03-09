@@ -101,7 +101,7 @@ int main(int argc, char **argv)
             Eigen::VectorXd quat;
             quat << traj_cart[3],traj_cart[4],traj_cart[5],traj_cart[6];
             quat.normalize();
-            KDL::Rotation Rot = KDL::Rotation::Quaternion(quat[3],quat[4],quat[5],quat[6]);
+            KDL::Rotation Rot = KDL::Rotation::Quaternion(quat[3],quat[4],quat[5],quat[6]); 
 
             KDL::Vector Vec(traj_cart[0],traj_cart[1],traj_cart[2]);
             KDL::Frame Next_joint_cartesian(Rot,Vec); 
