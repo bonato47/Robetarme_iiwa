@@ -232,6 +232,9 @@ target_link_libraries(Follow_traj ${catkin_LIBRARIES})
 add_executable(Follow_trajV2 src/Follow_trajV2.cpp)
 target_link_libraries(Follow_trajV2 ${catkin_LIBRARIES})
 
+add_executable(talker src/talker.cpp)
+target_link_libraries(talker ${catkin_LIBRARIES})
+
 add_executable(Send_pos src/Send_pos.cpp)
 target_link_libraries(Send_pos ${catkin_LIBRARIES})
 
