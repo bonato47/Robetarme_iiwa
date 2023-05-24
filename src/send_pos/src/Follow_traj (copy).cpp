@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 
     //iniailization Invers Kinematics
     string base_link = "iiwa_link_0";
-    string tip_link = "iiwa_link_6";
+    string tip_link = "iiwa_link_ee";
     string URDF_param="/robot_description";
     double timeout_in_secs=0.5;
     double error=1e-3; // a voir la taille
@@ -60,12 +60,12 @@ int main(int argc, char **argv)
     ROS_INFO("Preparing trajectory...");
 
     std::ofstream myfile;
-    myfile.open ("src/send_pos/src/trajectory_joints_small.csv");
+    myfile.open ("src/send_pos/src/trajectory_joints2.csv");
 
     //Convert cartesian to joint space
     vector<double> pos_joint_next(7);
     double* ptr;
-    for(int i = 0; i< int(traj_cart.size()/50);i++)
+    for(int i = 0; i< int(traj_cart.size());i++)
     {
         KDL::JntArray Next_joint_task;
         KDL::JntArray actual_joint_task; 
