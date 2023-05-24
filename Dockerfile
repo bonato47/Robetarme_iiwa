@@ -135,12 +135,10 @@ RUN rm trac_ik -r
 ### Add environement variables to bashrc
 WORKDIR /home/${USER}
 
-COPY --chown=${USER} ./src .
+COPY --chown=${USER} ./src ./ros_ws/src
 
 # Give bashrc back to user
 RUN sudo chown -R ${USER}:${HOST_GID} .bashrc
-
-
 
 # Add cmake option to bash rc if needed
 RUN if [ "${USE_SIMD}" = "ON" ] ; \
