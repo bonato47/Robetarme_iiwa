@@ -120,10 +120,7 @@ RUN rm -rf /tmp/*
 WORKDIR /home/${USER}/ros_ws/src
 RUN git clone https://github.com/epfl-lasa/iiwa_ros.git
 
-# Install iiwa_robetarme
-#WORKDIR /home/${USER}
-#RUN git clone https://github.com/bonato47/Robetarme_iiwa.git
-#RUN cp -R Robetarme_iiwa/src/send_pos/ ros_ws/src/
+
 
 # Install trak_ik
 WORKDIR /home/${USER}
@@ -131,6 +128,16 @@ RUN git clone https://bitbucket.org/traclabs/trac_ik.git
 RUN cp -R trac_ik ros_ws/src/
 RUN rm trac_ik -r
 
+# Install pinochio
+RUN echo "deb [arch=amd64] http://robotpkg.openrobots.org/packages/debian/pub $(lsb_release -cs) robotpkg" | sudo tee /etc/apt/sources.list.d/robotpkg.list
+RUN  curl http://robotpkg.openrobots.org/packages/debian/robotpkg.key | sudo apt-key add -
+RUN  sudo apt update
+RUN  sudo apt install -qqy robotpkg-py3*-pinocchio
+RUN export PATH=/opt/openrobots/bin:$PATH
+RUN export PKG_CONFIG_PATH=/opt/openrobots/lib/pkgconfig:$PKG_CONFIG_PATH
+RUN export LD_LIBRARY_PATH=/opt/openrobots/lib:$LD_LIBRARY_PATH
+RUN export PYTHONPATH=/opt/openrobots/lib/python3.8.10/site-packages:$PYTHONPATH 
+RUN export CMAKE_PREFIX_PATH=/opt/openrobots:$CMAKE_PREFIX_PATH
 
 ### Add environement variables to bashrc
 WORKDIR /home/${USER}

@@ -38,6 +38,7 @@ int main(int argc, char **argv)
 
     vector<double> traj_cart({0,0,1.3,0,0,0,1});
 
+
     ros::param::set("send_pos/Nextpos",traj_cart);
 
     //iniailization Invers Kinematics

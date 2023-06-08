@@ -8,6 +8,7 @@
 #include <vector>
 #include "std_srvs/Empty.h"
 #include <trac_ik/trac_ik.hpp>
+#include "iiwa_tools/GetFK.h"
 #include <eigen3/Eigen/Dense>
 #include <filesystem>
 #include <unistd.h>
@@ -18,9 +19,7 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr);
 bool mseValue(vector<double> , vector<double> , int);
 vector<vector<double>> CSVtoVectorVectorDouble();
 
-
 int n =7;
-int Taille = 5000;
 vector<double> eff(n);
 vector<double> vel(n);
 vector<double> pos_joint_actual(n);
@@ -36,33 +35,30 @@ int main(int argc, char **argv)
     ros::NodeHandle Nh;
     ros::Subscriber sub = Nh.subscribe("iiwa/joint_states", 1000, CounterCallback);
     ros::Publisher chatter_pub = Nh.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
+    ros::ServiceClient client_FK = Nh.serviceClient<iiwa_tools::GetFK>("iiwa/iiwa_fk_server");
+
     //Frequency of the Ros loop
     ros::Rate loop_rate(200);
 
     // Read trajectory from .csv 
     vector<vector<double>> traj_cart = CSVtoVectorVectorDouble();
 
-    //iniailization Invers Kinematics
-    string base_link = "iiwa_link_0";
-    string tip_link = "iiwa_link_ee";
-    string URDF_param="/robot_description";
-    double timeout_in_secs=0.5;
-    double error=1e-3; // a voir la taille
-    TRAC_IK::SolveType type=TRAC_IK::Distance;
-    TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
+    //iniailization Forward Kinematics
+    iiwa_tools::GetFK  FK_state ;
+    FK_state.request.joints.layout.dim.push_back(std_msgs::MultiArrayDimension());
+    FK_state.request.joints.layout.dim.push_back(std_msgs::MultiArrayDimension());
+    FK_state.request.joints.layout.dim[0].size = 1;
+    FK_state.request.joints.layout.dim[1].size = 7;
 
-    KDL::Chain chain;
-    bool valid = ik_solver.getKDLChain(chain);
-    if (!valid)
-    {
-        ROS_ERROR("There was no valid KDL chain found");
-    }
-    ROS_INFO("Preparing trajectory...");
+
+    geometry_msgs::Quaternion Past_cart_quat;
+    geometry_msgs::Point Past_cart_pos;
+    geometry_msgs::Pose Past_cart;
 
     std::ofstream myfile;
-    myfile.open ("src/send_pos/src/trajectory_joints2.csv");
+    myfile.open ("src/send_pos/src/trajectory_cart.csv");
 
-    //Convert cartesian to joint space
+    //Convert joint space to  cartesian 
     vector<double> pos_joint_next(7);
     double* ptr;
     for(int i = 0; i< int(traj_cart.size());i++)
@@ -81,18 +77,19 @@ int main(int argc, char **argv)
             std::fill(pos_joint_next.begin(), pos_joint_next.end(), 0);
         }
        
-        KDL::Vector Vec(traj_cart[i][3],traj_cart[i][4],traj_cart[i][5]);
-        //KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[i][0],traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
-        KDL::Rotation Rot = KDL::Rotation::EulerZYX(traj_cart[i][2],traj_cart[i][1],traj_cart[i][0]);
 
-        KDL::Frame Next_joint_cartesian(Rot,Vec); 
+        FK_state.request.joints.data =  {traj_cart[i][0],traj_cart[i][1],traj_cart[i][2],traj_cart[i][3],traj_cart[i][4],traj_cart[i][5],traj_cart[i][6]};
+        client_FK.call(FK_state);
+        Past_cart = FK_state.response.poses[0], FK_state.response.poses[1];
+        Past_cart_pos = Past_cart.position;
+        Past_cart_quat = Past_cart.orientation;
 
-        Eigen::VectorXd pos_joint_next_eigen ;
-        int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
-        pos_joint_next_eigen = Next_joint_task.data;
-        for(int i = 0 ;i<7;++i){
+        pos_joint_next = {Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w,Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z};
+        
+
+        /* for(int i = 0 ;i<7;++i){
             pos_joint_next[i] =pos_joint_next_eigen(i);
-        }
+        } */
         traj_joint.push_back(pos_joint_next);
         std::stringstream ss;
         if(i > 15){
@@ -105,7 +102,16 @@ int main(int argc, char **argv)
             myfile << ss.str();
             myfile <<"\n";
         }
- 
+
+ /*        if(rc < 0){
+            ROS_INFO("no solution found");
+            myfile.close();
+            break;
+        }
+        else{
+            ROS_INFO("ok");
+        }
+  */
 
         if(i == round(int(traj_cart.size())/2)){
             ROS_INFO("Half of the the trajectory load, please wait... ");
@@ -117,6 +123,7 @@ int main(int argc, char **argv)
     myfile.close();
 
     ROS_INFO("Trajectory well load, When you are ready press GO");
+    return 0;
     string UserInput = "stop";
     while( UserInput != "GO"){
         cin >> UserInput;
@@ -184,7 +191,7 @@ bool mseValue(vector<double> v1, vector<double> v2,int Num)
 vector<vector<double>> CSVtoVectorVectorDouble()
 {
     //string fname = "/home/bonato/catkin_ws/src/send_pos/src/trajectory.csv";
-    string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory.csv";
+    string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory_joints_Trajectory_Transform.csv";
     vector<vector<double>> Traj;
     vector<vector<string>> content;
     vector<string> row;

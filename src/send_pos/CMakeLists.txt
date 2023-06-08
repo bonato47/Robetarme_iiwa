@@ -226,14 +226,17 @@ target_link_libraries(Ds_Tikhonov ${catkin_LIBRARIES} ${Eigen3_LIBRARIES} "stdc+
 #add_executable(listener src/listener.cpp )
 #target_link_libraries(listener ${catkin_LIBRARIES})
 
-add_executable(Follow_traj src/Follow_traj.cpp)
-target_link_libraries(Follow_traj ${catkin_LIBRARIES})
+add_executable(Follow_traj_trak_ik src/Follow_traj_trak_ik.cpp)
+target_link_libraries(Follow_traj_trak_ik ${catkin_LIBRARIES})
 
 add_executable(Follow_trajV2 src/Follow_trajV2.cpp)
 target_link_libraries(Follow_trajV2 ${catkin_LIBRARIES})
 
-add_executable(talker src/talker.cpp)
-target_link_libraries(talker ${catkin_LIBRARIES})
+add_executable(Follow_traj_pinochio src/Follow_traj_pinochio.cpp)
+target_link_libraries(Follow_traj_pinochio ${catkin_LIBRARIES})
+
+add_executable(ItoK src/ItoK.cpp)
+target_link_libraries(ItoK ${catkin_LIBRARIES})
 
 add_executable(Send_pos src/Send_pos.cpp)
 target_link_libraries(Send_pos ${catkin_LIBRARIES})
