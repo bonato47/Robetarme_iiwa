@@ -1,6 +1,7 @@
 # Handle ros distro
 ARG ROS_DISTRO=noetic
-FROM ghcr.io/aica-technology/ros-ws:${ROS_DISTRO}
+
+FROM ghcr.io/aica-technology/ros-ws:${ROS_DISTRO} as ros-ws
 
 # User provided arguments
 ARG HOST_GID=1000
@@ -31,7 +32,6 @@ RUN if [ "${ROS_DISTRO}" == "noetic" ] ; \
     then sudo apt install python-is-python3 ; fi
 
 
-
 ### Add a few tools
 RUN sudo apt-get update && sudo apt-get install -y \
     bash-completion \
@@ -42,6 +42,9 @@ RUN sudo apt-get update && sudo apt-get install -y \
     ros-${ROS_DISTRO}-ros-control \
     ros-${ROS_DISTRO}-ros-controllers \
     && sudo apt-get upgrade -y && sudo apt-get clean
+   
+
+FROM ros-ws as iiwa-dependencies
 
 # Install gazebo (9 or 11 depending on distro)
 WORKDIR /home/${USER}
@@ -120,7 +123,7 @@ RUN rm -rf /tmp/*
 WORKDIR /home/${USER}/ros_ws/src
 RUN git clone https://github.com/epfl-lasa/iiwa_ros.git
 
-
+FROM iiwa-dependencies as inverse-kinematics
 
 # Install trak_ik
 WORKDIR /home/${USER}
@@ -128,16 +131,44 @@ RUN git clone https://bitbucket.org/traclabs/trac_ik.git
 RUN cp -R trac_ik ros_ws/src/
 RUN rm trac_ik -r
 
-# Install pinochio
-RUN echo "deb [arch=amd64] http://robotpkg.openrobots.org/packages/debian/pub $(lsb_release -cs) robotpkg" | sudo tee /etc/apt/sources.list.d/robotpkg.list
-RUN  curl http://robotpkg.openrobots.org/packages/debian/robotpkg.key | sudo apt-key add -
-RUN  sudo apt update
-RUN  sudo apt install -qqy robotpkg-py3*-pinocchio
-RUN export PATH=/opt/openrobots/bin:$PATH
-RUN export PKG_CONFIG_PATH=/opt/openrobots/lib/pkgconfig:$PKG_CONFIG_PATH
-RUN export LD_LIBRARY_PATH=/opt/openrobots/lib:$LD_LIBRARY_PATH
-RUN export PYTHONPATH=/opt/openrobots/lib/python3.8.10/site-packages:$PYTHONPATH 
-RUN export CMAKE_PREFIX_PATH=/opt/openrobots:$CMAKE_PREFIX_PATH
+# Install pinochio and control libraire from epfl-lasa#
+WORKDIR /home/${USER}
+RUN git clone https://github.com/epfl-lasa/control-libraries.git --branch v6.0.0  --single-branch
+WORKDIR /home/${USER}/control-libraries/source
+RUN sudo bash install.sh -y
+
+#install eigen
+#WORKDIR /home/${USER}
+#RUN wget -c https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz -O - | tar -xz
+#RUN cd eigen-3.4.0 && mkdir build && cd build && cmake .. && make install
+#RUN cd ../.. && rm -r eigen-3.4.0
+
+#WORKDIR /home/${USER}/control-libraries/source
+#RUN mkdir build && cd build
+#RUN cmake -DCMAKE_BUILD_TYPE=Release ..
+#RUN make -j
+#RUN make install
+
+#WORKDIR /home/${USER}/control-libraries/protocol
+#RUN sudo bash install.sh --auto
+
+#COPY --from=ghcr.io/epfl-lasa/control-libraries/development-dependencies:latest /usr/local/include/google /usr/local/include/google
+#COPY --from=ghcr.io/epfl-lasa/control-libraries/development-dependencies:latest /usr/local/lib/libproto* /usr/local/lib
+#COPY --from=ghcr.io/epfl-lasa/control-libraries/development-dependencies:latest /usr/local/bin/protoc /usr/local/bin
+#RUN sudo ldconfig
+
+#RUN echo "deb [arch=amd64] http://robotpkg.openrobots.org/packages/debian/pub $(lsb_release -cs) robotpkg" | sudo tee /etc/apt/sources.list.d/robotpkg.list
+#RUN  curl http://robotpkg.openrobots.org/packages/debian/robotpkg.key | sudo apt-key add -
+#RUN  sudo apt update
+#RUN  sudo apt install -qqy robotpkg-py3*-pinocchio
+#RUN export PATH=/opt/openrobots/bin:$PATH
+#RUN export PKG_CONFIG_PATH=/opt/openrobots/lib/pkgconfig:$PKG_CONFIG_PATH
+#RUN export LD_LIBRARY_PATH=/opt/openrobots/lib:$LD_LIBRARY_PATH
+#RUN export PYTHONPATH=/opt/openrobots/lib/python3.8.10/site-packages:$PYTHONPATH 
+#RUN export CMAKE_PREFIX_PATH=/opt/openrobots:$CMAKE_PREFIX_PATH
+
+
+FROM inverse-kinematics as finalisation
 
 ### Add environement variables to bashrc
 WORKDIR /home/${USER}

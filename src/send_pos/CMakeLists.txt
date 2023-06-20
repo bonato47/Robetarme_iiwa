@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.3)
 project(send_pos)
 
+set (CMAKE_CXX_STANDARD 14)
+set(CMAKE_BUILD_TYPE Release)
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
@@ -16,9 +18,10 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   iiwa_tools
   trac_ik_lib
-  #qpOASES
-)
 
+  #qpOASESCONFIG REQUIRED
+)
+find_package(control_libraries 6.3.1 REQUIRED)
 ## System dependencies are found with CMake's conventionsF
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -232,8 +235,8 @@ target_link_libraries(Follow_traj_trak_ik ${catkin_LIBRARIES})
 add_executable(Follow_trajV2 src/Follow_trajV2.cpp)
 target_link_libraries(Follow_trajV2 ${catkin_LIBRARIES})
 
-add_executable(Follow_traj_pinochio src/Follow_traj_pinochio.cpp)
-target_link_libraries(Follow_traj_pinochio ${catkin_LIBRARIES})
+add_executable(Follow_traj_pinochio src/Follow_traj_pinochio.cpp src/Utils.cpp)
+target_link_libraries(Follow_traj_pinochio ${catkin_LIBRARIES} ${control_libraries_LIBRARIES})
 
 add_executable(ItoK src/ItoK.cpp)
 target_link_libraries(ItoK ${catkin_LIBRARIES})

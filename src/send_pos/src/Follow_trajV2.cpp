@@ -206,8 +206,7 @@ vector<double> TakeLine(vector<vector<double>> Mat, int numB )
 
 vector<vector<double>> CSVtoVectorVectorDouble()
 {
-    //string fname = "/home/bonato/catkin_ws/src/send_pos/src/trajectory.csv";
-    string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory_joints_combine_speed2.csv";
+    string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory_joints_Trajectory_Transform.csv";
     vector<vector<double>> Traj;
     vector<vector<string>> content;
     vector<string> row;

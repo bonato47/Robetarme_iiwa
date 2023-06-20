@@ -32,7 +32,6 @@ vector<vector<double>> CSVtoVectorVectorDouble();
 Eigen::Matrix< double,6,1> state_to_twist(Vector4d q1, Vector3d x01, Vector4d q2 ,Vector3d x02, double dt);
 
 int n =7;
-bool init= false;
 vector<double> posJointActual(n);
 vector<double> velJointActual(n);
 vector<double> posJointNext(7);
@@ -45,9 +44,6 @@ float pi =3.14;
 int main(int argc, char **argv)
 {
     double dt = 0;
-    VectorXd posJointNext_eigen;
-    VectorXd posJointActualEigen;
-
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Follow_traj_pinochio");
     ros::NodeHandle Nh;
@@ -81,8 +77,9 @@ int main(int argc, char **argv)
     Nh.getParam("/InversDynamics/proportional_gain", proportional_gain);
     Nh.getParam("/InversDynamics/linear_velocity_limit", linear_velocity_limit);
     Nh.getParam("/InversDynamics/angular_velocity_limit", angular_velocity_limit);
-    std::chrono::nanoseconds t = 1000ns;
-    struct robot_model::QPInverseVelocityParameters paramsVel = {alphaVel,proportional_gain,linear_velocity_limit,angular_velocity_limit,t};
+    std::chrono::nanoseconds dt(static_cast<int>(1e9));
+
+    struct robot_model::QPInverseVelocityParameters paramsVel = {alphaVel,proportional_gain,linear_velocity_limit,angular_velocity_limit,dt};
 
     //parameter for inverse kinematics
     double damp;
@@ -108,20 +105,20 @@ int main(int argc, char **argv)
     else{
         ROS_INFO("Trajectory planned with Inverse Dynamics");
     }
-
-    //waiting for the first joint position
-    while(!init){
-        ros::spinOnce();
-        ptr = &posJointActual[0];
-        posJointActualEigen = Map<VectorXd>(ptr, 7);
-    }
-
+    VectorXd posJointNext_eigen;
+    VectorXd posJointActualEigen;
+   
     int size = int(traj_cart.size())-1;
     for(int i = 0; i< size;i++)
     {
-        Vector3d p1, p2;
-        Vector4d q1,q2;
-        Quaterniond qa ;
+        Vector3d p1 = {traj_cart[i][4],traj_cart[i][5],traj_cart[i][6]};
+        Vector3d p2 = {traj_cart[i+1][4],traj_cart[i+1][5],traj_cart[i+1][6]};
+        Vector4d q1 = {traj_cart[i][0],traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]};
+        Vector4d q2 = {traj_cart[i+1][0],traj_cart[i+1][1],traj_cart[i+1][2],traj_cart[i+1][3]};
+        //quaternion given by w,x,y,z
+        Quaterniond qa = {traj_cart[i][3],traj_cart[i][0],traj_cart[i][1],traj_cart[i][2]};
+        dt =  traj_cart[i+1][7];
+
         if(i == 0){
             ptr = &posJointActual[0];
             posJointActualEigen = Map<VectorXd>(ptr, 7); 
@@ -142,13 +139,6 @@ int main(int argc, char **argv)
         else{
             posJointActualEigen = posJointNext_eigen; 
             std::fill(posJointNext_eigen.begin(), posJointNext_eigen.end(), 0);
-            p1 = {traj_cart[i][4],traj_cart[i][5],traj_cart[i][6]};
-            p2 = {traj_cart[i+1][4],traj_cart[i+1][5],traj_cart[i+1][6]};
-            q1 = {traj_cart[i][0],traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]};
-            q2 = {traj_cart[i+1][0],traj_cart[i+1][1],traj_cart[i+1][2],traj_cart[i+1][3]};
-            //quaternion given by w,x,y,z
-            qa = {traj_cart[i][3],traj_cart[i][0],traj_cart[i][1],traj_cart[i][2]};
-            dt =  traj_cart[i+1][7];
         }
    
         if(IK == "kinematics"){
@@ -162,19 +152,17 @@ int main(int argc, char **argv)
             //inverse dynamics------------------------------------------------
             //convert pos and quat to twist
             Eigen::Matrix< double,6,1> twist = state_to_twist(q1, p1, q2, p2, dt);
-            cout << "posactual : " << p1 << endl;
-
             state_representation::JointPositions actualJoinState =  state_representation::JointPositions(robot_name,posJointActualEigen);        
             state_representation::CartesianTwist nextPostwist = state_representation::CartesianTwist("nextPostwist",twist);
             state_representation::JointVelocities nextJoinStateSpeed = model.inverse_velocity(nextPostwist,actualJoinState,paramsVel,"iiwa_link_ee");
             posJointNext_eigen = nextJoinStateSpeed.data()  * dt + posJointActualEigen;
 
-/*              state_representation::JointPositions nextJoinState =  state_representation::JointPositions(robot_name,posJointNext_eigen);        
+            state_representation::JointPositions nextJoinState =  state_representation::JointPositions(robot_name,posJointActualEigen);        
             state_representation::CartesianPose nextCartesianPose = model.forward_kinematics(nextJoinState,"iiwa_link_ee");
             Vector3d p1Prime = nextCartesianPose.get_position();
             Quaterniond q1Prime = nextCartesianPose.get_orientation();
-            cout << "nextpos : " << p1Prime << endl;
-            return 1;  */
+            cout << "position from speed : " << p1Prime << endl;
+            return 1;
 
         }
         
@@ -257,7 +245,6 @@ int main(int argc, char **argv)
 
 void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
 {
-    if(init == false){init = true;}
     posJointActual = msg->position;
     velJointActual = msg->velocity;
 }
