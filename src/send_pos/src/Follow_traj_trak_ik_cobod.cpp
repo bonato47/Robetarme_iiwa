@@ -18,6 +18,8 @@ using namespace std;
 //void CounterCallback(const sensor_msgs::JointState::ConstPtr);
 bool mseValue(vector<double> , vector<double> , int);
 vector<vector<double>> CSVtoVectorVectorDouble();
+visualization_msgs::Marker printMarker(vector<double> quatPos);
+
 
 
 class inverseKin {       // The class
@@ -70,7 +72,6 @@ class inverseKin {       // The class
     }
 
 };
-
 
 int main(int argc, char **argv)
 {
@@ -185,7 +186,6 @@ int main(int argc, char **argv)
     //begin the Ros loop
     int Next  = 0;
     int count = 0 ;  
-    visualization_msgs::Marker marker;
 
     while (ros::ok())
     {
@@ -194,6 +194,7 @@ int main(int argc, char **argv)
         msgP.effort   = {};     
         msgP.name = {"Joint_1","Joint_2","Joint_3","Joint_5","Joint_6"};
         msgP.header.stamp=ros::Time::now();
+        visualization_msgs::Marker markers = printMarker(traj_cart[Next]);
 
         /* IK.pos_joint_actual= traj_joint[Next];
 
@@ -208,34 +209,10 @@ int main(int argc, char **argv)
             count = 0;
         }   
         ++count;  */
-        marker.header.frame_id = "Link_1";
-        marker.header.stamp = ros::Time::now();
-        marker.type = visualization_msgs::Marker::ARROW;
-        marker.action = visualization_msgs::Marker::ADD;
-        marker.ns= "ns";
-        marker.id = 0;
-        marker.pose.position.x =  traj_cart[Next][4];
-        marker.pose.position.y =  traj_cart[Next][5];
-        marker.pose.position.z =  traj_cart[Next][6];
-        Eigen::Quaterniond quat = {traj_cart[Next][0],traj_cart[Next][1],traj_cart[Next][2],traj_cart[Next][3]};
-        Eigen::Quaterniond Transf = {0,0,0,1};
-        quat = quat * Transf;
-        marker.pose.orientation.x =  quat.x();
-        marker.pose.orientation.y =  quat.y();
-        marker.pose.orientation.z =  quat.z();
-        marker.pose.orientation.w =  quat.w();
-        marker.scale.x = 0.1;
-        marker.scale.y = 0.01;
-        marker.scale.z = 0.01;
-        marker.color.a = 1.0; // Don't forget to set the alpha!
-        marker.color.r = 1.0;
-        marker.color.g = 1.0;
-        marker.color.b = 0.0;
-        ros::Duration one_seconds(1, 0);
-        marker.lifetime = one_seconds; 
+       
         //only if using a MESH_RESOURCE marker type:
        // marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
-        vis_pub.publish( marker );
+        vis_pub.publish(markers);
         pub.publish(msgP);
         ros::spinOnce();
         loop_rate.sleep();
@@ -319,4 +296,34 @@ vector<vector<double>> CSVtoVectorVectorDouble()
     }
 
     return Traj;
+}
+
+visualization_msgs::Marker printMarker(vector<double> quatPos){
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "Link_1";
+    marker.header.stamp = ros::Time::now();
+    marker.type = visualization_msgs::Marker::ARROW;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.ns= "ns";
+    marker.id = 0;
+    marker.pose.position.x =  quatPos[4];
+    marker.pose.position.y =  quatPos[5];
+    marker.pose.position.z =  quatPos[6];
+    Eigen::Quaterniond quat = {quatPos[0],quatPos[1],quatPos[2],quatPos[3]};
+    Eigen::Quaterniond Transf = {0,0,0,1};
+    quat = quat * Transf;
+    marker.pose.orientation.x =  quat.x();
+    marker.pose.orientation.y =  quat.y();
+    marker.pose.orientation.z =  quat.z();
+    marker.pose.orientation.w =  quat.w();
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.01;
+    marker.scale.z = 0.01;
+    marker.color.a = 1.0; // Don't forget to set the alpha!
+    marker.color.r = 1.0;
+    marker.color.g = 1.0;
+    marker.color.b = 0.0;
+    ros::Duration one_seconds(1, 0);
+    marker.lifetime = one_seconds; 
+    return marker;
 }
