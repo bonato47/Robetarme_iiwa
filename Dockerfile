@@ -133,7 +133,7 @@ RUN rm trac_ik -r
 
 # Install pinochio and control libraire from epfl-lasa#
 WORKDIR /home/${USER}
-RUN git clone https://github.com/epfl-lasa/control-libraries.git --branch v6.0.0  --single-branch
+RUN git clone https://github.com/epfl-lasa/control-libraries.git --branch v6.3.1  --single-branch
 WORKDIR /home/${USER}/control-libraries/source
 RUN sudo bash install.sh -y
 
@@ -173,6 +173,8 @@ FROM inverse-kinematics as finalisation
 ### Add environement variables to bashrc
 WORKDIR /home/${USER}
 
+
+### Copy all src from github Robetarme_iwwa
 COPY --chown=${USER} ./src ./ros_ws/src
 
 # Give bashrc back to user

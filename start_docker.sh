@@ -86,18 +86,28 @@ if [ "${MODE}" != "connect" ]; then
     # Other
     FWD_ARGS+=("--privileged")
     
-     #Add volume
+     #Add volume send_pos
     
-    docker volume rm rosbag_folder
+    docker volume rm send_pos
     docker volume create --driver local \
     --opt type="none" \
     --opt device="${PWD}/src/send_pos" \
     --opt o="bind" \
-    "rosbag_folder"
+    "send_pos"
     
-    FWD_ARGS+=(--volume="rosbag_folder:/home/ros/ros_ws/src/send_pos:rw")
+    FWD_ARGS+=(--volume="send_pos:/home/ros/ros_ws/src/send_pos:rw")
+    
+       
+    docker volume rm cobod_arm
+    docker volume create --driver local \
+    --opt type="none" \
+    --opt device="${PWD}/src/cobod_arm" \
+    --opt o="bind" \
+    "cobod_arm"
+    
+    FWD_ARGS+=(--volume="cobod_arm:/home/ros/ros_ws/src/cobod_arm:rw")
+    
 
-    
 fi
 
 # Trick aica-docker into making a server on a host network container

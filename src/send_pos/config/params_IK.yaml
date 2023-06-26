@@ -1,6 +1,6 @@
 #choose between inverse Kineatics and Inverse Dynamics
-#IK : "kinematics"
-IK : "dynamics"
+IK: "kinematics"
+#IK : "dynamics"
 
 # Parameter for invers kinematics
 

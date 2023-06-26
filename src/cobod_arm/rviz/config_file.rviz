@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Marker1
       Splitter Ratio: 0.5
     Tree Height: 554
   - Class: rviz/Selection
@@ -59,16 +60,6 @@ Visualization Manager:
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
-        Gripper_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        Gripper_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         Gripper_base:
           Alpha: 1
           Show Axes: false
@@ -111,6 +102,14 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: visualization_marker
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -139,7 +138,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.5263843536376953
+      Distance: 4.423496246337891
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -175,5 +174,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 60
-  Y: 60
+  X: 177
+  Y: 67

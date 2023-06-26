@@ -71,44 +71,41 @@ int main(int argc, char **argv)
 
     double timeout_in_secs=0.1;
     double error=1e-6; // a voir la taille 
-
-    //parameter for inverse velocities
+    string IK = "init" ;
+     //parameter for inverse velocities
     double alphaVel;
     double proportional_gain;
     double linear_velocity_limit; 
-    double angular_velocity_limit;
-    Nh.getParam("/InversDynamics/alphaVel", alphaVel);
-    Nh.getParam("/InversDynamics/proportional_gain", proportional_gain);
-    Nh.getParam("/InversDynamics/linear_velocity_limit", linear_velocity_limit);
-    Nh.getParam("/InversDynamics/angular_velocity_limit", angular_velocity_limit);
-    std::chrono::nanoseconds t = 1000ns;
-    struct robot_model::QPInverseVelocityParameters paramsVel = {alphaVel,proportional_gain,linear_velocity_limit,angular_velocity_limit,t};
-
-    //parameter for inverse kinematics
+    double angular_velocity_limit=2;
+     //parameter for inverse kinematics
     double damp;
     double alphaKin;
     double gamma;
     double margin;
     double tolerance;
     unsigned int maxNumberIteratons = 1000;
-    Nh.getParam("/InversKinematics/damp", damp);
-    Nh.getParam("/InversKinematics/alphaKin", alphaKin);
-    Nh.getParam("/InversKinematics/gamma", gamma);
-    Nh.getParam("/InversKinematics/margin", margin);
-    Nh.getParam("/InversKinematics/tolerance", tolerance);
 
+    while(IK == "init"){
+        Nh.getParam("IK", IK);
+        //parameter for inverse velocities
+        Nh.getParam("/InversDynamics/alphaVel", alphaVel);
+        Nh.getParam("/InversDynamics/proportional_gain", proportional_gain);
+        Nh.getParam("/InversDynamics/linear_velocity_limit", linear_velocity_limit);
+        Nh.getParam("/InversDynamics/angular_velocity_limit", angular_velocity_limit);
+        cout << angular_velocity_limit << endl;
+
+        //parameter for inverse kinematics
+        Nh.getParam("/InversKinematics/damp", damp);
+        Nh.getParam("/InversKinematics/alphaKin", alphaKin);
+        Nh.getParam("/InversKinematics/gamma", gamma);
+        Nh.getParam("/InversKinematics/margin", margin);
+        Nh.getParam("/InversKinematics/tolerance", tolerance);
+        ros::spinOnce();
+    }
+
+    std::chrono::nanoseconds t = 1000ns;
+    struct robot_model::QPInverseVelocityParameters paramsVel = {alphaVel,proportional_gain,linear_velocity_limit,angular_velocity_limit,t};
     struct robot_model::InverseKinematicsParameters paramsKin = {damp,alphaKin,gamma,margin,tolerance,maxNumberIteratons };
-
-    string IK ;
-    Nh.getParam("/IK", IK);
-
-    if(IK == "kinematics"){
-        ROS_INFO("Trajectory planned with Inverse Kinematics");
-    }
-    else{
-        ROS_INFO("Trajectory planned with Inverse Dynamics");
-    }
-
     //waiting for the first joint position
     while(!init){
         ros::spinOnce();
@@ -162,7 +159,7 @@ int main(int argc, char **argv)
             //inverse dynamics------------------------------------------------
             //convert pos and quat to twist
             Eigen::Matrix< double,6,1> twist = state_to_twist(q1, p1, q2, p2, dt);
-            cout << "posactual : " << p1 << endl;
+            //cout << "posactual : " << p1 << endl;
 
             state_representation::JointPositions actualJoinState =  state_representation::JointPositions(robot_name,posJointActualEigen);        
             state_representation::CartesianTwist nextPostwist = state_representation::CartesianTwist("nextPostwist",twist);

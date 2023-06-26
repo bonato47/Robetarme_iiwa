@@ -229,6 +229,9 @@ target_link_libraries(Ds_Tikhonov ${catkin_LIBRARIES} ${Eigen3_LIBRARIES} "stdc+
 #add_executable(listener src/listener.cpp )
 #target_link_libraries(listener ${catkin_LIBRARIES})
 
+add_executable(Follow_traj_trak_ik_cobod src/Follow_traj_trak_ik_cobod.cpp)
+target_link_libraries(Follow_traj_trak_ik_cobod ${catkin_LIBRARIES})
+
 add_executable(Follow_traj_trak_ik src/Follow_traj_trak_ik.cpp)
 target_link_libraries(Follow_traj_trak_ik ${catkin_LIBRARIES})
 

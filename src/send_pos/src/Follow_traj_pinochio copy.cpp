@@ -31,6 +31,35 @@ bool mseValue(vector<double> , vector<double> , int);
 vector<vector<double>> CSVtoVectorVectorDouble();
 Eigen::Matrix< double,6,1> state_to_twist(Vector4d q1, Vector3d x01, Vector4d q2 ,Vector3d x02, double dt);
 
+/* 
+class State_robot {       // The class
+  public:             // Access specifier
+    vector<double> cart,joint,cart_next,joint_next;
+    VectorXd cart_eigen, joint_eigen ,cart_next_eigen, joint_next_eigen ;
+    std_msgs::Float64MultiArray joint_std64;
+
+    void State_robot_actual(vector<double> V) {  // Method/function defined inside the class
+        joint = V;
+        int L = V.size();
+        double* pt = &V[0];
+        joint_eigen = Map<VectorXd>(pt, L);
+        joint_std64.data = {joint[0],joint[1],joint[2],joint[3],joint[4],joint[5],joint[6]};
+    }
+
+    void State_robot_next(vector<double> V) {  // Method/function defined inside the class
+        joint_next = V;
+        int L = V.size();
+        double* pt = &V[0];
+        joint_next_eigen = Map<VectorXd>(pt, L);
+    }
+    void State_robot_next_cart(vector<double> V) {  // Method/function defined inside the class
+        cart_next = V;
+        int L = V.size();
+        double* pt = &V[0];
+        cart_next_eigen = Map<VectorXd>(pt, L);
+    }
+}; */
+
 int n =7;
 vector<double> posJointActual(n);
 vector<double> velJointActual(n);
@@ -39,7 +68,6 @@ vector<double> posDesJoint(n);
 std_msgs::Float64MultiArray msgP;
 vector<vector<double>> trajJoint;
 double* ptr;
-float pi =3.14;
 
 int main(int argc, char **argv)
 {
@@ -79,7 +107,7 @@ int main(int argc, char **argv)
     Nh.getParam("/InversDynamics/angular_velocity_limit", angular_velocity_limit);
     std::chrono::nanoseconds dt(static_cast<int>(1e9));
 
-    struct robot_model::QPInverseVelocityParameters paramsVel = {alphaVel,proportional_gain,linear_velocity_limit,angular_velocity_limit,dt};
+    struct robot_model::QPInverseVelocityParameters paramsVel = {alphaVel,proportional_gain,linear_velocity_limit,angular_velocity_limit};
 
     //parameter for inverse kinematics
     double damp;

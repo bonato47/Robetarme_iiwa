@@ -3,7 +3,7 @@
   name="cobod_arm">
   <link
     name="Link_1">
-    <inertial>
+    <!--<inertial>
       <origin
         xyz="-3.52E-05 0.00025739 0.18016"
         rpy="0 0 0" />
@@ -16,7 +16,7 @@
         iyy="0.010294"
         iyz="-5.2258E-08"
         izz="0.014258" />
-    </inertial>
+    </inertial> -->
     <visual>
       <origin
         xyz="0 0 0"
@@ -384,122 +384,6 @@
       effort="4"
       velocity="1.0" />
   </joint>
-  <link
-    name="Gripper_1">
-    <inertial>
-      <origin
-        xyz="-0.108 -0.2101 0.39631"
-        rpy="0 0 0" />
-      <mass
-        value="0.067507" />
-      <inertia
-        ixx="3.4848E-05"
-        ixy="-1.7749E-09"
-        ixz="-8.6485E-06"
-        iyy="5.5859E-05"
-        iyz="-2.7888E-07"
-        izz="4.3644E-05" />
-    </inertial>
-    <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <mesh
-          filename="package://cobod_arm/meshes/Gripper_1.STL" />
-      </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.75294 0.75294 0.75294 1" />
-      </material>
-    </visual>
-    <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <mesh
-          filename="package://cobod_arm/meshes/Gripper_1.STL" />
-      </geometry>
-    </collision>
-  </link>
-  <joint
-    name="Joint_7"
-    type="prismatic">
-    <origin
-      xyz="0.0678 0.20642 -0.31502"
-      rpy="0 0 0" />
-    <parent
-      link="Gripper_base" />
-    <child
-      link="Gripper_1" />
-    <axis
-      xyz="1 0 0" />
-    <limit
-      lower="-0.01285"
-      upper="0"
-      effort="10"
-      velocity="1.0" />
-  </joint>
-  <link
-    name="Gripper_2">
-    <inertial>
-      <origin
-        xyz="0.10897 -0.20255 0.39382"
-        rpy="0 0 0" />
-      <mass
-        value="0.064664" />
-      <inertia
-        ixx="3.1278E-05"
-        ixy="2.7077E-08"
-        ixz="6.0458E-06"
-        iyy="5.0311E-05"
-        iyz="2.2825E-07"
-        izz="4.0103E-05" />
-    </inertial>
-    <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <mesh
-          filename="package://cobod_arm/meshes/Gripper_2.STL" />
-      </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.75294 0.75294 0.75294 1" />
-      </material>
-    </visual>
-    <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <mesh
-          filename="package://cobod_arm/meshes/Gripper_2.STL" />
-      </geometry>
-    </collision>
-  </link>
-  <joint
-    name="Joint_8"
-    type="prismatic">
-    <origin
-      xyz="-0.0678 0.20642 -0.31502"
-      rpy="0 0 0" />
-    <parent
-      link="Gripper_base" />
-    <child
-      link="Gripper_2" />
-    <axis
-      xyz="-1 0 0" />
-    <limit
-      lower="-0.01285"
-      upper="0"
-      effort="10"
-      velocity="1.0" />
-  </joint>
 
   <gazebo reference="Link_1">
     <material>Gazebo/Black</material>
@@ -517,7 +401,7 @@
 <!--######################################################################-->
   <gazebo>
     <plugin name="joint_state_publisher" filename="libgazebo_ros_joint_state_publisher.so">
-      <jointName>Joint_1, Joint_2, Joint_3, Joint_5, Joint_6, Joint_7, Joint_8</jointName>
+      <jointName>Joint_1, Joint_2, Joint_3, Joint_5, Joint_6</jointName>
     </plugin>
   </gazebo>
 
