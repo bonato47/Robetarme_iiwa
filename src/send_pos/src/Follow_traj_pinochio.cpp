@@ -67,7 +67,7 @@ int main(int argc, char **argv)
     ROS_INFO("Preparing trajectory...");
 
     std::ofstream myfile;
-    myfile.open ("src/send_pos/src/trajectory_joints_Trajectory_Transform.csv");
+    myfile.open ("/home/ros/ros_ws/src/send_pos/src/trajectory_joints_Trajectory_Transform_pinochio.csv");
 
     double timeout_in_secs=0.1;
     double error=1e-6; // a voir la taille 
@@ -76,14 +76,14 @@ int main(int argc, char **argv)
     double alphaVel;
     double proportional_gain;
     double linear_velocity_limit; 
-    double angular_velocity_limit=2;
+    double angular_velocity_limit;
      //parameter for inverse kinematics
     double damp;
     double alphaKin;
     double gamma;
     double margin;
     double tolerance;
-    unsigned int maxNumberIteratons = 1000;
+    unsigned int maxNumberIteratons = 100000;
 
     while(IK == "init"){
         Nh.getParam("IK", IK);
@@ -92,7 +92,6 @@ int main(int argc, char **argv)
         Nh.getParam("/InversDynamics/proportional_gain", proportional_gain);
         Nh.getParam("/InversDynamics/linear_velocity_limit", linear_velocity_limit);
         Nh.getParam("/InversDynamics/angular_velocity_limit", angular_velocity_limit);
-        cout << angular_velocity_limit << endl;
 
         //parameter for inverse kinematics
         Nh.getParam("/InversKinematics/damp", damp);
@@ -206,7 +205,7 @@ int main(int argc, char **argv)
     while( UserInput != "start"){
         cin >> UserInput;
     }
-    int Next  = 0;
+    int Next  = 1;
     int count = 0 ;
     msgP.data = trajJoint[Next];
     posDesJoint= trajJoint[Next];
@@ -226,6 +225,7 @@ int main(int argc, char **argv)
     } 
     count =1;
     //begin the Ros loop
+    ROS_INFO("Let's GO");
 
     while (ros::ok())
     {
@@ -242,7 +242,7 @@ int main(int argc, char **argv)
             }
             //ROS_INFO("target reached, go next one ");
             count = 0;
-        }   
+        }    
         ++count;
         chatter_pub.publish(msgP);
         ros::spinOnce();
@@ -263,7 +263,7 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
 bool mseValue(vector<double> v1, vector<double> v2,int Num)
 {
     // tolerance of the errot between each point
-    float tol =0.05;
+    float tol =0.005;
     bool Reached = false;
     int crit =0;
     float err =0;

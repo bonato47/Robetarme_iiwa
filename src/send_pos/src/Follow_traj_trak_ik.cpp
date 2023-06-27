@@ -59,7 +59,7 @@ int main(int argc, char **argv)
     ROS_INFO("Preparing trajectory...");
 
     std::ofstream myfile;
-    myfile.open ("src/send_pos/src/trajectory_joints_Trajectory_Transform.csv");
+    myfile.open ("src/send_pos/src/trajectory_joints_Trajectory_Transform_trak_ik.csv");
 
     //Convert cartesian to joint space
     vector<double> pos_joint_next(7);
@@ -167,7 +167,7 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
 bool mseValue(vector<double> v1, vector<double> v2,int Num)
 {
     // tolerance of the errot between each point
-    float tol =0.05;
+    float tol =0.01;
     bool Reached = false;
     int crit =0;
     float err =0;

@@ -98,7 +98,7 @@ int main(int argc, char **argv)
     ros::Publisher pub = Nh.advertise<sensor_msgs::JointState>("joint_states", 1000);
     ros::Publisher vis_pub = Nh.advertise<visualization_msgs::Marker>("visualization_marker", 100 );
     //Frequency of the Ros loop
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(100);
 
 
     //setup IK parameters
