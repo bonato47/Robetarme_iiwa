@@ -1,0 +1,29 @@
+<launch>
+  <arg name="model" />
+  <param name="robot_description"
+    textfile="$(find send_pos)/urdf/iiwa7.urdf" />
+<!-- <node 
+    name="joint_state_publisher_gui"
+    pkg="joint_state_publisher_gui"
+    type="joint_state_publisher_gui" /> -->
+  <node
+    name="robot_state_publisher"
+    pkg="robot_state_publisher"
+    type="robot_state_publisher" />
+  <node
+    name="rviz"
+    pkg="rviz"
+    type="rviz"
+    args="-d $(find send_pos)/rviz/config_file_iiwa.rviz" />
+
+  <param name="robot_name" type="string" value="iiwa" />
+  <param name="errorIK" type="double" value="0.000001" />
+  <param name="timeIK" type="double" value="0.1" />
+
+
+  <node pkg="send_pos" name="Follow_traj_trak_ik_cobod" type="Follow_traj_trak_ik_cobod" output="screen"/>
+    
+
+</launch>
+
+

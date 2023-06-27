@@ -14,51 +14,59 @@
 #include <unistd.h>
 
 using namespace std;
+using namespace Eigen;
+
 
 //void CounterCallback(const sensor_msgs::JointState::ConstPtr);
 bool mseValue(vector<double> , vector<double> , int);
 vector<vector<double>> CSVtoVectorVectorDouble();
-visualization_msgs::Marker printMarker(vector<double> quatPos);
-
-
+visualization_msgs::Marker printMarker(vector<double> quatPos, string base);
 
 class inverseKin {       // The class
     public:             // Access specifier
         //iniailization Invers Kinematics
-        string base_link = "Link_1";
-        string tip_link = "Gripper_base";
+        string base_link;
+        string tip_link ;
         string URDF_param="/robot_description";
         TRAC_IK::SolveType type =TRAC_IK::Speed;
         double error;
         double timeout_in_secs;
         int n_joint;
-        vector<double> pos_joint_actual;
+        vector<double> posJointActual;
+        VectorXd posJointActualEigen;
+        vector<double> pos_joint_next;
         vector<double> pos_des_joint;
+        ros::V_string jointsName;
+        bool init= false;
 
-        // TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
     void init_IK_iiwa() {  // Method/function defined inside the class
         base_link = "iiwa_link_0";
         tip_link = "iiwa_link_ee";
         n_joint =7;
-        pos_joint_actual.reserve(n_joint);
+        posJointActual.reserve(n_joint);
         pos_des_joint.reserve(n_joint);
+        pos_joint_next.reserve(n_joint);
+        jointsName ={"iiwa_joint_1", "iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4", "iiwa_joint_5", "iiwa_joint_6", "iiwa_joint_7"};
     }    
     void init_IK_cobod() {  // Method/function defined inside the class
         base_link = "Link_1";
         tip_link = "Gripper_base";
         n_joint = 5;
-        pos_joint_actual.reserve(n_joint);
+        posJointActual.reserve(n_joint);
         pos_des_joint.reserve(n_joint);
-
+        pos_joint_next.reserve(n_joint);
+        jointsName = {"Joint_1","Joint_2","Joint_3","Joint_5","Joint_6"};
     }
 
     void updateParamIK( double errorUpdate,double timeUpdate) {  // Method/function defined inside the class
-
         error = errorUpdate;
         timeout_in_secs = timeUpdate;
         TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
+    }
 
-        KDL::Chain chain;
+    void getIK( ) {  // Method/function defined inside the class
+        TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
+         KDL::Chain chain;
         bool valid = ik_solver.getKDLChain(chain);
         if (!valid)
         {
@@ -68,41 +76,60 @@ class inverseKin {       // The class
 
     void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
     {
-        pos_joint_actual = msg->position;
+        posJointActual = msg->position;
+        if(init == false){
+            init = true;
+        }    
+        double* ptr = &posJointActual[0];
+        posJointActualEigen = Map<VectorXd>(ptr, n_joint);
     }
-
 };
 
 int main(int argc, char **argv)
 {
-    inverseKin IK;
-    IK.init_IK_cobod();
     sensor_msgs::JointState msgP;
     vector<vector<double>> traj_joint;
 
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Follow_traj");
     ros::NodeHandle Nh;
+    inverseKin IK;
     ros::Subscriber sub = Nh.subscribe("joint_states", 1000, &inverseKin::CounterCallback, &IK);
     ros::Publisher pub = Nh.advertise<sensor_msgs::JointState>("joint_states", 1000);
     ros::Publisher vis_pub = Nh.advertise<visualization_msgs::Marker>("visualization_marker", 100 );
     //Frequency of the Ros loop
     ros::Rate loop_rate(10);
 
+
+    //setup IK parameters
+    string robot_name;
+    Nh.getParam("/robot_name", robot_name);
+    if(robot_name == "iiwa"){
+        IK.init_IK_iiwa();
+    } 
+    else { 
+        IK.init_IK_cobod();
+    }
+    Nh.getParam("/errorIK",IK.error);
+    Nh.getParam("/timeIK",IK.timeout_in_secs);
+
+
     // Read trajectory from .csv 
     vector<vector<double>> traj_cart = CSVtoVectorVectorDouble();
-/*     inverseKin Trak;
-    Trak.init_IK(TRAC_IK::Speed,0.05,0.01); */
 
-    //iniailization Invers Kinematics
-    string base_link = "Link_1";
-    string tip_link = "Gripper_base";
-    string URDF_param="/robot_description";
-    double timeout_in_secs=0.01;
-    double error=0.05; // a voir la taille
-    TRAC_IK::SolveType type=TRAC_IK::Speed;
-    TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
+    //waiting for the first joint position
 
+     while(!IK.init){
+        msgP.position = IK.posJointActual;//{0.0,0.0,0.0,0.0,0.0};
+        msgP.velocity = {};
+        msgP.effort   = {};     
+        msgP.name = IK.jointsName;
+        msgP.header.stamp=ros::Time::now();
+        pub.publish(msgP);
+        ros::spinOnce();
+     } 
+
+    TRAC_IK::TRAC_IK ik_solver(IK.base_link, IK.tip_link, IK.URDF_param, IK.timeout_in_secs, IK.error, IK.type);  
     KDL::Chain chain;
     bool valid = ik_solver.getKDLChain(chain);
     if (!valid)
@@ -115,39 +142,37 @@ int main(int argc, char **argv)
     myfile.open ("src/send_pos/src/trajectory_joints_cobod.csv");
 
     //Convert cartesian to joint space
-    vector<double> pos_joint_next(IK.n_joint);
-    double* ptr;
     int size = int(traj_cart.size());
-    //size = 25000;
+    vector<double> pos_joint_next(IK.n_joint);
     for(int i = 0; i< size;i++)
     {
         KDL::JntArray Next_joint_task;
         KDL::JntArray actual_joint_task; 
+        VectorXd pos_joint_next_eigen ;
+
         if(i == 0){
-            ptr = &IK.pos_joint_actual[0];
-            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, IK.n_joint); 
-            actual_joint_task.data = pos_joint_actual_eigen; 
+            actual_joint_task.data = IK.posJointActualEigen; 
         }
         else {
-            ptr = &pos_joint_next[0];
-            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, IK.n_joint); 
-            actual_joint_task.data = pos_joint_actual_eigen; 
+            Map<VectorXd> pos_joint_next_eigen(&pos_joint_next[0], IK.n_joint); 
+            actual_joint_task.data = pos_joint_next_eigen; 
             std::fill(pos_joint_next.begin(), pos_joint_next.end(), 0);
         }  
 
         KDL::Vector Vec(traj_cart[i][4],traj_cart[i][5],traj_cart[i][6]);
         KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[i][0],traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
         KDL::Frame Next_joint_cartesian(Rot,Vec); 
-        Eigen::VectorXd pos_joint_next_eigen ;
         int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
-
         pos_joint_next_eigen = Next_joint_task.data;
         for(int i = 0 ;i<IK.n_joint;++i){
             pos_joint_next[i] =pos_joint_next_eigen(i);
+
         }
         traj_joint.push_back(pos_joint_next);
+
+
         std::stringstream ss;
-        if(i > 15){
+        if(i > 1){
             for (auto it = pos_joint_next.begin(); it != pos_joint_next.end(); it++)    {
                 if (it != pos_joint_next.begin()) {
                     ss << ",";
@@ -158,14 +183,12 @@ int main(int argc, char **argv)
             myfile <<"\n";
         }
 
- /*        if(rc < 0){
+ /*     if(rc < 0){
             ROS_INFO("no solution found");
             myfile.close();
             break;
         }
-        else{
-            ROS_INFO("ok");
-        }
+
   */
 
         if(i == round(int(traj_cart.size())/2)){
@@ -173,9 +196,8 @@ int main(int argc, char **argv)
         }
     }
 
-   
-    //-----------------------------------------
     myfile.close();
+    //-------------------------------------------------------------------
 
     ROS_INFO("Trajectory well load, When you are ready press GO");
     string UserInput = "stop";
@@ -192,14 +214,14 @@ int main(int argc, char **argv)
         msgP.position = traj_joint[Next];
         msgP.velocity = {};
         msgP.effort   = {};     
-        msgP.name = {"Joint_1","Joint_2","Joint_3","Joint_5","Joint_6"};
+        msgP.name = IK.jointsName;
         msgP.header.stamp=ros::Time::now();
-        visualization_msgs::Marker markers = printMarker(traj_cart[Next]);
+        visualization_msgs::Marker markers = printMarker(traj_cart[Next], IK.base_link);
 
-        /* IK.pos_joint_actual= traj_joint[Next];
+        /* IK.posJointActual= traj_joint[Next];
 
-        //ROS_INFO("%f", mseValue(pos,IK.pos_joint_actual,n));
-        if ((mseValue(IK.pos_joint_actual,IK.pos_joint_actual,IK.n_joint) && (Next < int(traj_cart.size()) )) || (count >50)){
+        //ROS_INFO("%f", mseValue(pos,IK.posJointActual,n));
+        if ((mseValue(IK.posJointActual,IK.posJointActual,IK.n_joint) && (Next < int(traj_cart.size()) )) || (count >50)){
             ++Next;
             if(Next == int(traj_cart.size())){
                 ROS_INFO("Last point reached, stop ");
@@ -210,12 +232,11 @@ int main(int argc, char **argv)
         }   
         ++count;  */
        
-        //only if using a MESH_RESOURCE marker type:
-       // marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
         vis_pub.publish(markers);
         pub.publish(msgP);
         ros::spinOnce();
         loop_rate.sleep();
+
         Next++;
         if(Next == int(traj_cart.size())){
             ROS_INFO("Last point reached, stop ");
@@ -223,8 +244,6 @@ int main(int argc, char **argv)
     }
     return 0;
 }   
-
-
 
 // Function that Calculate Root Mean Square
 bool mseValue(vector<double> v1, vector<double> v2,int Num)
@@ -249,7 +268,6 @@ bool mseValue(vector<double> v1, vector<double> v2,int Num)
 
     return Reached;
 }
-
 
 vector<vector<double>> CSVtoVectorVectorDouble()
 {
@@ -298,9 +316,9 @@ vector<vector<double>> CSVtoVectorVectorDouble()
     return Traj;
 }
 
-visualization_msgs::Marker printMarker(vector<double> quatPos){
+visualization_msgs::Marker printMarker(vector<double> quatPos, string base){
     visualization_msgs::Marker marker;
-    marker.header.frame_id = "Link_1";
+    marker.header.frame_id = base;
     marker.header.stamp = ros::Time::now();
     marker.type = visualization_msgs::Marker::ARROW;
     marker.action = visualization_msgs::Marker::ADD;
@@ -310,8 +328,8 @@ visualization_msgs::Marker printMarker(vector<double> quatPos){
     marker.pose.position.y =  quatPos[5];
     marker.pose.position.z =  quatPos[6];
     Eigen::Quaterniond quat = {quatPos[0],quatPos[1],quatPos[2],quatPos[3]};
-    Eigen::Quaterniond Transf = {0,0,0,1};
-    quat = quat * Transf;
+    Eigen::Quaterniond Transf = {0,1,0,0};
+    quat =  Transf* quat;
     marker.pose.orientation.x =  quat.x();
     marker.pose.orientation.y =  quat.y();
     marker.pose.orientation.z =  quat.z();

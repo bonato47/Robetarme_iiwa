@@ -15,4 +15,11 @@
     pkg="rviz"
     type="rviz"
     args="-d $(find cobod_arm)/rviz/config_file.rviz" />
+
+  <param name="errorIK" type="double" value="0.05" />
+  <param name="timeIK" type="double" value="0.1" />
+  <param name="robot_name" type="string" value="cobod" />
+  <node pkg="send_pos" name="Follow_traj_trak_ik_cobod" type="Follow_traj_trak_ik_cobod" output="screen"/>
+    
+
 </launch>
