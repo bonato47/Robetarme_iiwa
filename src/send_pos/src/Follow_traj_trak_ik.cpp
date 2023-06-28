@@ -187,7 +187,6 @@ bool mseValue(vector<double> v1, vector<double> v2,int Num)
     return Reached;
 }
 
-
 vector<vector<double>> CSVtoVectorVectorDouble()
 {
     //string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory_cart_short.csv";

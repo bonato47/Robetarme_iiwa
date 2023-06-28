@@ -326,8 +326,7 @@ visualization_msgs::Marker printMarker(vector<double> quatPos, string base){
     marker.pose.position.y =  quatPos[5];
     marker.pose.position.z =  quatPos[6];
     Eigen::Quaterniond quat = {quatPos[3],quatPos[0],quatPos[1],quatPos[2]};
-     Eigen::Quaterniond Transf = {0,0.7,0,0.7};
-    //Eigen::Quaterniond Transf = {0,0,0,1};
+    Eigen::Quaterniond Transf = {0,0.7,0,0.7};
 
     Transf.normalize();
 
