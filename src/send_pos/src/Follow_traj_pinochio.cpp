@@ -153,6 +153,9 @@ int main(int argc, char **argv)
             state_representation::JointPositions actualJoinState =  state_representation::JointPositions(robot_name,posJointActualEigen);        
             state_representation::JointPositions nextJoinStateKin = model.inverse_kinematics(nextPosCart,actualJoinState,paramsKin,"iiwa_link_ee");
             posJointNext_eigen = nextJoinStateKin.get_positions();
+
+
+            
         }
         else{
             //inverse dynamics------------------------------------------------
@@ -165,12 +168,11 @@ int main(int argc, char **argv)
             state_representation::JointVelocities nextJoinStateSpeed = model.inverse_velocity(nextPostwist,actualJoinState,paramsVel,"iiwa_link_ee");
             posJointNext_eigen = nextJoinStateSpeed.data()  * dt + posJointActualEigen;
 
-/*              state_representation::JointPositions nextJoinState =  state_representation::JointPositions(robot_name,posJointNext_eigen);        
+       /*      state_representation::JointPositions nextJoinState =  state_representation::JointPositions(robot_name,posJointNext_eigen);        
             state_representation::CartesianPose nextCartesianPose = model.forward_kinematics(nextJoinState,"iiwa_link_ee");
             Vector3d p1Prime = nextCartesianPose.get_position();
             Quaterniond q1Prime = nextCartesianPose.get_orientation();
-            cout << "nextpos : " << p1Prime << endl;
-            return 1;  */
+            posJointNext_eigen << p1Prime[0],p1Prime[1],p1Prime[2],q1Prime.x(),q1Prime.y(),q1Prime.z(),q1Prime.z(); */
 
         }
         

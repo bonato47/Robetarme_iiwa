@@ -98,14 +98,14 @@ if [ "${MODE}" != "connect" ]; then
     FWD_ARGS+=(--volume="send_pos:/home/ros/ros_ws/src/send_pos:rw")
     
        
-    docker volume rm cobod_arm
+    docker volume rm cobod_arm_study
     docker volume create --driver local \
     --opt type="none" \
-    --opt device="${PWD}/src/cobod_arm" \
+    --opt device="${PWD}/src/cobod_arm_study" \
     --opt o="bind" \
-    "cobod_arm"
+    "cobod_arm_study"
     
-    FWD_ARGS+=(--volume="cobod_arm:/home/ros/ros_ws/src/cobod_arm:rw")
+    FWD_ARGS+=(--volume="cobod_arm:/home/ros/ros_ws/src/cobod_arm_study:rw")
     
 
 fi

@@ -19,7 +19,7 @@ using namespace Eigen;
 
 //void CounterCallback(const sensor_msgs::JointState::ConstPtr);
 bool mseValue(vector<double> , vector<double> , int);
-vector<vector<double>> CSVtoVectorVectorDouble();
+vector<vector<double>> CSVtoVectorVectorDouble(string);
 visualization_msgs::Marker printMarker(vector<double> quatPos, string base);
 
 class inverseKin {       // The class
@@ -41,7 +41,7 @@ class inverseKin {       // The class
 
     void init_IK_iiwa() {  // Method/function defined inside the class
         base_link = "iiwa_link_0";
-        tip_link = "iiwa_link_ee";
+        tip_link = "iiwa_link_7";
         n_joint =7;
         posJointActual.reserve(n_joint);
         pos_des_joint.reserve(n_joint);
@@ -115,7 +115,8 @@ int main(int argc, char **argv)
 
 
     // Read trajectory from .csv 
-    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble();
+    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/send_pos/src/Trajectory_Transform.csv");
+    vector<vector<double>> traj_marker = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/send_pos/src/Trajectory_Transform_noend.csv");
 
     //waiting for the first joint position
 
@@ -269,11 +270,8 @@ bool mseValue(vector<double> v1, vector<double> v2,int Num)
     return Reached;
 }
 
-vector<vector<double>> CSVtoVectorVectorDouble()
+vector<vector<double>> CSVtoVectorVectorDouble(string fname)
 {
-    //string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory_cart_short.csv";
-    string fname = "/home/ros/ros_ws/src/send_pos/src/Trajectory_Transform.csv";
-
     vector<vector<double>> Traj;
     vector<vector<string>> content;
     vector<string> row;
@@ -327,14 +325,18 @@ visualization_msgs::Marker printMarker(vector<double> quatPos, string base){
     marker.pose.position.x =  quatPos[4];
     marker.pose.position.y =  quatPos[5];
     marker.pose.position.z =  quatPos[6];
-    Eigen::Quaterniond quat = {quatPos[0],quatPos[1],quatPos[2],quatPos[3]};
-    Eigen::Quaterniond Transf = {0,1,0,0};
-    quat =  Transf* quat;
+    Eigen::Quaterniond quat = {quatPos[3],quatPos[0],quatPos[1],quatPos[2]};
+     Eigen::Quaterniond Transf = {0,0.7,0,0.7};
+    //Eigen::Quaterniond Transf = {0,0,0,1};
+
+    Transf.normalize();
+
+    quat =   quat * Transf;
     marker.pose.orientation.x =  quat.x();
     marker.pose.orientation.y =  quat.y();
     marker.pose.orientation.z =  quat.z();
     marker.pose.orientation.w =  quat.w();
-    marker.scale.x = 0.1;
+    marker.scale.x = 0.3;
     marker.scale.y = 0.01;
     marker.scale.z = 0.01;
     marker.color.a = 1.0; // Don't forget to set the alpha!

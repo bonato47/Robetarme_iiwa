@@ -1,7 +1,0 @@
-
-
-msgP.position = traj_joint[Next];
-msgP.velocity = {};
-msgP.effort   = {};     
-msgP.name = IK.jointsName;
-msgP.header.stamp=ros::Time::now();
