@@ -170,8 +170,7 @@ int main(int argc, char **argv){
             state_representation::CartesianPose nextCartesianPose = model.forward_kinematics(nextJoinState,"iiwa_link_ee");
             Vector3d p1Prime = nextCartesianPose.get_position();
             Quaterniond q1Prime = nextCartesianPose.get_orientation();
-            posJointNext_eigen << p1Prime[0],p1Prime[1],p1Prime[2],q1Prime.x(),q1Prime.y(),q1Prime.z(),q1Prime.z(); */
-
+            posJointNext_eigen << p1Prime[0],p1Prime[1],p1Prime[2],q1Prime.x(),q1Prime.y(),q1Prime.z(),q1Prime.z(); */	
         }
         
         //cout << "position from speed : " << posJointNext_eigen << endl;

@@ -227,7 +227,8 @@ endforeach(dir)
 
 
 add_executable(cobod_arm_study src/cobod_arm_study.cpp)
-target_link_libraries(cobod_arm_study ${catkin_LIBRARIES})
+target_link_libraries(cobod_arm_study ${catkin_LIBRARIES} ${control_libraries_LIBRARIES})
+
 
 
 

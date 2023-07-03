@@ -16,7 +16,7 @@
     type="rviz"
     args="-d $(find cobod_arm_study)/rviz/config_file_iiwa.rviz" />
 
-  <param name="robot_name" type="string" value="iiwa" />
+  <param name="robot_name" type="string" value="iiwa7" />
   <param name="errorIK" type="double" value="0.00001" />
   <param name="timeIK" type="double" value="0.01" />
 
