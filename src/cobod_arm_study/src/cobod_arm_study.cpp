@@ -26,53 +26,72 @@ class inverseKin {       // The class
     public:             // Access specifier
         //iniailization Invers Kinematics
         string base_link;
-        string tip_link ;
+        string tip_link;
         string URDF_param="/robot_description";
         TRAC_IK::SolveType type =TRAC_IK::Speed;
-        double error;
-        double timeout_in_secs;
-        int n_joint;
+        double error{};
+        double timeout_in_secs{};
+        int n_joint{};
         vector<double> posJointActual;
         VectorXd posJointActualEigen;
         vector<double> pos_joint_next;
         vector<double> pos_des_joint;
         ros::V_string jointsName;
         bool init= false;
+        TRAC_IK::TRAC_IK* ik_solver = nullptr;  
+
 
     void init_IK_iiwa() {  // Method/function defined inside the class
-        base_link = "iiwa_link_0";
-        tip_link = "iiwa_link_7";
-        n_joint =7;
-        posJointActual.reserve(n_joint);
-        pos_des_joint.reserve(n_joint);
-        pos_joint_next.reserve(n_joint);
-        jointsName ={"iiwa_joint_1", "iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4", "iiwa_joint_5", "iiwa_joint_6", "iiwa_joint_7"};
+        this->base_link  = "iiwa_link_0";
+        this->tip_link   = "iiwa_link_ee";
+        this->jointsName = {"iiwa_joint_1", "iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4", "iiwa_joint_5", "iiwa_joint_6", "iiwa_joint_7"};
+        this->n_joint    = 7;
+        this->init_general();
     }    
     void init_IK_cobod() {  // Method/function defined inside the class
-        base_link = "Link_1";
-        tip_link = "Gripper_base";
-        n_joint = 5;
-        posJointActual.reserve(n_joint);
-        pos_des_joint.reserve(n_joint);
-        pos_joint_next.reserve(n_joint);
-        jointsName = {"Joint_1","Joint_2","Joint_3","Joint_5","Joint_6"};
+        this->base_link = "Link_1";
+        this->tip_link = "Gripper_base";
+        this->jointsName = {"Joint_1","Joint_2","Joint_3","Joint_5","Joint_6"};
+        this->n_joint = 5;
+        this->init_general();
+    }
+    void init_general(){
+
+        vector<double> vector0(this->n_joint, 0.0);;
+        this->pos_joint_next = vector0;
+        this->posJointActual= vector0;
+        this->pos_des_joint = vector0;
+        this->ik_solver= new TRAC_IK::TRAC_IK(this->base_link, this->tip_link, this->URDF_param, this->timeout_in_secs, this->error, this->type);  
+        KDL::Chain chain;
+        bool valid = ik_solver->getKDLChain(chain);
+        if (!valid) {
+        ROS_ERROR("There was no valid KDL chain found");
+        } 
     }
 
-    void updateParamIK( double errorUpdate,double timeUpdate) {  // Method/function defined inside the class
-        error = errorUpdate;
-        timeout_in_secs = timeUpdate;
-        TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
-    }
+    // void updateParamIK( double errorUpdate,double timeUpdate) {  // Method/function defined inside the class
+    //     error = errorUpdate;
+    //     timeout_in_secs = timeUpdate;
+    //     TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
+    // }
+ 
+    void getIK(vector<double> vectorQuatPos ) {  // Method/function defined inside the class
+        //Inverse kinematics trac-IK
+        KDL::JntArray Next_joint_task;
+        KDL::JntArray actual_joint_task; 
+        Map<VectorXd> pos_joint_next_eigen(&pos_joint_next[0], n_joint); 
+        actual_joint_task.data = pos_joint_next_eigen; 
+        std::fill(pos_joint_next.begin(), pos_joint_next.end(), 0);
+        KDL::Vector Vec(vectorQuatPos[4],vectorQuatPos[5],vectorQuatPos[6]);
+        KDL::Rotation Rot = KDL::Rotation::Quaternion(vectorQuatPos[0],vectorQuatPos[1],vectorQuatPos[2],vectorQuatPos[3]);
+        KDL::Frame Next_joint_cartesian(Rot,Vec); 
+        int rc = ik_solver->CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
 
-    void getIK( ) {  // Method/function defined inside the class
-        TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
-         KDL::Chain chain;
-        bool valid = ik_solver.getKDLChain(chain);
-        if (!valid)
-        {
-            ROS_ERROR("There was no valid KDL chain found");
+        pos_joint_next_eigen = Next_joint_task.data;
+        for(int i = 0 ;i<n_joint;++i){
+            pos_joint_next[i] =pos_joint_next_eigen(i);
         }
-    }
+     } 
 
     void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
     {
@@ -90,33 +109,34 @@ int main(int argc, char **argv)
     sensor_msgs::JointState msgP;
     vector<vector<double>> traj_joint;
 
-    //Initialisation of the Ros Node (Service, Subscrber and Publisher)
+    //init ros
     ros::init(argc, argv, "Follow_traj");
     ros::NodeHandle Nh;
-    inverseKin IK;
-    ros::Subscriber sub = Nh.subscribe("joint_states", 1000, &inverseKin::CounterCallback, &IK);
-    ros::Publisher pub = Nh.advertise<sensor_msgs::JointState>("joint_states", 1000);
-    ros::Publisher vis_pub = Nh.advertise<visualization_msgs::Marker>("visualization_marker", 100 );
-    //Frequency of the Ros loop
-    ros::Rate loop_rate(100);
-
 
     //setup IK parameters
+    inverseKin IK;
     string robot_name;
     Nh.getParam("/robot_name", robot_name);
+    Nh.getParam("/errorIK",IK.error);
+    Nh.getParam("/timeIK",IK.timeout_in_secs);
+
     if(robot_name == "iiwa"){
         IK.init_IK_iiwa();
     } 
     else { 
         IK.init_IK_cobod();
     }
-    Nh.getParam("/errorIK",IK.error);
-    Nh.getParam("/timeIK",IK.timeout_in_secs);
 
+    //Initialisation of the Ros Node (Service, Subscrber and Publisher)
+    ros::Subscriber sub = Nh.subscribe("joint_states", 1000, &inverseKin::CounterCallback, &IK);
+    ros::Publisher pub = Nh.advertise<sensor_msgs::JointState>("joint_states", 1000);
+    ros::Publisher vis_pub = Nh.advertise<visualization_msgs::Marker>("visualization_marker", 100 );
+    //Frequency of the Ros loop
+
+    ros::Rate loop_rate(100);
 
     // Read trajectory from .csv 
-    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/send_pos/src/Trajectory_Transform.csv");
-    vector<vector<double>> traj_marker = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/send_pos/src/Trajectory_Transform_noend.csv");
+    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/Trajectory_Transform.csv");
 
     //waiting for the first joint position
 
@@ -129,53 +149,43 @@ int main(int argc, char **argv)
         pub.publish(msgP);
         ros::spinOnce();
      } 
-
-    TRAC_IK::TRAC_IK ik_solver(IK.base_link, IK.tip_link, IK.URDF_param, IK.timeout_in_secs, IK.error, IK.type);  
-    KDL::Chain chain;
-    bool valid = ik_solver.getKDLChain(chain);
-    if (!valid)
-    {
-        ROS_ERROR("There was no valid KDL chain found");
-    } 
+    
     ROS_INFO("Preparing trajectory...");
 
     std::ofstream myfile;
-    myfile.open ("src/send_pos/src/trajectory_joints_cobod.csv");
+    myfile.open ("src/cobod_arm_study/src/trajectory_joints_cobod.csv");
 
     //Convert cartesian to joint space
     int size = int(traj_cart.size());
-    vector<double> pos_joint_next(IK.n_joint);
+    //vector<double> pos_joint_next(IK.n_joint);
+    //IK.pos_joint_next = pos_joint_next;
     for(int i = 0; i< size;i++)
     {
+   /*      //Inverse kinematics trac-IK
         KDL::JntArray Next_joint_task;
         KDL::JntArray actual_joint_task; 
-        VectorXd pos_joint_next_eigen ;
-
-        if(i == 0){
-            actual_joint_task.data = IK.posJointActualEigen; 
-        }
-        else {
-            Map<VectorXd> pos_joint_next_eigen(&pos_joint_next[0], IK.n_joint); 
-            actual_joint_task.data = pos_joint_next_eigen; 
-            std::fill(pos_joint_next.begin(), pos_joint_next.end(), 0);
-        }  
-
+        Map<VectorXd> pos_joint_next_eigen(&IK.pos_joint_next[0], IK.n_joint); 
+        actual_joint_task.data = pos_joint_next_eigen; 
+        std::fill(IK.pos_joint_next.begin(), IK.pos_joint_next.end(), 0);
         KDL::Vector Vec(traj_cart[i][4],traj_cart[i][5],traj_cart[i][6]);
         KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[i][0],traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
         KDL::Frame Next_joint_cartesian(Rot,Vec); 
-        int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
+        int rc = IK.ik_solver->CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
+
         pos_joint_next_eigen = Next_joint_task.data;
         for(int i = 0 ;i<IK.n_joint;++i){
-            pos_joint_next[i] =pos_joint_next_eigen(i);
-
+            IK.pos_joint_next[i] =pos_joint_next_eigen(i);
         }
-        traj_joint.push_back(pos_joint_next);
+         */
 
+        IK.getIK(traj_cart[i]);  // Method/function defined inside the class
+
+        traj_joint.push_back(IK.pos_joint_next);
 
         std::stringstream ss;
         if(i > 1){
-            for (auto it = pos_joint_next.begin(); it != pos_joint_next.end(); it++)    {
-                if (it != pos_joint_next.begin()) {
+            for (auto it = IK.pos_joint_next.begin(); it != IK.pos_joint_next.end(); it++)    {
+                if (it != IK.pos_joint_next.begin()) {
                     ss << ",";
                 }
                 ss << *it;
@@ -183,14 +193,6 @@ int main(int argc, char **argv)
             myfile << ss.str();
             myfile <<"\n";
         }
-
- /*     if(rc < 0){
-            ROS_INFO("no solution found");
-            myfile.close();
-            break;
-        }
-
-  */
 
         if(i == round(int(traj_cart.size())/2)){
             ROS_INFO("Half of the the trajectory load, please wait... ");

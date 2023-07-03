@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   iiwa_tools
   trac_ik_lib
+  roslaunch
 
   #qpOASESCONFIG REQUIRED
 )
@@ -218,6 +219,10 @@ include_directories(
 # catkin_add_nosetests(test)
 
 #include/qpOASES/qpOASES.cpp
+foreach(dir config launch meshes urdf)
+	install(DIRECTORY ${dir}/
+		DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
+endforeach(dir)
 
 
 

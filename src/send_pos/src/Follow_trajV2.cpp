@@ -17,8 +17,7 @@ using namespace std;
 void CounterCallback(const sensor_msgs::JointState::ConstPtr);
 bool mseValue(vector<double> , vector<double> , int);
 vector<double> TakeLine(vector<vector<double>> , int );
-vector<vector<double>> CSVtoVectorVectorDouble();
-
+vector<vector<double>> CSVtoVectorVectorDouble(string fname);
 
 int n =7;
 int Taille = 5000;
@@ -40,76 +39,14 @@ int main(int argc, char **argv)
     ros::Rate loop_rate(200);
 
     // Read trajectory from .csv 
-    vector<vector<double>> traj_joint = CSVtoVectorVectorDouble();
-/* 
-    //iniailization Invers Kinematics
-    string base_link = "iiwa_link_0";
-    string tip_link = "iiwa_link_ee";
-    string URDF_param="/robot_description";
-    double timeout_in_secs=0.05;
-    double error=1e-3; // a voir la taille
-    TRAC_IK::SolveType type=TRAC_IK::Distance;
-    TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
+    string name_file;
+    Nh.getParam("/Follow_trajV2/name", name_file);
+    //${PWD}
+        cout << name_file<< endl;
+    name_file =  "/home/ros/ros_ws/src/send_pos/trajectories/" + name_file;
+    cout << name_file<< endl;
 
-    KDL::Chain chain;
-    bool valid = ik_solver.getKDLChain(chain);
-    if (!valid)
-    {
-        ROS_ERROR("There was no valid KDL chain found");
-    }
-    ROS_INFO("Preparing trajectory...");
-
-    std::ofstream myfile;
-    myfile.open ("example.csv");
-
-    //Convert cartesian to joint space
-    vector<double> pos_joint_next(7);
-    double* ptr;
-    for(int i = 0; i< int(traj_cart.size());i++)
-    {
-        KDL::JntArray Next_joint_task;
-        KDL::JntArray actual_joint_task; 
-        if(i == 0){
-            ptr = &pos_joint_actual[0];
-            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7); 
-            actual_joint_task.data = pos_joint_actual_eigen; 
-        }
-        else {
-            ptr = &pos_joint_next[0];
-            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7); 
-            actual_joint_task.data = pos_joint_actual_eigen; 
-            std::fill(pos_joint_next.begin(), pos_joint_next.end(), 0);
-        }
-       
-        KDL::Vector Vec(traj_cart[i][4],traj_cart[i][5],traj_cart[i][6]);
-        KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[i][0],traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
-        KDL::Frame Next_joint_cartesian(Rot,Vec); 
-
-        Eigen::VectorXd pos_joint_next_eigen ;
-        int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
-        pos_joint_next_eigen = Next_joint_task.data;
-        for(int i = 0 ;i<7;++i){
-            pos_joint_next[i] =pos_joint_next_eigen(i);
-        }
-        traj_joint.push_back(pos_joint_next);
-        std::stringstream ss;
-        for (auto it = pos_joint_next.begin(); it != pos_joint_next.end(); it++)    {
-            if (it != pos_joint_next.begin()) {
-                ss << ", ";
-            }
-            ss << *it;
-        }
-        myfile << ss.str();
-        myfile <<", /n ";
-
-        if(i == round(int(traj_cart.size())/2)){
-            ROS_INFO("Half of the the trajectory load, please wait... ");
-        }
-    }
-
-   
-    //-----------------------------------------
-    myfile.close(); */
+    vector<vector<double>> traj_joint = CSVtoVectorVectorDouble(name_file);
 
 
     string UserInput = "stop";
@@ -204,9 +141,8 @@ vector<double> TakeLine(vector<vector<double>> Mat, int numB )
     return vector;
 }
 
-vector<vector<double>> CSVtoVectorVectorDouble()
+vector<vector<double>> CSVtoVectorVectorDouble(string fname)
 {
-    string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory_joints_Trajectory_Transform.csv";
     vector<vector<double>> Traj;
     vector<vector<string>> content;
     vector<string> row;

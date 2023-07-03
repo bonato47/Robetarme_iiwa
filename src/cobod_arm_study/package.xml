@@ -54,6 +54,11 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>iiwa_tools</build_depend>
   <build_depend>trac_ik_lib</build_depend>
+  <depend>roslaunch</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>rviz</depend>
+  <depend>joint_state_publisher_gui</depend>
+  <depend>gazebo</depend>
   <build_export_depend>trac_ik_lib</build_export_depend>
   <build_export_depend>iiwa_tools</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>

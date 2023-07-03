@@ -116,7 +116,6 @@ int main(int argc, char **argv)
 
     // Read trajectory from .csv 
     vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/send_pos/src/Trajectory_Transform.csv");
-    vector<vector<double>> traj_marker = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/send_pos/src/Trajectory_Transform_noend.csv");
 
     //waiting for the first joint position
 

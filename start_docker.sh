@@ -105,7 +105,7 @@ if [ "${MODE}" != "connect" ]; then
     --opt o="bind" \
     "cobod_arm_study"
     
-    FWD_ARGS+=(--volume="cobod_arm:/home/ros/ros_ws/src/cobod_arm_study:rw")
+    FWD_ARGS+=(--volume="cobod_arm_study:/home/ros/ros_ws/src/cobod_arm_study:rw")
     
 
 fi

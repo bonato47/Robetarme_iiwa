@@ -22,7 +22,6 @@
 #include "robot_model/Model.hpp"
 
 
-
 using namespace Eigen;
 using namespace std;
 
@@ -42,8 +41,7 @@ vector<vector<double>> trajJoint;
 double* ptr;
 float pi =3.14;
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv){
     double dt = 0;
     VectorXd posJointNext_eigen;
     VectorXd posJointActualEigen;
@@ -61,6 +59,7 @@ int main(int argc, char **argv)
 
     //iniailization Invers Kinematics
     string robot_name = "iiwa7";
+    string last_joint = "iiwa_link_ee";
 
     robot_model::Model model(robot_name, "/home/ros/ros_ws/src/send_pos/urdf/iiwa7.urdf");
 
@@ -69,8 +68,6 @@ int main(int argc, char **argv)
     std::ofstream myfile;
     myfile.open ("/home/ros/ros_ws/src/send_pos/src/trajectory_joints_Trajectory_Transform_pinochio.csv");
 
-    double timeout_in_secs=0.1;
-    double error=1e-6; // a voir la taille 
     string IK = "init" ;
      //parameter for inverse velocities
     double alphaVel;
@@ -83,7 +80,7 @@ int main(int argc, char **argv)
     double gamma;
     double margin;
     double tolerance;
-    unsigned int maxNumberIteratons = 100000;
+    unsigned int maxNumberIteratons = 10000;
 
     while(IK == "init"){
         Nh.getParam("IK", IK);
@@ -112,9 +109,10 @@ int main(int argc, char **argv)
         posJointActualEigen = Map<VectorXd>(ptr, 7);
     }
 
+    double timeInit = ros::Time::now().toSec();
+
     int size = int(traj_cart.size())-1;
-    for(int i = 0; i< size;i++)
-    {
+    for(int i = 0; i< size;i++){
         Vector3d p1, p2;
         Vector4d q1,q2;
         Quaterniond qa ;
@@ -124,7 +122,7 @@ int main(int argc, char **argv)
 
             if(IK != "kinematics"){
                 state_representation::JointPositions actualJoinState =  state_representation::JointPositions(robot_name,posJointActualEigen);        
-                state_representation::CartesianPose actualCartesianPose = model.forward_kinematics(actualJoinState,"iiwa_link_ee");
+                state_representation::CartesianPose actualCartesianPose = model.forward_kinematics(actualJoinState, last_joint);
                 Vector3d p1Prime = actualCartesianPose.get_position();
                 Quaterniond q1Prime = actualCartesianPose.get_orientation();
 
@@ -151,7 +149,7 @@ int main(int argc, char **argv)
             //inverse kinematics--------------------------------------------
             state_representation::CartesianPose nextPosCart = state_representation::CartesianPose("nextPosCart",p1,qa);
             state_representation::JointPositions actualJoinState =  state_representation::JointPositions(robot_name,posJointActualEigen);        
-            state_representation::JointPositions nextJoinStateKin = model.inverse_kinematics(nextPosCart,actualJoinState,paramsKin,"iiwa_link_ee");
+            state_representation::JointPositions nextJoinStateKin = model.inverse_kinematics(nextPosCart,actualJoinState,paramsKin,last_joint);
             posJointNext_eigen = nextJoinStateKin.get_positions();
 
 
@@ -165,7 +163,7 @@ int main(int argc, char **argv)
 
             state_representation::JointPositions actualJoinState =  state_representation::JointPositions(robot_name,posJointActualEigen);        
             state_representation::CartesianTwist nextPostwist = state_representation::CartesianTwist("nextPostwist",twist);
-            state_representation::JointVelocities nextJoinStateSpeed = model.inverse_velocity(nextPostwist,actualJoinState,paramsVel,"iiwa_link_ee");
+            state_representation::JointVelocities nextJoinStateSpeed = model.inverse_velocity(nextPostwist,actualJoinState,paramsVel,last_joint);
             posJointNext_eigen = nextJoinStateSpeed.data()  * dt + posJointActualEigen;
 
        /*      state_representation::JointPositions nextJoinState =  state_representation::JointPositions(robot_name,posJointNext_eigen);        
@@ -203,6 +201,10 @@ int main(int argc, char **argv)
     myfile.close();
 
     ROS_INFO("Trajectory well load, When you are ready to go on the first position press start");
+    double timeEnd = ros::Time::now().toSec();
+    timeEnd = timeEnd- timeInit;
+    ROS_INFO("%f", timeEnd);
+
     string UserInput = "stop";
     while( UserInput != "start"){
         cin >> UserInput;
@@ -213,7 +215,7 @@ int main(int argc, char **argv)
     posDesJoint= trajJoint[Next];
     chatter_pub.publish(msgP);
 
-    while(Next == 0 ){
+    while(Next == 1 ){
         if(mseValue(posJointActual,posDesJoint,n)|| (count >50)){
             ROS_INFO("first position reached, please Press GO when ready to shotcreet");
                 while( UserInput != "GO"){
@@ -223,14 +225,12 @@ int main(int argc, char **argv)
             ++Next;
         }   
         ++count;
-
     } 
     count =1;
     //begin the Ros loop
     ROS_INFO("Let's GO");
 
-    while (ros::ok())
-    {
+    while (ros::ok()){
         msgP.data = trajJoint[Next];
         posDesJoint= trajJoint[Next];
 
@@ -253,19 +253,16 @@ int main(int argc, char **argv)
     return 0;
 }
 
-
-void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
-{
+void CounterCallback(const sensor_msgs::JointState::ConstPtr msg){
     if(init == false){init = true;}
     posJointActual = msg->position;
     velJointActual = msg->velocity;
 }
 
 // Function that Calculate Root Mean Square
-bool mseValue(vector<double> v1, vector<double> v2,int Num)
-{
+bool mseValue(vector<double> v1, vector<double> v2,int Num){
     // tolerance of the errot between each point
-    float tol =0.005;
+    float tol =0.01;
     bool Reached = false;
     int crit =0;
     float err =0;
@@ -276,20 +273,16 @@ bool mseValue(vector<double> v1, vector<double> v2,int Num)
             ++crit;
         }
        // ROS_INFO("%f",err);
-
     }
     if(crit == 0){
         Reached =true;
     }
-
     return Reached;
 }
 
-
-vector<vector<double>> CSVtoVectorVectorDouble()
-{
+vector<vector<double>> CSVtoVectorVectorDouble(){
     //string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory_cart_short.csv";
-    string fname = "/home/ros/ros_ws/src/send_pos/src/Trajectory_Transform.csv";
+    string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory_to_tristan.csv";
 
     vector<vector<double>> Traj;
     vector<vector<string>> content;
@@ -297,25 +290,20 @@ vector<vector<double>> CSVtoVectorVectorDouble()
     string line, word;
 
     fstream file (fname, ios::in);
-    if(file.is_open())
-    {
-        while(getline(file, line))
-        {
-            row.clear();
-            
+    if(file.is_open()){
+        while(getline(file, line)){
+            row.clear();      
             stringstream str(line);
             while(getline(str, word, ','))
                 row.push_back(word);
             content.push_back(row);
         }
         ROS_INFO("file well readed");
-
     }
-    else
+    else{
         ROS_ERROR("Could not open the file\n");
-
-    for(int i=0;i<int(content.size());i++) //
-    {
+    }
+    for(int i=0;i<int(content.size());i++){
         string::size_type sz;     // alias of size_t
         double quat_x = stod(content[i][0],&sz);
         double quat_y = stod(content[i][1],&sz);
@@ -326,7 +314,6 @@ vector<vector<double>> CSVtoVectorVectorDouble()
         double pos_z = stod(content[i][6],&sz);
         double dt = stod(content[i][7],&sz);
 
-
         vector<double> Line = {quat_x,quat_y,quat_z,quat_w,pos_x,pos_y,pos_z,dt};
         Traj.push_back(Line);
     }
@@ -334,9 +321,7 @@ vector<vector<double>> CSVtoVectorVectorDouble()
     return Traj;
 }
 
-
- Matrix< double,6,1> state_to_twist(Vector4d q1, Vector3d x01, Vector4d q2 ,Vector3d x02, double dt)
-{
+Matrix< double,6,1> state_to_twist(Vector4d q1, Vector3d x01, Vector4d q2 ,Vector3d x02, double dt){
     //position
     Vector3d lin_speed = (x02-x01)/dt;
     //orientation

@@ -18,11 +18,11 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr);
 bool mseValue(vector<double> , vector<double> , int);
 vector<vector<double>> CSVtoVectorVectorDouble();
 
-
 int n =7;
 vector<double> eff(n);
 vector<double> vel(n);
 vector<double> pos_joint_actual(n);
+bool init= false;
 float pi =3.14;
 int main(int argc, char **argv)
 {
@@ -37,6 +37,9 @@ int main(int argc, char **argv)
     ros::Publisher chatter_pub = Nh.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
     //Frequency of the Ros loop
     ros::Rate loop_rate(200);
+    while(!init){
+        ros::spinOnce();
+    }
 
     // Read trajectory from .csv 
     vector<vector<double>> traj_cart = CSVtoVectorVectorDouble();
@@ -46,8 +49,8 @@ int main(int argc, char **argv)
     string tip_link = "iiwa_link_ee";
     string URDF_param="/robot_description";
     double timeout_in_secs=0.1;
-    double error=1e-6; // a voir la taille
-    TRAC_IK::SolveType type=TRAC_IK::Speed;
+    double error=1e-4; // a voir la taille
+    TRAC_IK::SolveType type=TRAC_IK::Distance;
     TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
 
     KDL::Chain chain;
@@ -59,13 +62,16 @@ int main(int argc, char **argv)
     ROS_INFO("Preparing trajectory...");
 
     std::ofstream myfile;
-    myfile.open ("src/send_pos/src/trajectory_joints_Trajectory_Transform_trak_ik.csv");
+    myfile.open ("src/send_pos/src/trajectory_joints_Trajectory_Transform_trak_ik_louis.csv");
+
 
     //Convert cartesian to joint space
     vector<double> pos_joint_next(7);
     double* ptr;
     int size = int(traj_cart.size());
-    //size = 25000;
+
+    double timeInit = ros::Time::now().toSec();
+    ROS_INFO("%f", timeInit);
     for(int i = 0; i< size;i++)
     {
         KDL::JntArray Next_joint_task;
@@ -123,7 +129,12 @@ int main(int argc, char **argv)
     //-----------------------------------------
     myfile.close();
 
+
     ROS_INFO("Trajectory well load, When you are ready press GO");
+    double timeEnd = ros::Time::now().toSec();
+    timeEnd = timeEnd- timeInit;
+    ROS_INFO("%f", timeEnd);
+
     string UserInput = "stop";
     while( UserInput != "GO"){
         cin >> UserInput;
@@ -158,6 +169,7 @@ int main(int argc, char **argv)
 
 void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
 {
+    if(init == false){init = true;}
     pos_joint_actual = msg->position;
     vel = msg->velocity;
     eff = msg->effort;
@@ -167,7 +179,7 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
 bool mseValue(vector<double> v1, vector<double> v2,int Num)
 {
     // tolerance of the errot between each point
-    float tol =0.01;
+    float tol =0.11;
     bool Reached = false;
     int crit =0;
     float err =0;
@@ -190,7 +202,7 @@ bool mseValue(vector<double> v1, vector<double> v2,int Num)
 vector<vector<double>> CSVtoVectorVectorDouble()
 {
     //string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory_cart_short.csv";
-    string fname = "/home/ros/ros_ws/src/send_pos/src/Trajectory_Transform.csv";
+    string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory_to_tristan.csv";
 
     vector<vector<double>> Traj;
     vector<vector<string>> content;
