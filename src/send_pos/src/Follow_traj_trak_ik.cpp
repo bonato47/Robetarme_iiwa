@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     string base_link = "iiwa_link_0";
     string tip_link = "iiwa_link_ee";
     string URDF_param="/robot_description";
-    double timeout_in_secs=0.1;
+    double timeout_in_secs=0.01;
     double error=1e-4; // a voir la taille
     TRAC_IK::SolveType type=TRAC_IK::Distance;
     TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
@@ -202,7 +202,7 @@ bool mseValue(vector<double> v1, vector<double> v2,int Num)
 vector<vector<double>> CSVtoVectorVectorDouble()
 {
     //string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory_cart_short.csv";
-    string fname = "/home/ros/ros_ws/src/send_pos/src/trajectory_to_tristan.csv";
+    string fname = "/home/ros/ros_ws/src/send_pos/src/Trajectory_Transform_scraping.csv";
 
     vector<vector<double>> Traj;
     vector<vector<string>> content;

@@ -24,8 +24,6 @@
 using namespace std;
 using namespace Eigen;
 
-
-//void CounterCallback(const sensor_msgs::JointState::ConstPtr);
 bool mseValue(vector<double> , vector<double> , int);
 vector<vector<double>> CSVtoVectorVectorDouble(string);
 visualization_msgs::Marker printMarker(vector<double> quatPos, string base);
@@ -41,33 +39,52 @@ class inverseKin {       // The class
         double timeoutInSecs{};
         int nJoint{};
         vector<double> posJointActual;
-        VectorXd posJointActualEigen;
+        vector<double> velJointActual;
         vector<double> posJointNext;
+        VectorXd velJointActualEigen;
+        VectorXd posJointActualEigen;
+        VectorXd posJointNextEigen;
         ros::V_string jointsName;
         bool init= false;
         TRAC_IK::TRAC_IK* ikSolver = nullptr;  
 
 
     void init_IK_iiwa() {  // Method/function defined inside the class
-        this->baseLink  = "iiwa_link_0";
-        this->tipLink   = "iiwa_link_ee";
-        this->jointsName = {"iiwa_joint_1", "iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4", "iiwa_joint_5", "iiwa_joint_6", "iiwa_joint_7"};
-        this->nJoint    = 7;
-        this->init_general();
+        baseLink  = "iiwa_link_0";
+        tipLink   = "iiwa_link_ee";
+        jointsName = {"iiwa_joint_1", "iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4", "iiwa_joint_5", "iiwa_joint_6", "iiwa_joint_7"};
+        nJoint    = 7;
+        init_general();
     }    
     void init_IK_cobod() {  // Method/function defined inside the class
-        this->baseLink = "Link_1";
-        this->tipLink = "Gripper_base";
-        this->jointsName = {"Joint_1","Joint_2","Joint_3","Joint_5","Joint_6"};
-        this->nJoint = 5;
-        this->init_general();
+        baseLink = "Link_1";
+        tipLink = "Gripper_base";
+        jointsName = {"Joint_1","Joint_2","Joint_3","Joint_5","Joint_6"};
+        nJoint = 5;
+        init_general();
+    }
+    void init_IK_ur5() {  // Method/function defined inside the class
+        baseLink = "base_link";
+        tipLink = "ee_link";
+        jointsName = {"shoulder_pan_joint","shoulder_lift_joint","elbow_joint","wrist_1_joint","wrist_2_joint","wrist_3_joint"};
+        nJoint = 6;
+        init_general();
+    }
+    void init_IK_ur10() {  // Method/function defined inside the class
+        baseLink = "base_link";
+        tipLink = "tool0";
+        jointsName = {"shoulder_pan_joint","shoulder_lift_joint","elbow_joint","wrist_1_joint","wrist_2_joint","wrist_3_joint"};
+        nJoint = 6;
+        init_general();
     }
     void init_general(){
 
-        vector<double> vector0(this->nJoint, 0.0);;
-        this->posJointNext = vector0;
-        this->posJointActual= vector0;
-        this->ikSolver= new TRAC_IK::TRAC_IK(this->baseLink, this->tipLink, this->URDF_param, this->timeoutInSecs, this->error, this->type);  
+        vector<double> vector0(nJoint, 0.0);;
+        posJointNext = vector0;
+        posJointActual= vector0;
+        velJointActual= vector0;
+        posJointNextEigen = Map<VectorXd>(&posJointNext[0], nJoint);
+        ikSolver= new TRAC_IK::TRAC_IK(baseLink, tipLink, URDF_param, timeoutInSecs, error, type);  
         KDL::Chain chain;
         bool valid = ikSolver->getKDLChain(chain);
         if (!valid) {
@@ -79,7 +96,6 @@ class inverseKin {       // The class
         //Inverse kinematics trac-IK
         KDL::JntArray NextJointTask;
         KDL::JntArray actualJointTask; 
-        Map<VectorXd> posJointNextEigen(&posJointNext[0], nJoint); 
         actualJointTask.data = posJointNextEigen; 
         std::fill(posJointNext.begin(), posJointNext.end(), 0);
         KDL::Vector Vec(vectorQuatPos[4],vectorQuatPos[5],vectorQuatPos[6]);
@@ -96,16 +112,19 @@ class inverseKin {       // The class
     void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
     {
         posJointActual = msg->position;
+        velJointActual = msg->velocity;
+
         if(init == false){
             init = true;
         }    
-        double* ptr = &posJointActual[0];
-        posJointActualEigen = Map<VectorXd>(ptr, nJoint);
+        posJointActualEigen = Map<VectorXd>(&posJointActual[0], nJoint);
+        velJointActualEigen = Map<VectorXd>(&velJointActual[0], nJoint); 
     }
 };
 
 int main(int argc, char **argv)
 {
+    name_path = "";
     sensor_msgs::JointState msgP;
     vector<vector<double>> traj_joint;
 
@@ -123,10 +142,18 @@ int main(int argc, char **argv)
     if(robot_name == "iiwa7"){
         IK.init_IK_iiwa();
     } 
-    else { 
+    else if(robot_name == "cobod_arm") { 
         IK.init_IK_cobod();
     }
-    robot_model::Model model(robot_name, "/home/ros/ros_ws/src/cobod_arm_study/urdf/iiwa7.urdf");
+    else if(robot_name == "ur5") { 
+        IK.init_IK_ur5();
+    }
+    else if(robot_name == "ur10") { 
+        IK.init_IK_ur10();
+    }
+
+    string path_urdf = "/home/ros/ros_ws/src/cobod_arm_study/urdf/" + robot_name + ".urdf";
+    robot_model::Model model(robot_name,path_urdf);
 
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::Subscriber sub = Nh.subscribe("joint_states", 1000, &inverseKin::CounterCallback, &IK);
@@ -140,9 +167,8 @@ int main(int argc, char **argv)
     vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/Trajectory_Transform.csv");
 
     //waiting for the first joint position
-
      while(!IK.init){
-        msgP.position = IK.posJointActual;//{0.0,0.0,0.0,0.0,0.0};
+        msgP.position = IK.posJointActual;
         msgP.velocity = {};
         msgP.effort   = {};     
         msgP.name = IK.jointsName;
@@ -154,7 +180,9 @@ int main(int argc, char **argv)
     ROS_INFO("Preparing trajectory...");
 
     std::ofstream myfile;
-    myfile.open ("src/cobod_arm_study/src/trajectory_joints_cobod.csv");
+    string nameJoint = "/home/ros/ros_ws/src/cobod_arm_study/src/trajectories/trajectory_joints_" + robot_name + name_path +".csv";
+
+    myfile.open(nameJoint);
 
     //Convert cartesian to joint space
     int size = int(traj_cart.size());
@@ -165,8 +193,19 @@ int main(int argc, char **argv)
 
         traj_joint.push_back(IK.posJointNext);
 
-        state_representation::Jacobian jac(robot_name, IK.nJoint, IK.tipLink,IK.baseLink);
-        cout << jac << endl;
+        //compute jaocbian to have the manipulability matrix
+        state_representation::JointPositions  actualJointPos =  state_representation::JointPositions(robot_name,IK.posJointNextEigen);        
+        state_representation::Jacobian jacobian = model.compute_jacobian(actualJointPos);
+
+        Eigen::MatrixXd manipulabilityEigen =jacobian.data()*jacobian.transpose().data();
+        Eigen::EigenSolver<Eigen::MatrixXd> eigensolver;
+        eigensolver.compute(manipulabilityEigen);
+        Eigen::VectorXd eigen_values = eigensolver.eigenvalues().real();  
+ 
+
+        cout << "this is "<< endl; 
+        cout << eigen_values << endl; 
+
         std::stringstream ss;
         if(i > 1){
             for (auto it = IK.posJointNext.begin(); it != IK.posJointNext.end(); it++)    {
@@ -182,6 +221,7 @@ int main(int argc, char **argv)
         if(i == round(int(traj_cart.size())/2)){
             ROS_INFO("Half of the the trajectory load, please wait... ");
         }
+
     }
 
     myfile.close();
@@ -312,7 +352,6 @@ visualization_msgs::Marker printMarker(vector<double> quatPos, string base){
     marker.pose.position.z =  quatPos[6];
     Eigen::Quaterniond quat = {quatPos[3],quatPos[0],quatPos[1],quatPos[2]};
      Eigen::Quaterniond Transf = {0,0.7,0,0.7};
-    //Eigen::Quaterniond Transf = {0,0,0,1};
 
     Transf.normalize();
 

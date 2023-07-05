@@ -137,6 +137,14 @@ RUN git clone https://github.com/epfl-lasa/control-libraries.git --branch v6.3.1
 WORKDIR /home/${USER}/control-libraries/source
 RUN sudo bash install.sh -y
 
+
+#isntall universal robot
+WORKDIR /home/${USER}
+RUN git clone https://github.com/ros-industrial/universal_robot.git
+RUN cp -R universal_robot ros_ws/src/
+RUN rm universal_robot -r
+
+
 #install eigen
 #WORKDIR /home/${USER}
 #RUN wget -c https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz -O - | tar -xz
