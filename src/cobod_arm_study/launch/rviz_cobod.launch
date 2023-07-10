@@ -2,22 +2,12 @@
   <arg name="model" />
   <param name="robot_description"
     textfile="$(find cobod_arm_study)/urdf/cobod_arm.urdf" />
-  <!-- <node 
-    name="joint_state_publisher_gui"
-    pkg="joint_state_publisher_gui"
-    type="joint_state_publisher_gui" />-->
-  <node
-    name="robot_state_publisher"
-    pkg="robot_state_publisher"
-    type="robot_state_publisher" /> 
-  <node
-    name="rviz"
-    pkg="rviz"
-    type="rviz"
-    args="-d $(find cobod_arm_study)/rviz/config_file_cobod.rviz" />
 
-  <param name="errorIK" type="double" value="0.01" />
-  <param name="timeIK" type="double" value="0.1" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" /> 
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cobod_arm_study)/rviz/config_file_cobod.rviz" />
+
+  <param name="errorIK" type="double" value="0.03" />
+  <param name="timeIK" type="double" value="0.05" />
   <param name="robot_name" type="string" value="cobod_arm" />
   <node pkg="cobod_arm_study" name="cobod_arm_study" type="cobod_arm_study" output="screen"/>
     

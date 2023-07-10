@@ -13,6 +13,10 @@
         "vector": "cpp",
         "array": "cpp",
         "string": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "iosfwd": "cpp",
+        "cmath": "cpp",
+        "complex": "cpp",
+        "initializer_list": "cpp"
     }
 }
