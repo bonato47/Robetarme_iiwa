@@ -164,7 +164,7 @@ int main(int argc, char **argv)
     ros::Rate loopRate(100);
 
     // Read trajectory from .csv 
-    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/Trajectory_Transform.csv");
+    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/Trajectory_Transform_twobyside.csv");
 
     //waiting for the first joint position
      while(!IK.init){
@@ -191,11 +191,10 @@ int main(int argc, char **argv)
 
         //trac-ik inverse kinematic
         IK.getIK(traj_cart[i]);  
-        //cout << IK.posJointNextEigen(0) << IK.posJointNextEigen(1) << IK.posJointNextEigen(2) << endl;
 
         traj_joint.push_back(IK.posJointNext);
 
-        vector<double> output_csv;//= IK.posJointNext;
+        vector<double> output_csv;
         //compute jaocbian to have the manipulability matrix
         state_representation::JointPositions  actualJointPos =  state_representation::JointPositions(robot_name,IK.posJointNextEigen);        
         state_representation::Jacobian jacobian = model.compute_jacobian(actualJointPos);
