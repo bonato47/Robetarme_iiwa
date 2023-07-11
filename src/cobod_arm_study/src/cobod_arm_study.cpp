@@ -254,6 +254,9 @@ int main(int argc, char **argv)
         }
 
         output_csv.push_back(angle); 
+        output_csv.push_back(p1Prime(0));
+        output_csv.push_back(p1Prime(1));
+        output_csv.push_back(p1Prime(2));  
  
         std::stringstream ss;
         if(i > 1){
