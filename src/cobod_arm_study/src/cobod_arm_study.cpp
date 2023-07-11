@@ -36,6 +36,7 @@ class inverseKin {       // The class
         string URDF_param="/robot_description";
         TRAC_IK::SolveType type =TRAC_IK::Speed;
         double error{};
+        double errorMax{};
         double timeoutInSecs{};
         int nJoint{};
         vector<double> posJointActual;
@@ -92,7 +93,7 @@ class inverseKin {       // The class
         } 
     }
 
-    void getIK(vector<double> vectorQuatPos ) {  
+    int getIK(vector<double> vectorQuatPos ) {  
         //Inverse kinematics trac-IK
         KDL::JntArray NextJointTask;
         KDL::JntArray actualJointTask; 
@@ -107,7 +108,12 @@ class inverseKin {       // The class
         for(int i = 0 ;i<nJoint;++i){
             posJointNext[i] =posJointNextEigen(i);
         }
+        return rc;
      } 
+
+     void updateIK(double err){
+        ikSolver= new TRAC_IK::TRAC_IK(baseLink, tipLink, URDF_param, timeoutInSecs, err, type);  
+     }
 
     void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
     {
@@ -136,7 +142,9 @@ int main(int argc, char **argv)
     inverseKin IK;
     string robot_name;
     Nh.getParam("/robot_name", robot_name);
-    Nh.getParam("/errorIK",IK.error);
+    Nh.getParam("/errorIK_min",IK.error);
+    Nh.getParam("/errorIK_max",IK.errorMax);
+
     Nh.getParam("/timeIK",IK.timeoutInSecs);
 
     if(robot_name == "iiwa7"){
@@ -164,7 +172,7 @@ int main(int argc, char **argv)
     ros::Rate loopRate(100);
 
     // Read trajectory from .csv 
-    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/Trajectory_Transform_twobyside.csv");
+    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/csv_cobod/trajectory_scraping_bis.csv");
 
     //waiting for the first joint position
      while(!IK.init){
@@ -188,9 +196,15 @@ int main(int argc, char **argv)
     int size = int(traj_cart.size());
     for(int i = 0; i< size;i++)
     {
-
         //trac-ik inverse kinematic
-        IK.getIK(traj_cart[i]);  
+        double err = IK.error;
+        IK.updateIK(IK.error);
+        int rc = IK.getIK(traj_cart[i]);
+        while(rc  < 0){
+            err= err*5;
+            IK.updateIK(err);
+            rc = IK.getIK(traj_cart[i]);
+        }
 
         traj_joint.push_back(IK.posJointNext);
 

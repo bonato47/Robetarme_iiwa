@@ -5,7 +5,7 @@
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cobod_arm_study)/rviz/config_file_ur10.rviz" />
 
   <param name="robot_name" type="string" value="ur10" />
-  <param name="errorIK" type="double" value="0.00001" />
+  <param name="errorIK_min" type="double" value="0.00001" />
   <param name="timeIK" type="double" value="0.01" />
 
   <node pkg="cobod_arm_study" name="cobod_arm_study" type="cobod_arm_study" output="screen"/>
