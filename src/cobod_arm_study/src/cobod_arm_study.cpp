@@ -172,7 +172,7 @@ int main(int argc, char **argv)
     ros::Rate loopRate(100);
 
     // Read trajectory from .csv 
-    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/csv_cobod/trajectory_scraping.csv");
+    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/csv_cobod/trajectory_twobyside_bis.csv");
 
     //waiting for the first joint position
      while(!IK.init){
@@ -200,12 +200,12 @@ int main(int argc, char **argv)
         double err = IK.error;
         IK.updateIK(IK.error);
         int rc = IK.getIK(traj_cart[i]);
-   /*      while(rc  < 0){
+        while(rc  < 0){
             err= err*5;
             IK.updateIK(err);
             rc = IK.getIK(traj_cart[i]);
         }
- */
+ 
         traj_joint.push_back(IK.posJointNext);
 
         vector<double> output_csv;
