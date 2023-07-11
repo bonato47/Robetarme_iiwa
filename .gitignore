@@ -27,6 +27,7 @@ src/mc_rbdyn_urdf
 src/send_pose/Third_party/qpOASES
 iiwa_toolkit
 
+.DS_Store
 .idea
 .vs_code
 .catkin_workspace
