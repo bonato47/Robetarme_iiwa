@@ -137,14 +137,12 @@ RUN git clone https://github.com/epfl-lasa/control-libraries.git --branch v6.3.1
 WORKDIR /home/${USER}/control-libraries/source
 RUN sudo bash install.sh -y
 
-<<<<<<< HEAD
-
 #isntall universal robot
 WORKDIR /home/${USER}
 RUN git clone https://github.com/ros-industrial/universal_robot.git
 RUN cp -R universal_robot ros_ws/src/
 RUN rm universal_robot -r
-=======
+
 # Install relaxed ik
 RUN curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN sudo apt-get install -y ros-noetic-kdl-parser ros-noetic-kdl-parser-py
@@ -165,7 +163,6 @@ RUN --mount=type=ssh git submodule update
 WORKDIR /home/${USER}/ros_ws/src
 RUN chown -R ${USER}:${HOST_GID} relaxed_ik_ros1
 USER ${USER}
->>>>>>> 12ff674... [Relaxed_ik] Add relaxed informations into docker image. Still has to be improved : algorithms starts but does not perform graphically as intended.
 
 # Install rust dependency
 RUN sudo apt-get install -y build-essential cmake
