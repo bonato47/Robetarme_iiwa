@@ -107,6 +107,16 @@ if [ "${MODE}" != "connect" ]; then
     
     FWD_ARGS+=(--volume="cobod_arm_study:/home/ros/ros_ws/src/cobod_arm_study:rw")
     
+       
+    docker volume rm test_relaxed_ik
+    docker volume create --driver local \
+    --opt type="none" \
+    --opt device="${PWD}/src/test_relaxed_ik" \
+    --opt o="bind" \
+    "test_relaxed_ik"
+    
+    FWD_ARGS+=(--volume="test_relaxed_ik:/home/ros/ros_ws/src/test_relaxed_ik:rw")
+    
 
 fi
 

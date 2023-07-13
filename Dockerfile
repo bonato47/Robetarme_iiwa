@@ -137,19 +137,64 @@ RUN git clone https://github.com/epfl-lasa/control-libraries.git --branch v6.3.1
 WORKDIR /home/${USER}/control-libraries/source
 RUN sudo bash install.sh -y
 
+<<<<<<< HEAD
 
 #isntall universal robot
 WORKDIR /home/${USER}
 RUN git clone https://github.com/ros-industrial/universal_robot.git
 RUN cp -R universal_robot ros_ws/src/
 RUN rm universal_robot -r
+=======
+# Install relaxed ik
+RUN curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+RUN sudo apt-get install -y ros-noetic-kdl-parser ros-noetic-kdl-parser-py
+RUN python get-pip.py
+RUN rm get-pip.py 
+RUN pip install readchar python-fcl scipy PyYaml matplotlib scipy tf
+RUN pip install --upgrade numpy
 
+# Need to be root to use ssh inside docker build
+WORKDIR /home/${USER}/ros_ws/src
+USER root
+RUN --mount=type=ssh git clone git@github.com:uwgraphics/relaxed_ik_ros1.git
+WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1
+RUN git submodule init 
+RUN --mount=type=ssh git submodule update
+
+# Transfer repo back to original user after root clone
+WORKDIR /home/${USER}/ros_ws/src
+RUN chown -R ${USER}:${HOST_GID} relaxed_ik_ros1
+USER ${USER}
+>>>>>>> 12ff674... [Relaxed_ik] Add relaxed informations into docker image. Still has to be improved : algorithms starts but does not perform graphically as intended.
+
+# Install rust dependency
+RUN sudo apt-get install -y build-essential cmake
+RUN sudo chmod 777 ~/.bashrc
+RUN curl --proto '=https' --tlsv1.3 https://sh.rustup.rs -sSf | sh -s -- -y
+RUN sudo chmod 644 ~/.bashrc
+ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
+
+# Need to be root to use ssh inside docker build
+WORKDIR /home/${USER}
+USER root
+RUN --mount=type=ssh git clone git@github.com:lmunier/ncollide.git --branch fix_relaxed_ik
+
+# Transfer repo back to original user after root clone
+RUN chown -R ${USER}:${HOST_GID} ncollide
+USER ${USER}
+
+WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1/relaxed_ik_core
+
+# Modify crates used to have the ones with the fixes
+RUN sed -i 's/ncollide2d = \"0.19\"/ncollide2d = \{ path = \"..\/..\/..\/..\/ncollide\/build\/ncollide2d\" \}/' Cargo.toml
+RUN sed -i 's/ncollide3d = \"0.21.0\"/ncollide3d = \{ path = \"..\/..\/..\/..\/ncollide\/build\/ncollide3d\" \}/' Cargo.toml
+RUN cargo build
+RUN cargo fix --lib -p relaxed_ik_core --allow-dirty
 
 FROM inverse-kinematics as finalisation
 
 ### Add environement variables to bashrc
 WORKDIR /home/${USER}
-
 
 ### Copy all src from github Robetarme_iwwa
 COPY --chown=${USER} ./src ./ros_ws/src
@@ -167,4 +212,4 @@ RUN source /home/${USER}/.bashrc && rosdep install --from-paths src --ignore-src
 RUN source /home/${USER}/.bashrc && catkin_make;
 
 ### Final apt clean
-RUN sudo apt update && sudo apt upgrade -y   && sudo apt clean
+RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
