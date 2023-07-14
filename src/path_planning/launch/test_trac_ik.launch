@@ -1,0 +1,12 @@
+<launch>
+	<param name="ik" type="str" value="trac_ik" />
+
+	<rosparam file="$(find robetarme)/config/param.yaml" />
+
+	<include file="$(find iiwa_gazebo)/launch/iiwa_gazebo.launch">
+		<arg name="controller" default="PositionController" />
+    	<arg name="model" default="7" />
+	</include>
+
+    <node pkg="robetarme" type="path_planning_node.py" name="pathPlanningNode" output="screen"></node>
+</launch>

@@ -1,0 +1,58 @@
+# Regroup all the needed parameters common to the ROS implementation.
+#
+# Update: 230623
+# Maintainers: louis.munier@epfl.ch
+
+# --------------------------------------------------
+# DIRECTORIES AND FILENAMES
+# --------------------------------------------------
+recording: True
+
+# Save the generated trajectory in a csv
+save_trajectory: False
+
+# Filename to save trajectory
+saved_trajectory_filename: "trajectory_to_tristan"
+
+# Read the trajectory from a given file
+read_trajectory: False
+
+# file to read the waypoints from
+waypoints_filename: "waypoints"
+
+# path to save the recorded data, relative from data folder let it empt to save into data
+save_path: "develop/hello"
+
+# name of the file to record robot motion (either during demonstration or during replciation)
+record_name: "test"
+
+# --------------------------------------------------
+# GENERAL PARAMETERS
+# --------------------------------------------------
+# Distance threshold to consider two points as equals
+epsilon: 0.001
+
+# Precision to take into account for position / orientation
+precision: 6
+
+# --------------------------------------------------
+# ROS PARAMETERS
+# --------------------------------------------------
+node_name: "straight_line"
+end_effector: "iiwa_link_ee"
+base_link: "iiwa_link_0"
+
+frequency: 100 # ROS publish frequency
+degrees_of_freedom: 7 # DoF of kuka iiwa robot
+
+# --------------------------------------------------
+# TOPIC NAMES
+# --------------------------------------------------
+# type -> std_msgs::Float64MultiArray | Relays the command joint position
+position_controller_topic: "/iiwa/PositionController/command"
+
+# type -> geometry_msgs::Pose # Relays the end-effector position and orientation from trajectory planner
+command_end_effector_pos_topic: "/commandEEPosTopic"
+
+# type -> sensor_msgs::JointState | Relays the joint states from robot
+robot_joint_state_topic: "/iiwa/joint_states"

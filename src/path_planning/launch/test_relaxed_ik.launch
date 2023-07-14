@@ -1,0 +1,24 @@
+<launch>
+	<arg name="sim_viewer_arg" default="gazebo" /> <!-- gazebo or rviz-->
+
+	<param name="sim_viewer" type="str" value="$(eval arg('sim_viewer_arg'))" />
+	<param name="ik" type="str" value="relaxed_ik" />
+	<param name="simulation_time" type="str" value="go" />
+
+	<rosparam file="$(find robetarme)/config/param.yaml" />
+
+	<group if="$(eval arg('sim_viewer_arg') == 'gazebo')">
+		<include file="$(find iiwa_gazebo)/launch/iiwa_gazebo.launch">
+			<arg name="controller" default="PositionController" />
+			<arg name="model" default="7" />
+		</include>
+	</group>
+
+	<group if="$(eval arg('sim_viewer_arg') == 'rviz')">
+		<include file="$(find relaxed_ik_ros1)/launch/rviz_viewer.launch" />
+	</group>
+
+	<include file="$(find relaxed_ik_ros1)/launch/relaxed_ik_rust.launch" />
+
+    <node pkg="robetarme" type="path_planning_node.py" name="pathPlanningNode" output="screen"></node>
+</launch>
