@@ -152,9 +152,9 @@ RUN pip install readchar python-fcl scipy PyYaml matplotlib scipy tf
 RUN pip install --upgrade numpy
 
 # Need to be root to use ssh inside docker build
-WORKDIR /home/${USER}/ros_ws/src
 USER root
-RUN --mount=type=ssh git clone git@github.com:uwgraphics/relaxed_ik_ros1.git
+WORKDIR /home/${USER}/ros_ws/src
+RUN --mount=type=ssh git clone git@github.com:lmunier/relaxed_ik_ros1.git
 WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1
 RUN git submodule init 
 RUN --mount=type=ssh git submodule update
