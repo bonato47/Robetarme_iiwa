@@ -190,13 +190,11 @@ RUN cargo fix --lib -p relaxed_ik_core --allow-dirty
 
 FROM inverse-kinematics as finalisation
 
-### Add environement variables to bashrc
-WORKDIR /home/${USER}
-
 ### Copy all src from github Robetarme_iwwa
 COPY --chown=${USER} ./src ./ros_ws/src
 
 # Give bashrc back to user
+WORKDIR /home/${USER}
 RUN sudo chown -R ${USER}:${HOST_GID} .bashrc
 
 # Add cmake option to bash rc if needed
