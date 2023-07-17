@@ -61,7 +61,6 @@ fi
 
 # Handle interactive/server specific arguments
 if [ "${MODE}" != "connect" ]; then
-
     # Check if a conitainer with this name is already running
     if [ "$( docker container inspect -f '{{.State.Status}}' ${CONTAINER_NAME} 2>/dev/null)" == "running" ]; then
         echo "A container named ${CONTAINER_NAME} is already running. Stopping it."
@@ -86,8 +85,7 @@ if [ "${MODE}" != "connect" ]; then
     # Other
     FWD_ARGS+=("--privileged")
     
-     #Add volume send_pos
-    
+    # Add volume send_pos
     docker volume rm send_pos
     docker volume create --driver local \
     --opt type="none" \
@@ -116,8 +114,9 @@ if [ "${MODE}" != "connect" ]; then
     "path_planning"
     
     FWD_ARGS+=(--volume="path_planning:/home/ros/ros_ws/src/path_planning:rw")
-    
 
+    # Setup git config
+    FWD_ARGS+=(--volume="${HOME}/.gitconfig:/home/ros/.gitconfig:ro")
 fi
 
 # Trick aica-docker into making a server on a host network container

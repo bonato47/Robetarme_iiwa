@@ -22,15 +22,10 @@ RUN if [ "HOST_GID" != "1000"] ; \
     usermod ${USER} -a -G ${USER_GROUP}; fi
 USER ${USER}
 
-# Setup git identity
-RUN git config --global user.name "${GIT_NAME}"
-RUN git config --global user.email "${GIT_EMAIL}"
-
 # Setup python version for noetic
 RUN sudo apt update
 RUN if [ "${ROS_DISTRO}" == "noetic" ] ; \
     then sudo apt install python-is-python3 ; fi
-
 
 ### Add a few tools
 RUN sudo apt-get update && sudo apt-get install -y \
@@ -43,7 +38,6 @@ RUN sudo apt-get update && sudo apt-get install -y \
     ros-${ROS_DISTRO}-ros-controllers \
     && sudo apt-get upgrade -y && sudo apt-get clean
    
-
 FROM ros-ws as iiwa-dependencies
 
 # Install gazebo (9 or 11 depending on distro)
@@ -64,6 +58,11 @@ RUN if [ "${USE_SIMD}" = "ON" ] ; \
 
 ### Install all dependencies of IIWA ROS
 # Clone KUKA FRI (need to be root to clone private repo)
+
+# Setup git identity to publish patch on SIMD
+RUN git config --global user.name "${GIT_NAME}"
+RUN git config --global user.email "${GIT_EMAIL}"
+
 WORKDIR /tmp
 USER root
 RUN --mount=type=ssh git clone git@github.com:epfl-lasa/kuka_fri.git
@@ -73,6 +72,10 @@ RUN if [ "${USE_SMID}" != "ON" ] ; \
     ; fi
 RUN --mount=type=ssh  if [ "${USE_SMID}" != "ON" ] ; \
     then git am 0001-Config-Disables-SIMD-march-native-by-default.patch ; fi
+
+# Remove git identity
+RUN git config --global --unset user.name
+RUN git config --global --unset user.email
 
 # Transfer repo back to original user after root clone
 WORKDIR /tmp
