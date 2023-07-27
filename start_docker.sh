@@ -114,6 +114,16 @@ if [ "${MODE}" != "connect" ]; then
     "path_planning"
     
     FWD_ARGS+=(--volume="path_planning:/home/ros/ros_ws/src/path_planning:rw")
+    
+       
+    docker volume rm simulation_tool
+    docker volume create --driver local \
+    --opt type="none" \
+    --opt device="${PWD}/src/simulation_tool" \
+    --opt o="bind" \
+    "simulation_tool"
+    
+    FWD_ARGS+=(--volume="simulation_tool:/home/ros/ros_ws/src/simulation_tool:rw")
 
     # Setup git config
     FWD_ARGS+=(--volume="${HOME}/.gitconfig:/home/ros/.gitconfig:ro")

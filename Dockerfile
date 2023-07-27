@@ -211,3 +211,10 @@ RUN source /home/${USER}/.bashrc && catkin_make;
 
 ### Final apt clean
 RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
+
+FROM finalisation as simulation_tool
+
+WORKDIR /home/${USER}
+RUN wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04.tar.xz
+RUN tar -xf CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04.tar.xz
+RUN rm CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04.tar.xz

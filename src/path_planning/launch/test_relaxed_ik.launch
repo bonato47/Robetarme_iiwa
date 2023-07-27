@@ -1,5 +1,5 @@
 <launch>
-	<arg name="sim_viewer_arg" default="gazebo" /> <!-- gazebo or rviz-->
+	<arg name="sim_viewer_arg" default="gazebo" /> <!-- gazebo or rviz or none-->
 
 	<param name="sim_viewer" type="str" value="$(eval arg('sim_viewer_arg'))" />
 	<param name="ik" type="str" value="relaxed_ik" />
