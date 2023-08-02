@@ -3,12 +3,12 @@
 """Trajectory generation class to generate the different
 needed interpolation between all the waypoints submitted.
 
-Update: 230623
+Update: 230802
 Maintainers: louis.munier@epfl.ch
 """
 
 import os
-from typing import List
+from typing import List, Union
 
 import matplotlib.pyplot as plt
 import numpy as np

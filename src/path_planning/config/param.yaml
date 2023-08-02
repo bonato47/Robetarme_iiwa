@@ -20,6 +20,11 @@ read_trajectory: False
 # file to read the waypoints from
 waypoints_filename: "waypoints"
 
+# index for the first quaternions and positions
+ifirst_dt: 1
+ifirst_quat: 0
+ifirst_pos: 4
+
 # path to save the recorded data, relative from data folder let it empt to save into data
 save_path: "develop/hello"
 

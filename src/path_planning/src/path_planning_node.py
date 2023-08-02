@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Main module for the path planning implementation.
 
-Update: 230623
+Update: 230802
 Maintainers: louis.munier@epfl.ch
 """
 import os
@@ -28,16 +28,23 @@ def main():
 
     # Retrieve waypoints
     dir_path = os.path.dirname(os.path.realpath(__file__))
+    is_path_read = rospy.get_param("/read_trajectory")
     waypoints_filename = rospy.get_param("/waypoints_filename")
+
+    ifirst_quat = rospy.get_param("/ifirst_quat")
+    ifirst_pos = rospy.get_param("/ifirst_pos")
+
+    waypoints_cols = [ifirst_quat + x for x in range(4)] + [ifirst_pos + x for x in range(3)]
     waypoints = np.loadtxt(
         dir_path + "/../data/" + waypoints_filename + ".csv",
         delimiter=',',
-        skiprows=1
+        skiprows=1,
+        usecols=waypoints_cols
     )
 
     # Generate trajectory or read it
     trajectory = StraightLine(waypoints)
-    if rospy.get_param("/read_trajectory"):
+    if is_path_read:
         trajectory.set_trajectory(waypoints)
     else:
         trajectory.generate(0.05, 0.02)
