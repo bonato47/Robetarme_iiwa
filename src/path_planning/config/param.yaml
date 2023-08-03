@@ -1,6 +1,6 @@
 # Regroup all the needed parameters common to the ROS implementation.
 #
-# Update: 230623
+# Update: 230803
 # Maintainers: louis.munier@epfl.ch
 
 # --------------------------------------------------
@@ -43,7 +43,6 @@ precision: 6
 # --------------------------------------------------
 # ROS PARAMETERS
 # --------------------------------------------------
-node_name: "straight_line"
 end_effector: "iiwa_link_ee"
 base_link: "iiwa_link_0"
 
@@ -53,11 +52,5 @@ degrees_of_freedom: 7 # DoF of kuka iiwa robot
 # --------------------------------------------------
 # TOPIC NAMES
 # --------------------------------------------------
-# type -> std_msgs::Float64MultiArray | Relays the command joint position
-position_controller_topic: "/iiwa/PositionController/command"
-
-# type -> geometry_msgs::Pose # Relays the end-effector position and orientation from trajectory planner
-command_end_effector_pos_topic: "/commandEEPosTopic"
-
 # type -> sensor_msgs::JointState | Relays the joint states from robot
 robot_joint_state_topic: "/iiwa/joint_states"

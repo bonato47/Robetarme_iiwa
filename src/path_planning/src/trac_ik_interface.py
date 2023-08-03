@@ -40,7 +40,7 @@ class TracIKInterface():
         rospy.Subscriber(
             robot_joint_state_topic, JointState, self._cbk_curr_joint_state)
 
-        pos_controller_topic = rospy.get_param("/position_controller_topic")
+        pos_controller_topic = rospy.get_param("/position_controller_command")
         self._dict_ros_comm["pos_controller"] = rospy.Publisher(
             pos_controller_topic, Float64MultiArray, queue_size=1)
 

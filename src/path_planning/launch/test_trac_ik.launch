@@ -2,6 +2,7 @@
 	<arg name="sim_viewer_arg" default="gazebo" /> <!-- gazebo or rviz or none-->
 
 	<param name="ik" type="str" value="trac_ik" />
+	<param name="position_controller_command" type="str" value="/iiwa/PositionController/command" />
 
 	<rosparam file="$(find robetarme)/config/param.yaml" />
 

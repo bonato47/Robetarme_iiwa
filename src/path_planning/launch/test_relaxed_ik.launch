@@ -8,6 +8,8 @@
 	<rosparam file="$(find robetarme)/config/param.yaml" />
 
 	<group if="$(eval arg('sim_viewer_arg') == 'gazebo')">
+		<param name="position_controller_command" type="str" value="/iiwa/PositionController/command" />
+		
 		<include file="$(find iiwa_gazebo)/launch/iiwa_gazebo.launch">
 			<arg name="controller" default="PositionController" />
 			<arg name="model" default="7" />
@@ -15,7 +17,13 @@
 	</group>
 
 	<group if="$(eval arg('sim_viewer_arg') == 'rviz')">
+		<param name="position_controller_command" type="str" value="/relaxed_ik/joint_angle_solutions" />
+		
 		<include file="$(find relaxed_ik_ros1)/launch/rviz_viewer.launch" />
+	</group>
+
+	<group if="$(eval arg('sim_viewer_arg') == 'none')">
+		<param name="position_controller_command" type="str" value="/iiwa/PositionController/command" />
 	</group>
 
 	<include file="$(find relaxed_ik_ros1)/launch/relaxed_ik_rust.launch" />
