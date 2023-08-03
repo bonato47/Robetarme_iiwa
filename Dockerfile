@@ -145,37 +145,6 @@ RUN cp -R universal_robot ros_ws/src/
 RUN rm universal_robot -r
 
 
-#install eigen
-#WORKDIR /home/${USER}
-#RUN wget -c https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz -O - | tar -xz
-#RUN cd eigen-3.4.0 && mkdir build && cd build && cmake .. && make install
-#RUN cd ../.. && rm -r eigen-3.4.0
-
-#WORKDIR /home/${USER}/control-libraries/source
-#RUN mkdir build && cd build
-#RUN cmake -DCMAKE_BUILD_TYPE=Release ..
-#RUN make -j
-#RUN make install
-
-#WORKDIR /home/${USER}/control-libraries/protocol
-#RUN sudo bash install.sh --auto
-
-#COPY --from=ghcr.io/epfl-lasa/control-libraries/development-dependencies:latest /usr/local/include/google /usr/local/include/google
-#COPY --from=ghcr.io/epfl-lasa/control-libraries/development-dependencies:latest /usr/local/lib/libproto* /usr/local/lib
-#COPY --from=ghcr.io/epfl-lasa/control-libraries/development-dependencies:latest /usr/local/bin/protoc /usr/local/bin
-#RUN sudo ldconfig
-
-#RUN echo "deb [arch=amd64] http://robotpkg.openrobots.org/packages/debian/pub $(lsb_release -cs) robotpkg" | sudo tee /etc/apt/sources.list.d/robotpkg.list
-#RUN  curl http://robotpkg.openrobots.org/packages/debian/robotpkg.key | sudo apt-key add -
-#RUN  sudo apt update
-#RUN  sudo apt install -qqy robotpkg-py3*-pinocchio
-#RUN export PATH=/opt/openrobots/bin:$PATH
-#RUN export PKG_CONFIG_PATH=/opt/openrobots/lib/pkgconfig:$PKG_CONFIG_PATH
-#RUN export LD_LIBRARY_PATH=/opt/openrobots/lib:$LD_LIBRARY_PATH
-#RUN export PYTHONPATH=/opt/openrobots/lib/python3.8.10/site-packages:$PYTHONPATH 
-#RUN export CMAKE_PREFIX_PATH=/opt/openrobots:$CMAKE_PREFIX_PATH
-
-
 FROM inverse-kinematics as finalisation
 
 ### Add environement variables to bashrc
