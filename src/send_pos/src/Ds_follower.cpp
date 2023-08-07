@@ -72,7 +72,7 @@ class ActualState {       // The class
     }
      void getFK(){
         // Take joints state actual and convert to cartesian state with the help of th FK service
-        FK_state.request.joints.data =  joint_std64;
+        FK_state.request.joints.data =  joint_std64.data;
         client_FK.call(FK_state);
         Past_cart = FK_state.response.poses[0], FK_state.response.poses[1];
         Past_cart_pos = Past_cart.position;
