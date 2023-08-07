@@ -42,8 +42,8 @@ class ActualState {       // The class
     geometry_msgs::Point Past_cart_pos;
 
 
-    vector<double> pos_joint_actual;
-    vector<double> pos_cart_actual;
+    vector<double> posJointActual;
+    vector<double> posCartActual;
 
     VectorXd posJointActualEigen;
     VectorXd posCartActualEigen;
@@ -62,7 +62,7 @@ class ActualState {       // The class
         joint_eigen = Map<VectorXd>(pt, 7);
         joint_std64.data = {pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]};
         initFK();
-    }
+        }
     void initFK(){
          //iniailization Forward Kinematics
         FK_state.request.joints.layout.dim.push_back(std_msgs::MultiArrayDimension());
