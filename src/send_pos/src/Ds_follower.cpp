@@ -210,8 +210,10 @@ int main(int argc, char **argv)
         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
         vector<double> NextQuatPosCart = Integral_func(actualState.posCartActual, speed_eigen, delta_t);
         
+        ROS_INFO("%f",NextQuatPosCart[4]);
+        
         //get inverse kinematic 
-        nextState.getIK(NextQuatPosCart);
+        //nextState.getIK(NextQuatPosCart);
 
         //-----------------------------------------------------------------------
         //send next joint 
