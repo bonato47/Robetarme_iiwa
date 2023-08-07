@@ -123,10 +123,10 @@ class NextState {       // The class
     }    
     
     void init_general(){
-        vector<double> vector0(4, 0.0);;
-        quatFromDS = vector0;
-        vector<double> vector0(3, 0.0);;
-        speedFromDS = vector0;
+        vector<double> vector0_4(4, 0.0);;
+        quatFromDS = vector0_4;
+        vector<double> vector0_3(3, 0.0);;
+        speedFromDS = vector0_3;
 
         ikSolver= new TRAC_IK::TRAC_IK(baseLink, tipLink, URDF_param, timeoutInSecs, error, type);  
         KDL::Chain chain;
