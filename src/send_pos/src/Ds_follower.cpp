@@ -219,7 +219,7 @@ int main(int argc, char **argv)
         //ROS_INFO("%f,%f,%f,%f,%f,%f,%f",NextQuatPosCart[0],NextQuatPosCart[1],NextQuatPosCart[2],NextQuatPosCart[3],NextQuatPosCart[4],NextQuatPosCart[5],NextQuatPosCart[6]);
         
         //get inverse kinematic 
-        nextState.getIK(actualState.posJointActual;NextQuatPosCart);
+        nextState.getIK(actualState.posJointActual,NextQuatPosCart);
 
         //-----------------------------------------------------------------------
         //send next joint 
