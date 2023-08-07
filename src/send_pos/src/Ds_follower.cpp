@@ -18,7 +18,7 @@ using namespace std;
 void CounterCallback(const sensor_msgs::JointState::ConstPtr msg);
 
   // Function that Calculate the speed with a DS
-VectorXd speed_func(vector<double> Pos, Vector3d x01, Vector4d q2);
+VectorXd speed_func(vector<double> Pos, vector<double> quat2,vector<double> speed);
 
 // Function that integrate the speed
 VectorXd Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double dt);
@@ -212,8 +212,10 @@ int main(int argc, char **argv)
       
         //FK
         actualState.getFK();
-        ROS_INFO("%f",actualState.posCartActual[0]);
        
+
+       VectorXd att = speed_func(actualState.posCartActual, nextState.quatFromDS,nextState.speedFromDS);
+
 
 
 
@@ -275,29 +277,14 @@ int main(int argc, char **argv)
 }
 
 
-VectorXd speed_func(vector<double> Pos,Vector3d x01, Vector4d q2)
+VectorXd speed_func(vector<double> Pos, vector<double> quat2,vector<double> speed)
 {
-    //int num_gridpoints = 30;
-    Vector3d Position ;
-    Position[0]= Pos[4];
-    Position[1]= Pos[5];
-    Position[2]= Pos[6];
-    Matrix3d A;
-    //Set a linear DS
-    A << -1, 0, 0 ,
-          0,-1, 0 ,
-          0, 0,-1;
-    A =50*A;
-    Vector3d b1,w; 
-    // Set the attracotr
-    //x01 << 0.5,0.5,0.5;
-    b1 =  -A*x01;
-    w = A *Position +b1 ;
-    //w = w.normalized()*0.1;
-
+    
      //orientation
-    Vector4d q1 ;
+    Vector4d q1,q2 ;
     q1 << Pos[0],Pos[1],Pos[2],Pos[3];
+    q2 << quat2[0],quat2[1],quat2[2],quat2[3];
+
     Vector4d dqd = Utils<double>::slerpQuaternion(q1, q2 ,0.5);    
     Vector4d deltaQ = dqd -  q1;
 
@@ -314,7 +301,7 @@ VectorXd speed_func(vector<double> Pos,Vector3d x01, Vector4d q2)
     double theta_gq = (-.5/(4*maxDq*maxDq)) * tmp_angular_vel.transpose() * tmp_angular_vel;
     Vector3d Omega_out  = 2 * dsGain_ori*(1+std::exp(theta_gq)) * tmp_angular_vel;
     
-    vector<double> V = {Omega_out[0],Omega_out[1],Omega_out[2],w[0],w[1],w[2]};
+    vector<double> V = {Omega_out[0],Omega_out[1],Omega_out[2],speed[0],speed[1],speed[2]};
 
     double* pt = &V[0];
     VectorXd VOut = Map<VectorXd>(pt, 6);
