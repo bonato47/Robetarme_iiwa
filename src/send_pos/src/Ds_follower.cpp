@@ -196,7 +196,7 @@ int main(int argc, char **argv)
     //Define object position and speed
     ActualState actualState;
     actualState.init(FK);
-    NextState nextstate;
+    NextState nextState;
     nextState.init_IK_iiwa();
 
     ros::Subscriber sub =  Nh_.subscribe("iiwa/joint_states", 1000, &ActualState::CounterCallback, &actualState);
