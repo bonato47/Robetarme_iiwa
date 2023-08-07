@@ -144,14 +144,14 @@ class NextState {       // The class
         KDL::Frame NextJointCartesian(Rot,Vec); 
         int rc = ikSolver->CartToJnt(actualJointTask, NextJointCartesian, NextJointTask);
 
-        // posJointNextEigen = NextJointTask.data;
-        // for(int i = 0 ;i<nJoint;++i){
-        //     posJointNext[i] =posJointNextEigen(i);
-        // }
-        // //msgP.data = posJointNext;
+        VectorXd posJointNextEigen = NextJointTask.data;
+        for(int i = 0 ;i<nJoint;++i){    
+            posJointNext[i] =posJointNextEigen(i);
+        }
+        msgP.data = posJointNext;
 
-        // return rc;
-        return 1;
+        return rc;
+        
      } 
 
      void updateIK(double err){
@@ -223,7 +223,7 @@ int main(int argc, char **argv)
 
         //-----------------------------------------------------------------------
         //send next joint 
-        //chatter_pub.publish(nextState.msgP);
+        chatter_pub.publish(nextState.msgP);
         
         //--------------------------------------------------------------------
         ros::spinOnce();        
