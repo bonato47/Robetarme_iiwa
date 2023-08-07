@@ -36,6 +36,8 @@ class ActualState {       // The class
     vector<double> cart,joint;
     VectorXd cart_eigen, joint_eigen;
     std_msgs::Float64MultiArray joint_std64;
+    geometry_msgs::Pose Past_cart;
+
 
     vector<double> pos_joint_actual;
     vector<double> pos_cart_actual;
@@ -59,7 +61,7 @@ class ActualState {       // The class
         vector<double> vector0(nJoint, 0.0);
         pos_joint_actual = vector0;
         pos_cart_actual  = vector0;
-        double* pt = &V[0];
+        double* pt = &pos_joint_actual[0];
         joint_eigen = Map<VectorXd>(pt, 7);
         joint_std64.data = {pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]};
         initFK();
