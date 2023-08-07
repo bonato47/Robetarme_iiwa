@@ -213,7 +213,7 @@ int main(int argc, char **argv)
         vector<double> NextQuatPosCart = Integral_func(actualState.posCartActual, speed_eigen, delta_t);
         
         //get inverse kinematic 
-        nextState.getIK(NextQuatPosCart);
+        //nextState.getIK(NextQuatPosCart);
 
         //-----------------------------------------------------------------------
         //send next joint 
