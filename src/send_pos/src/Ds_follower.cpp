@@ -42,6 +42,8 @@ class ActualState {       // The class
 
     VectorXd posJointActualEigen;
     VectorXd posCartActualEigen;
+    ros::ServiceClient client_FK = Nh_.serviceClient<iiwa_tools::GetFK>("iiwa/iiwa_fk_server");
+
     iiwa_tools::GetFK  FK_state ;
 
     void initFK(){
@@ -57,8 +59,8 @@ class ActualState {       // The class
         pos_joint_actual = vector0;
         pos_cart_actual  = vector0;
         double* pt = &V[0];
-        joint_eigen = Map<VectorXd>(pt, L);
-        joint_std64.data = {joint[0],joint[1],joint[2],joint[3],joint[4],joint[5],joint[6]};
+        joint_eigen = Map<VectorXd>(pt, 7);
+        joint_std64.data = {pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]};
         initFK();
     }
 
