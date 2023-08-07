@@ -101,7 +101,6 @@ class NextState {       // The class
         int nJoint{};
 
         std_msgs::Float64MultiArray msgP;
-        VectorXd posJointNextEigen;
         vector<double> posJointNext;
         vector<double> speedFromDS;
         vector<double> quatFromDS;
@@ -121,6 +120,7 @@ class NextState {       // The class
         quatFromDS = vector0_4;
         vector<double> vector0_3(3, 0.0);;
         speedFromDS = vector0_3;
+        
 
         ikSolver= new TRAC_IK::TRAC_IK(baseLink, tipLink, URDF_param, timeoutInSecs, error, type);  
         KDL::Chain chain;
@@ -130,14 +130,17 @@ class NextState {       // The class
         } 
     }
 
-    int getIK(vector<double> vectorQuatPos ) {  
+    int getIK(vector<double> actualJoint, vector<double> vectorQuatPos ) {  
+        //convert to eigen
+        int L = actualJoint.size();
+        double* pt = &actualJoint[0];
         //Inverse kinematics trac-IK
         KDL::JntArray NextJointTask;
         KDL::JntArray actualJointTask; 
-        actualJointTask.data = posJointNextEigen; 
+        actualJointTask.data = Map<VectorXd>(pt, L);
         std::fill(posJointNext.begin(), posJointNext.end(), 0);
         KDL::Vector Vec(vectorQuatPos[4],vectorQuatPos[5],vectorQuatPos[6]);
-        KDL::Rotation Rot = KDL::Rotation::Quaternion(0,0,0,1);//vectorQuatPos[0],vectorQuatPos[1],vectorQuatPos[2],vectorQuatPos[3]);
+        KDL::Rotation Rot = KDL::Rotation::Quaternion(vectorQuatPos[0],vectorQuatPos[1],vectorQuatPos[2],vectorQuatPos[3]);
         KDL::Frame NextJointCartesian(Rot,Vec); 
         int rc = ikSolver->CartToJnt(actualJointTask, NextJointCartesian, NextJointTask);
 
@@ -216,7 +219,7 @@ int main(int argc, char **argv)
         //ROS_INFO("%f,%f,%f,%f,%f,%f,%f",NextQuatPosCart[0],NextQuatPosCart[1],NextQuatPosCart[2],NextQuatPosCart[3],NextQuatPosCart[4],NextQuatPosCart[5],NextQuatPosCart[6]);
         
         //get inverse kinematic 
-        nextState.getIK(NextQuatPosCart);
+        nextState.getIK(actualState.posJointActual;NextQuatPosCart);
 
         //-----------------------------------------------------------------------
         //send next joint 
