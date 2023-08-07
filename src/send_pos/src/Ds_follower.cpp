@@ -32,7 +32,7 @@ bool mseValue_cart(vector<double> v1, vector<double> v2);
 class ActualState {       // The class
   public:             // Access specifier
     int nJoint =7;
-    bool init= false;
+    bool initCheck= false;
     vector<double> cart,joint;
     VectorXd cart_eigen, joint_eigen;
     std_msgs::Float64MultiArray joint_std64;
@@ -85,8 +85,8 @@ class ActualState {       // The class
         posJointActual = msg->position;
         posJointActualEigen = Map<VectorXd>(&posJointActual[0], nJoint);
 
-        if(init == false){
-            init = true;
+        if(initCheck == false){
+            initCheck = true;
         }    
     }
 };
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
     {
 
         //waiting for the first joint position
-        while(!actualState.init){
+        while(!actualState.initCheck){
             ros::spinOnce();
         } 
       
