@@ -141,58 +141,58 @@ int main(int argc, char **argv)
         //FK
         getFK();
         return 0;
-        //-----------------------------------------------------------------------
-        //Send the cartesian stat to Dynamical System (DS) to find desired speed ( wx,wy,wz,px,py,pz)
-         VectorXd speed_cart;
-        Robot_speed.cart_next_eigen = speed_func(Robot_position.cart,Position_des, Orientation_des);
-        //-----------------------------------------------------------------------
+//         //-----------------------------------------------------------------------
+//         //Send the cartesian stat to Dynamical System (DS) to find desired speed ( wx,wy,wz,px,py,pz)
+//          VectorXd speed_cart;
+//         Robot_speed.cart_next_eigen = speed_func(Robot_position.cart,Position_des, Orientation_des);
+//         //-----------------------------------------------------------------------
 
-        //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
-        Robot_position.cart_next_eigen = Integral_func(Robot_position.cart, Robot_speed.cart_next_eigen, delta_t);
+//         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
+//         Robot_position.cart_next_eigen = Integral_func(Robot_position.cart, Robot_speed.cart_next_eigen, delta_t);
         
-        //------------------------------------------------------------------------
-        //Convert cartesian to joint space
-        KDL::JntArray Next_joint_task;
-        KDL::JntArray actual_joint_task;   
-        actual_joint_task.data = Robot_position.joint_eigen;
+//         //------------------------------------------------------------------------
+//         //Convert cartesian to joint space
+//         KDL::JntArray Next_joint_task;
+//         KDL::JntArray actual_joint_task;   
+//         actual_joint_task.data = Robot_position.joint_eigen;
 
-        KDL::Rotation Rot = KDL::Rotation::Quaternion(Robot_position.cart_next_eigen[0],Robot_position.cart_next_eigen[1],Robot_position.cart_next_eigen[2],Robot_position.cart_next_eigen[3]);
-        KDL::Vector Vec(Robot_position.cart_next_eigen[4],Robot_position.cart_next_eigen[5],Robot_position.cart_next_eigen[6]);
-        KDL::Frame Next_joint_cartesian(Rot,Vec); 
+//         KDL::Rotation Rot = KDL::Rotation::Quaternion(Robot_position.cart_next_eigen[0],Robot_position.cart_next_eigen[1],Robot_position.cart_next_eigen[2],Robot_position.cart_next_eigen[3]);
+//         KDL::Vector Vec(Robot_position.cart_next_eigen[4],Robot_position.cart_next_eigen[5],Robot_position.cart_next_eigen[6]);
+//         KDL::Frame Next_joint_cartesian(Rot,Vec); 
 
-        int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
+//         int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
 
-        vector<double> pos_joint_next(7);
-        Robot_position.joint_next_eigen = Next_joint_task.data;
-        for(int i = 0 ;i<7;++i){
-            pos_joint_next[i] = Robot_position.joint_next_eigen(i);
-        }
-        Robot_position.joint_next = pos_joint_next;
-        //-----------------------------------------------------------------------
-        // Filter
+//         vector<double> pos_joint_next(7);
+//         Robot_position.joint_next_eigen = Next_joint_task.data;
+//         for(int i = 0 ;i<7;++i){
+//             pos_joint_next[i] = Robot_position.joint_next_eigen(i);
+//         }
+//         Robot_position.joint_next = pos_joint_next;
+//         //-----------------------------------------------------------------------
+//         // Filter
        
-/*         double alpha = 0.2;
-        vector<double> pos_joint_next_filter(7);
+// /*         double alpha = 0.2;
+//         vector<double> pos_joint_next_filter(7);
 
-        for(int i = 0;i<7;i++){
-            pos_joint_next_filter[i] = alpha*pos_joint_next[i] +(1-alpha)*pos_joint_actual[i];
-        } */
-        //-----------------------------------------------------------------------
-        //send next joint and exit if arrived to the attractor
-        if(count > 0 && mseValue_cart({Position_des[0],Position_des[1],Position_des[2]},{Robot_position.cart[4],Robot_position.cart[5],Robot_position.cart[6]})){
-            msgP.data = Robot_position.joint_next;
-            chatter_pub.publish(msgP);
-        }
-        else{
-            if(count > 0){
-                ROS_INFO(" Attractor Reached, Exit");
-                return 0;
-            }
-        }
-        //--------------------------------------------------------------------
-        ros::spinOnce();        
-        loop_rate.sleep();  
-        ++count;      
+//         for(int i = 0;i<7;i++){
+//             pos_joint_next_filter[i] = alpha*pos_joint_next[i] +(1-alpha)*pos_joint_actual[i];
+//         } */
+//         //-----------------------------------------------------------------------
+//         //send next joint and exit if arrived to the attractor
+//         if(count > 0 && mseValue_cart({Position_des[0],Position_des[1],Position_des[2]},{Robot_position.cart[4],Robot_position.cart[5],Robot_position.cart[6]})){
+//             msgP.data = Robot_position.joint_next;
+//             chatter_pub.publish(msgP);
+//         }
+//         else{
+//             if(count > 0){
+//                 ROS_INFO(" Attractor Reached, Exit");
+//                 return 0;
+//             }
+//         }
+//         //--------------------------------------------------------------------
+//         ros::spinOnce();        
+//         loop_rate.sleep();  
+//         ++count;      
     }
     return 0;
 }
