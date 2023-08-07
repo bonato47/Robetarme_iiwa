@@ -145,9 +145,9 @@ class NextState {       // The class
         int rc = ikSolver->CartToJnt(actualJointTask, NextJointCartesian, NextJointTask);
 
         VectorXd posJointNextEigen = NextJointTask.data;
-        ROS_INFO("%f,%f,%f,%f,%f,%f",posJointNextEigen(0),posJointNextEigen(1),posJointNextEigen(2),posJointNextEigen(3),posJointNextEigen(4),posJointNextEigen(5));
 
         for(int i = 0 ;i<nJoint;++i){    
+            ROS_INFO("%f",posJointNextEigen(i));
             posJointNext[i] =posJointNextEigen(i);
          }
         //msgP.data = posJointNext;
