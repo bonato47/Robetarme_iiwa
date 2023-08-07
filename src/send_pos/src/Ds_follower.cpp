@@ -100,7 +100,7 @@ class NextState {       // The class
         double timeoutInSecs=0.05;
         int nJoint{};
 
-       
+        std_msgs::Float64MultiArray msgP;
 
         vector<double> posJointNext;
         VectorXd posJointNextEigen;
@@ -108,12 +108,8 @@ class NextState {       // The class
         vector<double> speedFromDS;
         vector<double> quatFromDS;
 
-
-
-        ros::V_string jointsName;
         bool init_check= false;
         TRAC_IK::TRAC_IK* ikSolver = nullptr;  
-
 
     void init_IK_iiwa() {  // Method/function defined inside the class
         baseLink  = "iiwa_link_0";
@@ -132,7 +128,7 @@ class NextState {       // The class
         KDL::Chain chain;
         bool valid = ikSolver->getKDLChain(chain);
         if (!valid) {
-        ROS_ERROR("There was no valid KDL chain found");
+            ROS_ERROR("There was no valid KDL chain found");
         } 
     }
 
@@ -151,6 +147,8 @@ class NextState {       // The class
         for(int i = 0 ;i<nJoint;++i){
             posJointNext[i] =posJointNextEigen(i);
         }
+        msgP.data = posJointNext;
+
         return rc;
      } 
 
@@ -178,7 +176,6 @@ class NextState {       // The class
 
 int main(int argc, char **argv)
 {
-
     //choose the time step
     double delta_t = 0.1;
 
@@ -197,9 +194,6 @@ int main(int argc, char **argv)
 
     ros::Subscriber sub =  Nh_.subscribe("iiwa/joint_states", 1000, &ActualState::CounterCallback, &actualState);
     ros::Subscriber sub_DS =  Nh_.subscribe("/passive_control/vel_quat", 1000, &NextState::poseCallback, &nextState);
-
-
-    int count = 0;
 
     //waiting for the first joint position
     while(!actualState.initCheck){
@@ -223,12 +217,11 @@ int main(int argc, char **argv)
 
         //-----------------------------------------------------------------------
         //send next joint 
-        msgP.data = Robot_position.joint_next;
-        chatter_pub.publish(msgP);
+        chatter_pub.publish(nextState.msgP);
         
-         //--------------------------------------------------------------------
-         ros::spinOnce();        
-         loop_rate.sleep();  
+        //--------------------------------------------------------------------
+        ros::spinOnce();        
+        loop_rate.sleep();  
     }
     return 0;
 }
