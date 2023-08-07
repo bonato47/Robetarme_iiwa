@@ -51,8 +51,6 @@ class ActualState {       // The class
 
     iiwa_tools::GetFK  FK_state ;
 
-
-
     void init(ros::ServiceClient FK){
         client_FK = FK;
         vector<double> vector0(nJoint, 0.0);
@@ -91,6 +89,92 @@ class ActualState {       // The class
     }
 };
 
+class NextState {       // The class
+    public:             // Access specifier
+        //iniailization Invers Kinematics
+        string baseLink;
+        string tipLink;
+        string URDF_param="/robot_description";
+        TRAC_IK::SolveType type =TRAC_IK::Distance;
+        double error=1e-3; 
+        double timeoutInSecs=0.05;
+        int nJoint{};
+
+        vector<double> posJointActual;
+        vector<double> velJointActual;
+        vector<double> posJointNext;
+        VectorXd velJointActualEigen;
+        VectorXd posJointActualEigen;
+
+        vector<double> posJointNext;
+        VectorXd posJointNextEigen;
+
+        vector<double> speedFromDS;
+        vector<double> quatFromDS;
+
+
+
+        ros::V_string jointsName;
+        bool init_check= false;
+        TRAC_IK::TRAC_IK* ikSolver = nullptr;  
+
+
+    void init_IK_iiwa() {  // Method/function defined inside the class
+        baseLink  = "iiwa_link_0";
+        tipLink   = "iiwa_link_ee";
+        nJoint    = 7;
+        init_general();
+    }    
+    
+    void init_general(){
+        vector<double> vector0(4, 0.0);;
+        quatFromDS = vector0;
+        vector<double> vector0(3, 0.0);;
+        SpeedFromDS = vector0;
+
+        ikSolver= new TRAC_IK::TRAC_IK(baseLink, tipLink, URDF_param, timeoutInSecs, error, type);  
+        KDL::Chain chain;
+        bool valid = ikSolver->getKDLChain(chain);
+        if (!valid) {
+        ROS_ERROR("There was no valid KDL chain found");
+        } 
+    }
+
+    int getIK(vector<double> vectorQuatPos ) {  
+        //Inverse kinematics trac-IK
+        KDL::JntArray NextJointTask;
+        KDL::JntArray actualJointTask; 
+        actualJointTask.data = posJointNextEigen; 
+        std::fill(posJointNext.begin(), posJointNext.end(), 0);
+        KDL::Vector Vec(vectorQuatPos[4],vectorQuatPos[5],vectorQuatPos[6]);
+        KDL::Rotation Rot = KDL::Rotation::Quaternion(vectorQuatPos[0],vectorQuatPos[1],vectorQuatPos[2],vectorQuatPos[3]);
+        KDL::Frame NextJointCartesian(Rot,Vec); 
+        int rc = ikSolver->CartToJnt(actualJointTask, NextJointCartesian, NextJointTask);
+
+        posJointNextEigen = NextJointTask.data;
+        for(int i = 0 ;i<nJoint;++i){
+            posJointNext[i] =posJointNextEigen(i);
+        }
+        return rc;
+     } 
+
+     void updateIK(double err){
+        ikSolver= new TRAC_IK::TRAC_IK(baseLink, tipLink, URDF_param, timeoutInSecs, err, type);  
+     }
+
+    void CounterCallback(const geometry_msgs::Pose::ConstPtr msg)
+    {
+        posJointActual = msg->position;
+        velJointActual = msg->velocity;
+
+        if(init_check == false){
+            init_check = true;
+        }    
+        posJointActualEigen = Map<VectorXd>(&posJointActual[0], nJoint);
+        velJointActualEigen = Map<VectorXd>(&velJointActual[0], nJoint); 
+    }
+};
+
 int main(int argc, char **argv)
 {
 
@@ -107,28 +191,13 @@ int main(int argc, char **argv)
     //Define object position and speed
     ActualState actualState;
     actualState.init(FK);
+    NextState nextstate;
+    nextState.init_IK_iiwa();
+
     ros::Subscriber sub =  Nh_.subscribe("iiwa/joint_states", 1000, &ActualState::CounterCallback, &actualState);
+    ros::Subscriber sub_DS =  Nh_.subscribe("/passive_control/vel_quat", 1000, &NextState::CounterCallback, &nextState);
 
 
-   
-    //iniailization Invers Kinematics
-    string base_link = "iiwa_link_0";
-    string tip_link = "iiwa_link_ee";
-    string URDF_param="/robot_description";
-    double timeout_in_secs=0.05;
-    double error=1e-3; 
-    TRAC_IK::SolveType type=TRAC_IK::Distance;
-    TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
-    KDL::Chain chain;
-
-    bool valid = ik_solver.getKDLChain(chain);
-    if (!valid)
-    {
-        ROS_ERROR("There was no valid KDL chain found");
-    }
-
-    //initialization  Variable
-    std_msgs::Float64MultiArray msgP;
     int count = 0;
 
     //begin the ros loop
@@ -143,7 +212,11 @@ int main(int argc, char **argv)
         //FK
         actualState.getFK();
         ROS_INFO("%f",actualState.posCartActual[0]);
-        return 0;
+       
+
+
+
+
 //         //-----------------------------------------------------------------------
 //         //Send the cartesian stat to Dynamical System (DS) to find desired speed ( wx,wy,wz,px,py,pz)
 //          VectorXd speed_cart;
