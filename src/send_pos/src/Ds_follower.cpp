@@ -134,18 +134,14 @@ int main(int argc, char **argv)
     //begin the ros loop
     while (ros::ok())
     {
-        //Define object position and speed
-        State_robot Robot_position;
-        Robot_position.State_robot_actual(pos_joint_actual);
 
         //waiting for the first joint position
         while(!actualState.init){
             ros::spinOnce();
         } 
       
-        
         //FK
-        getFK();
+        actualState.getFK();
         return 0;
 //         //-----------------------------------------------------------------------
 //         //Send the cartesian stat to Dynamical System (DS) to find desired speed ( wx,wy,wz,px,py,pz)
