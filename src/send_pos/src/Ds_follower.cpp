@@ -162,17 +162,22 @@ class NextState {       // The class
         ikSolver= new TRAC_IK::TRAC_IK(baseLink, tipLink, URDF_param, timeoutInSecs, err, type);  
      }
 
-    void CounterCallback(const geometry_msgs::Pose::ConstPtr msg)
-    {
-        posJointActual = msg->position;
-        velJointActual = msg->velocity;
+    void poseCallback(const geometry_msgs::Pose::ConstPtr& msg) {
+        // Process the received Pose message here
+        // For example, you can access the position and orientation as follows:
+        double x = msg->position.x;
+        double y = msg->position.y;
+        double z = msg->position.z;
 
-        if(init_check == false){
-            init_check = true;
-        }    
-        posJointActualEigen = Map<VectorXd>(&posJointActual[0], nJoint);
-        velJointActualEigen = Map<VectorXd>(&velJointActual[0], nJoint); 
+        double qx = msg->orientation.x;
+        double qy = msg->orientation.y;
+        double qz = msg->orientation.z;
+        double qw = msg->orientation.w;
+
+        speedFromDS = [x,y,z]
+        quatFromDS= [qx,qy,qz,qw];   
     }
+
 };
 
 int main(int argc, char **argv)
@@ -195,7 +200,7 @@ int main(int argc, char **argv)
     nextState.init_IK_iiwa();
 
     ros::Subscriber sub =  Nh_.subscribe("iiwa/joint_states", 1000, &ActualState::CounterCallback, &actualState);
-    ros::Subscriber sub_DS =  Nh_.subscribe("/passive_control/vel_quat", 1000, &NextState::CounterCallback, &nextState);
+    ros::Subscriber sub_DS =  Nh_.subscribe("/passive_control/vel_quat", 1000, &NextState::poseCallback, &nextState);
 
 
     int count = 0;
