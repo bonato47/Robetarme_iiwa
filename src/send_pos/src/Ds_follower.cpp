@@ -217,7 +217,7 @@ int main(int argc, char **argv)
         VectorXd speed_eigen = speed_func(actualState.posCartActual, nextState.quatFromDS,nextState.speedFromDS);
 
         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
-        Robot_position.cart_next_eigen = Integral_func(actualState.posCartActual, speed_eigen, delta_t);
+        VectorXd NextPosEigen = Integral_func(actualState.posCartActual, speed_eigen, delta_t);
         
 //         //------------------------------------------------------------------------
 //         //Convert cartesian to joint space
