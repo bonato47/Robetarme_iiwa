@@ -21,7 +21,7 @@ void CounterCallback(const sensor_msgs::JointState::ConstPtr msg);
 VectorXd speed_func(vector<double> Pos, vector<double> quat2,vector<double> speed);
 
 // Function that integrate the speed
-VectorXd Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double dt);
+vector<double> Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double dt);
 
 // Function that Calculate Root Mean Square
 bool mseValue_cart(vector<double> v1, vector<double> v2);
@@ -217,8 +217,10 @@ int main(int argc, char **argv)
         VectorXd speed_eigen = speed_func(actualState.posCartActual, nextState.quatFromDS,nextState.speedFromDS);
 
         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
-        VectorXd NextPosEigen = Integral_func(actualState.posCartActual, speed_eigen, delta_t);
+        vector<double> NextQuatPosCart = Integral_func(actualState.posCartActual, speed_eigen, delta_t);
         
+        //get inverse kinematic
+        nextState.getIK(NextQuatPosCart);
 //         //------------------------------------------------------------------------
 //         //Convert cartesian to joint space
 //         KDL::JntArray Next_joint_task;
@@ -299,7 +301,7 @@ VectorXd speed_func(vector<double> Pos, vector<double> quat2,vector<double> spee
     return VOut;
 }
 
-VectorXd Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double dt)
+vector<double> Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double dt)
 {
     //Speed orientation integration
     
@@ -326,9 +328,9 @@ VectorXd Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double 
     past_bis << Pos_actual[4],Pos_actual[5],Pos_actual[6];
     next_bis =speed_bis*dt+ past_bis ;
 
-    VectorXd pos_cart_Next(7);
+    vector<double> pos_cart_Next;
 
-    pos_cart_Next<< resultQ.x(),resultQ.y(),resultQ.z(),resultQ.w(),next_bis;
+    pos_cart_Next ={ resultQ.x(),resultQ.y(),resultQ.z(),resultQ.w(),next_bis};
     //pos_cart_Next<< 0,0,0,1,next_bis;
 
     return pos_cart_Next;
