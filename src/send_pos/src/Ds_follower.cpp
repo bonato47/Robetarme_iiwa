@@ -139,7 +139,7 @@ class NextState {       // The class
         KDL::Vector Vec(vectorQuatPos[4],vectorQuatPos[5],vectorQuatPos[6]);
         KDL::Rotation Rot = KDL::Rotation::Quaternion(vectorQuatPos[0],vectorQuatPos[1],vectorQuatPos[2],vectorQuatPos[3]);
         KDL::Frame NextJointCartesian(Rot,Vec); 
-        // int rc = ikSolver->CartToJnt(actualJointTask, NextJointCartesian, NextJointTask);
+        /int rc = ikSolver->CartToJnt(actualJointTask, NextJointCartesian, NextJointTask);
 
         // posJointNextEigen = NextJointTask.data;
         // for(int i = 0 ;i<nJoint;++i){
