@@ -51,13 +51,7 @@ class ActualState {       // The class
 
     iiwa_tools::GetFK  FK_state ;
 
-    void initFK(){
-         //iniailization Forward Kinematics
-        FK_state.request.joints.layout.dim.push_back(std_msgs::MultiArrayDimension());
-        FK_state.request.joints.layout.dim.push_back(std_msgs::MultiArrayDimension());
-        FK_state.request.joints.layout.dim[0].size = 1;
-        FK_state.request.joints.layout.dim[1].size = nJoint;
-    }
+
 
     void init(ros::ServiceClient FK){
         client_FK = FK;
@@ -69,7 +63,13 @@ class ActualState {       // The class
         joint_std64.data = {pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]};
         initFK();
     }
-
+    void initFK(){
+         //iniailization Forward Kinematics
+        FK_state.request.joints.layout.dim.push_back(std_msgs::MultiArrayDimension());
+        FK_state.request.joints.layout.dim.push_back(std_msgs::MultiArrayDimension());
+        FK_state.request.joints.layout.dim[0].size = 1;
+        FK_state.request.joints.layout.dim[1].size = nJoint;
+    }
      void getFK(){
         // Take joints state actual and convert to cartesian state with the help of th FK service
         FK_state.request.joints.data =  joint_std64;
