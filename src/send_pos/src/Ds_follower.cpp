@@ -213,21 +213,11 @@ int main(int argc, char **argv)
         //FK
         actualState.getFK();
        
+        //use the speed from topic and convert the quat from topic to angular velocity
+        VectorXd speed_eigen = speed_func(actualState.posCartActual, nextState.quatFromDS,nextState.speedFromDS);
 
-       VectorXd att = speed_func(actualState.posCartActual, nextState.quatFromDS,nextState.speedFromDS);
-
-
-
-
-
-//         //-----------------------------------------------------------------------
-//         //Send the cartesian stat to Dynamical System (DS) to find desired speed ( wx,wy,wz,px,py,pz)
-//          VectorXd speed_cart;
-//         Robot_speed.cart_next_eigen = speed_func(Robot_position.cart,Position_des, Orientation_des);
-//         //-----------------------------------------------------------------------
-
-//         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
-//         Robot_position.cart_next_eigen = Integral_func(Robot_position.cart, Robot_speed.cart_next_eigen, delta_t);
+        //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
+        Robot_position.cart_next_eigen = Integral_func(actualState.posCartActual, speed_eigen, delta_t);
         
 //         //------------------------------------------------------------------------
 //         //Convert cartesian to joint space
