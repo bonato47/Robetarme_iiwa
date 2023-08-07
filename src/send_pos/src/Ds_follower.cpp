@@ -130,7 +130,7 @@ class NextState {       // The class
         vector<double> vector0(4, 0.0);;
         quatFromDS = vector0;
         vector<double> vector0(3, 0.0);;
-        SpeedFromDS = vector0;
+        speedFromDS = vector0;
 
         ikSolver= new TRAC_IK::TRAC_IK(baseLink, tipLink, URDF_param, timeoutInSecs, error, type);  
         KDL::Chain chain;
@@ -174,7 +174,7 @@ class NextState {       // The class
         double qz = msg->orientation.z;
         double qw = msg->orientation.w;
 
-        speedFromDS = [x,y,z]
+        speedFromDS = [x,y,z];
         quatFromDS= [qx,qy,qz,qw];   
     }
 
