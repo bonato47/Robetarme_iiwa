@@ -180,7 +180,7 @@ int main(int argc, char **argv)
 {
 
     //choose the time step
-    double delta_t = 0.01;
+    double delta_t = 0.1;
 
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Ds");
@@ -201,15 +201,14 @@ int main(int argc, char **argv)
 
     int count = 0;
 
+    //waiting for the first joint position
+    while(!actualState.initCheck){
+        ros::spinOnce();
+    } 
+
     //begin the ros loop
     while (ros::ok())
     {
-
-        //waiting for the first joint position
-        while(!actualState.initCheck){
-            ros::spinOnce();
-        } 
-      
         //FK
         actualState.getFK();
        
@@ -219,51 +218,17 @@ int main(int argc, char **argv)
         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
         vector<double> NextQuatPosCart = Integral_func(actualState.posCartActual, speed_eigen, delta_t);
         
-        //get inverse kinematic
+        //get inverse kinematic 
         nextState.getIK(NextQuatPosCart);
-//         //------------------------------------------------------------------------
-//         //Convert cartesian to joint space
-//         KDL::JntArray Next_joint_task;
-//         KDL::JntArray actual_joint_task;   
-//         actual_joint_task.data = Robot_position.joint_eigen;
 
-//         KDL::Rotation Rot = KDL::Rotation::Quaternion(Robot_position.cart_next_eigen[0],Robot_position.cart_next_eigen[1],Robot_position.cart_next_eigen[2],Robot_position.cart_next_eigen[3]);
-//         KDL::Vector Vec(Robot_position.cart_next_eigen[4],Robot_position.cart_next_eigen[5],Robot_position.cart_next_eigen[6]);
-//         KDL::Frame Next_joint_cartesian(Rot,Vec); 
-
-//         int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
-
-//         vector<double> pos_joint_next(7);
-//         Robot_position.joint_next_eigen = Next_joint_task.data;
-//         for(int i = 0 ;i<7;++i){
-//             pos_joint_next[i] = Robot_position.joint_next_eigen(i);
-//         }
-//         Robot_position.joint_next = pos_joint_next;
-//         //-----------------------------------------------------------------------
-//         // Filter
-       
-// /*         double alpha = 0.2;
-//         vector<double> pos_joint_next_filter(7);
-
-//         for(int i = 0;i<7;i++){
-//             pos_joint_next_filter[i] = alpha*pos_joint_next[i] +(1-alpha)*pos_joint_actual[i];
-//         } */
-//         //-----------------------------------------------------------------------
-//         //send next joint and exit if arrived to the attractor
-//         if(count > 0 && mseValue_cart({Position_des[0],Position_des[1],Position_des[2]},{Robot_position.cart[4],Robot_position.cart[5],Robot_position.cart[6]})){
-//             msgP.data = Robot_position.joint_next;
-//             chatter_pub.publish(msgP);
-//         }
-//         else{
-//             if(count > 0){
-//                 ROS_INFO(" Attractor Reached, Exit");
-//                 return 0;
-//             }
-//         }
-//         //--------------------------------------------------------------------
-//         ros::spinOnce();        
-//         loop_rate.sleep();  
-//         ++count;      
+        //-----------------------------------------------------------------------
+        //send next joint 
+        msgP.data = Robot_position.joint_next;
+        chatter_pub.publish(msgP);
+        
+         //--------------------------------------------------------------------
+         ros::spinOnce();        
+         loop_rate.sleep();  
     }
     return 0;
 }
@@ -355,34 +320,4 @@ bool mseValue_cart(vector<double> v1, vector<double> v2)
 
     return Reached;
 }
-/* 
-vector<double> DS_basic(class State_robot &Position, class State_robot &Speed, double dt,TRAC_IK::TRAC_IK &ik){
-    //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
-
-    Position.cart_next_eigen = Integral_func(Position.cart, Speed.cart_eigen, dt);
-    //------------------------------------------------------------------------
-    //Convert cartesian to joint space
-    KDL::JntArray Next_joint_task;
-    KDL::JntArray actual_joint_task;   
-
-    double* ptr = &pos_joint_actual[0];
-    Map<VectorXd> pos_joint_actual_eigen(ptr, 7); 
-    actual_joint_task.data = pos_joint_actual_eigen;
-
-    //Position.joint_std64
-
-    KDL::Rotation Rot = KDL::Rotation::Quaternion(Position.cart_next[0],Position.cart_next[1],Position.cart_next[2],Position.cart_next[3]);
-    KDL::Vector Vec(Position.cart_next[4],Position.cart_next[5],Position.cart_next[6]);
-    KDL::Frame Next_joint_cartesian(Rot,Vec); 
-
-    VectorXd pos_joint_next_eigen ;
-    int rc = ik.CartToJnt(Position.joint_std64, Next_joint_cartesian, Next_joint_task);
-
-    Position.Next_joint_eigen = Next_joint_task.data;
-    for(int i = 0 ;i<7;++i){
-        Position.Next_joint[i] =Position.joint_eigen(i);
-    }
-    return Position.Next_joint;
-
-} */
 
