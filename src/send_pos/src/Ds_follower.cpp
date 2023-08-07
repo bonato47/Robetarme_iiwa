@@ -147,10 +147,9 @@ class NextState {       // The class
         VectorXd posJointNextEigen = NextJointTask.data;
 
         for(int i = 0 ;i<nJoint;++i){    
-            ROS_INFO("%f",posJointNextEigen(i));
             posJointNext[i] =posJointNextEigen(i);
          }
-        //msgP.data = posJointNext;
+        msgP.data = posJointNext;
 
         return rc;
         
