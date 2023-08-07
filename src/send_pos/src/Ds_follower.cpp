@@ -55,7 +55,7 @@ class ActualState {       // The class
     }
 
     void init(ros::ServiceClient FK){
-        FK_state = FK;
+        client_FK = FK;
         vector<double> vector0(nJoint, 0.0);
         pos_joint_actual = vector0;
         pos_cart_actual  = vector0;
@@ -202,12 +202,6 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
-{
-    pos_joint_actual = msg->position;
-    vel_joint_actual = msg->velocity;
-    //eff = msg->effort;
-}
 
 VectorXd speed_func(vector<double> Pos,Vector3d x01, Vector4d q2)
 {
