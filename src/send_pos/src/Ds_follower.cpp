@@ -212,7 +212,7 @@ int main(int argc, char **argv)
         //use the speed from topic and convert the quat from topic to angular velocity
         VectorXd speed_eigen = speed_func(actualState.posCartActual, nextState.quatFromDS,nextState.speedFromDS);
 
-        //ROS_INFO("%f,%f,%f,%f,%f,%f",speed_eigen(0),speed_eigen(1),speed_eigen(2),speed_eigen(3),speed_eigen(4),speed_eigen(5));
+        ROS_INFO("%f,%f,%f,%f,%f,%f",speed_eigen(0),speed_eigen(1),speed_eigen(2),speed_eigen(3),speed_eigen(4),speed_eigen(5));
 
         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
         vector<double> NextQuatPosCart = Integral_func(actualState.posCartActual, speed_eigen, delta_t);
