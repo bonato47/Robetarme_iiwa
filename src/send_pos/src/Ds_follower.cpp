@@ -148,7 +148,7 @@ class NextState {       // The class
         for(int i = 0 ;i<nJoint;++i){    
             posJointNext[i] =posJointNextEigen(i);
         }
-        msgP.data = posJointNext;
+        //msgP.data = posJointNext;
 
         return rc;
         
