@@ -118,9 +118,10 @@ class NextState {       // The class
     void init_general(){
         vector<double> vector0_4(4, 0.0);;
         quatFromDS = vector0_4;
-        vector<double> vector0_3(3, 0.0);;
+        vector<double> vector0_3(3, 0.0);
         speedFromDS = vector0_3;
-        
+        vector<double> vector0_7(7, 0.0);
+        posJointNext = vector0_7;
 
         ikSolver= new TRAC_IK::TRAC_IK(baseLink, tipLink, URDF_param, timeoutInSecs, error, type);  
         KDL::Chain chain;
@@ -138,7 +139,6 @@ class NextState {       // The class
         KDL::JntArray NextJointTask;
         KDL::JntArray actualJointTask; 
         actualJointTask.data = Map<VectorXd>(pt, L);
-        std::fill(posJointNext.begin(), posJointNext.end(), 0);
         KDL::Vector Vec(vectorQuatPos[4],vectorQuatPos[5],vectorQuatPos[6]);
         KDL::Rotation Rot = KDL::Rotation::Quaternion(vectorQuatPos[0],vectorQuatPos[1],vectorQuatPos[2],vectorQuatPos[3]);
         KDL::Frame NextJointCartesian(Rot,Vec); 
