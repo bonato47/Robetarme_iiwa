@@ -79,7 +79,6 @@ class inverseKin {       // The class
         init_general();
     }
     void init_general(){
-
         vector<double> vector0(nJoint, 0.0);;
         posJointNext = vector0;
         posJointActual= vector0;

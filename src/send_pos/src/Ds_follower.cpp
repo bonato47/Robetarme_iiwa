@@ -170,8 +170,8 @@ class NextState {       // The class
         double qz = msg->orientation.z;
         double qw = msg->orientation.w;
 
-        speedFromDS = [x,y,z];
-        quatFromDS = [qx,qy,qz,qw];   
+        speedFromDS ={ x,y,z};
+        quatFromDS = { qx,qy,qz,qw};
     }
 
 };
