@@ -147,7 +147,7 @@ class NextState {       // The class
         for(int i = 0 ;i<nJoint;++i){
             posJointNext[i] =posJointNextEigen(i);
         }
-        msgP.data = posJointNext;
+        //msgP.data = posJointNext;
 
         return rc;
      } 
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 
         //-----------------------------------------------------------------------
         //send next joint 
-        chatter_pub.publish(nextState.msgP);
+        //chatter_pub.publish(nextState.msgP);
         
         //--------------------------------------------------------------------
         ros::spinOnce();        
