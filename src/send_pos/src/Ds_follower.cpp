@@ -148,6 +148,7 @@ class NextState {       // The class
         // //msgP.data = posJointNext;
 
         // return rc;
+        return 1;
      } 
 
      void updateIK(double err){
