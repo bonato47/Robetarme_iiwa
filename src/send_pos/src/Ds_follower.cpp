@@ -144,10 +144,10 @@ class NextState {       // The class
         KDL::Frame NextJointCartesian(Rot,Vec); 
         int rc = ikSolver->CartToJnt(actualJointTask, NextJointCartesian, NextJointTask);
 
-        VectorXd posJointNextEigen = NextJointTask.data;
-        for(int i = 0 ;i<nJoint;++i){    
-            posJointNext[i] =posJointNextEigen(i);
-        }
+        // VectorXd posJointNextEigen = NextJointTask.data;
+        // for(int i = 0 ;i<nJoint;++i){    
+        //     posJointNext[i] =posJointNextEigen(i);
+        // }
         //msgP.data = posJointNext;
 
         return rc;
