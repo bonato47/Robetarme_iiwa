@@ -36,7 +36,10 @@ class ActualState {       // The class
     vector<double> cart,joint;
     VectorXd cart_eigen, joint_eigen;
     std_msgs::Float64MultiArray joint_std64;
+
+    geometry_msgs::Quaternion Past_cart_quat;
     geometry_msgs::Pose Past_cart;
+    geometry_msgs::Point Past_cart_pos;
 
 
     vector<double> pos_joint_actual;
@@ -91,7 +94,6 @@ class ActualState {       // The class
 int main(int argc, char **argv)
 {
 
-    
     //choose the time step
     double delta_t = 0.01;
 
@@ -127,9 +129,6 @@ int main(int argc, char **argv)
 
     //initialization  Variable
     std_msgs::Float64MultiArray msgP;
-    geometry_msgs::Quaternion Past_cart_quat;
-    geometry_msgs::Pose Past_cart;
-    geometry_msgs::Point Past_cart_pos;
     int count = 0;
 
     //begin the ros loop
