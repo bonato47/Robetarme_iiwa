@@ -142,7 +142,7 @@ int main(int argc, char **argv)
       
         //FK
         actualState.getFK();
-        ROS_INFO(actualState.posCartActual);
+        ROS_INFO("%f",actualState.posCartActual[0]);
         return 0;
 //         //-----------------------------------------------------------------------
 //         //Send the cartesian stat to Dynamical System (DS) to find desired speed ( wx,wy,wz,px,py,pz)
