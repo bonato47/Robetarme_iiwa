@@ -77,7 +77,7 @@ class ActualState {       // The class
         Past_cart = FK_state.response.poses[0], FK_state.response.poses[1];
         Past_cart_pos = Past_cart.position;
         Past_cart_quat = Past_cart.orientation;
-        posCartactual = {Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w,Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z};
+        posCartActual = {Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w,Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z};
     }
 
     void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
