@@ -58,9 +58,9 @@ class ActualState {       // The class
         vector<double> vector0(nJoint, 0.0);
         posJointActual = vector0;
         posCartActual  = vector0;
-        double* pt = &pos_joint_actual[0];
+        double* pt = &posJointActual[0];
         joint_eigen = Map<VectorXd>(pt, 7);
-        joint_std64.data = {pos_joint_actual[0],pos_joint_actual[1],pos_joint_actual[2],pos_joint_actual[3],pos_joint_actual[4],pos_joint_actual[5],pos_joint_actual[6]};
+        joint_std64.data = {posJointActual[0],posJointActual[1],posJointActual[2],posJointActual[3],posJointActual[4],posJointActual[5],posJointActual[6]};
         initFK();
         }
     void initFK(){
