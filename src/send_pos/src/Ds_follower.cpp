@@ -42,7 +42,7 @@ class ActualState {       // The class
 
     VectorXd posJointActualEigen;
     VectorXd posCartActualEigen;
-    ros::ServiceClient client_FK = Nh_.serviceClient<iiwa_tools::GetFK>("iiwa/iiwa_fk_server");
+    ros::ServiceClient client_FK;
 
     iiwa_tools::GetFK  FK_state ;
 
@@ -54,7 +54,8 @@ class ActualState {       // The class
         FK_state.request.joints.layout.dim[1].size = nJoint;
     }
 
-    void init(){
+    void init(ros::ServiceClient FK){
+        FK_state = FK;
         vector<double> vector0(nJoint, 0.0);
         pos_joint_actual = vector0;
         pos_cart_actual  = vector0;
@@ -87,9 +88,7 @@ class ActualState {       // The class
 
 int main(int argc, char **argv)
 {
-    //Define object position and speed
-    ActualState actualState;
-    actualState.init();
+
     
     //choose the time step
     double delta_t = 0.01;
@@ -97,11 +96,15 @@ int main(int argc, char **argv)
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Ds");
     ros::NodeHandle Nh_;
-    ros::ServiceClient client_FK = Nh_.serviceClient<iiwa_tools::GetFK>("iiwa/iiwa_fk_server");
-    ros::Subscriber sub =  Nh_.subscribe("iiwa/joint_states", 1000, &ActualState::CounterCallback, &actualState);
-
+    ros::ServiceClient FK = Nh_.serviceClient<iiwa_tools::GetFK>("iiwa/iiwa_fk_server");
     ros::Publisher chatter_pub = Nh_.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
     ros::Rate loop_rate(1/delta_t);
+
+    //Define object position and speed
+    ActualState actualState;
+    actualState.init(FK);
+    ros::Subscriber sub =  Nh_.subscribe("iiwa/joint_states", 1000, &ActualState::CounterCallback, &actualState);
+
 
    
     //iniailization Invers Kinematics
