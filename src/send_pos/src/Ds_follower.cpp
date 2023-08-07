@@ -330,7 +330,7 @@ vector<double> Integral_func(vector<double> Pos_actual, VectorXd speed_actual, d
 
     vector<double> pos_cart_Next;
 
-    pos_cart_Next ={ resultQ.x(),resultQ.y(),resultQ.z(),resultQ.w(),next_bis};
+    pos_cart_Next ={ resultQ.x(),resultQ.y(),resultQ.z(),resultQ.w(),next_bis[0],next_bis[1],next_bis[2]};
     //pos_cart_Next<< 0,0,0,1,next_bis;
 
     return pos_cart_Next;
