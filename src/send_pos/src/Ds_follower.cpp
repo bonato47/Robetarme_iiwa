@@ -224,7 +224,7 @@ int main(int argc, char **argv)
 
         //-----------------------------------------------------------------------
         //send next joint 
-        //chatter_pub.publish(nextState.msgP);
+        chatter_pub.publish(nextState.msgP);
         
         //--------------------------------------------------------------------
         ros::spinOnce();        
