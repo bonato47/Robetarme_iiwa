@@ -100,11 +100,7 @@ class NextState {       // The class
         double timeoutInSecs=0.05;
         int nJoint{};
 
-        vector<double> posJointActual;
-        vector<double> velJointActual;
-        vector<double> posJointNext;
-        VectorXd velJointActualEigen;
-        VectorXd posJointActualEigen;
+       
 
         vector<double> posJointNext;
         VectorXd posJointNextEigen;
@@ -160,7 +156,7 @@ class NextState {       // The class
 
      void updateIK(double err){
         ikSolver= new TRAC_IK::TRAC_IK(baseLink, tipLink, URDF_param, timeoutInSecs, err, type);  
-     }
+    }
 
     void poseCallback(const geometry_msgs::Pose::ConstPtr& msg) {
         // Process the received Pose message here
@@ -175,7 +171,7 @@ class NextState {       // The class
         double qw = msg->orientation.w;
 
         speedFromDS = [x,y,z];
-        quatFromDS= [qx,qy,qz,qw];   
+        quatFromDS = [qx,qy,qz,qw];   
     }
 
 };
