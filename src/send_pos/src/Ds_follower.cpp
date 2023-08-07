@@ -278,7 +278,8 @@ vector<double> Integral_func(vector<double> Pos_actual, VectorXd speed_actual, d
     resultQ.normalize();
     resultQ.w() = q2.w() + resultQ.w();
     resultQ.vec() = q2.vec() + resultQ.vec();
-    
+    resultQ.normalize();
+
     ////ROS_INFO(" %f %f %f %f ", q2.x(),q2.y(),q2.z(),q2.w());
     //ROS_INFO(" %f %f %f %f ", resultQ.x(),resultQ.y(),resultQ.z(),resultQ.w());
   
