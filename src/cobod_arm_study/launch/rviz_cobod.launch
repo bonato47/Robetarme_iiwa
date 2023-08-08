@@ -5,6 +5,7 @@
 
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" /> 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cobod_arm_study)/rviz/config_file_cobod.rviz" />
+  <!-- <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" /> -->
 
   <param name="errorIK_min" type="double" value="0.005" />
   <param name="errorIK_max" type="double" value="0.1" />
