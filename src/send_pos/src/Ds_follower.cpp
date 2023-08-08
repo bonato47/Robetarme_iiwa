@@ -106,7 +106,7 @@ class NextState {       // The class
         vector<double> speedFromDS;
         vector<double> quatFromDS;
 
-        bool init_check= false;
+        bool initCheck= false;
         TRAC_IK::TRAC_IK* ikSolver = nullptr;  
 
     void init_IK_iiwa() {  // Method/function defined inside the class
@@ -151,7 +151,7 @@ class NextState {       // The class
             posJointNext[i] =posJointNextEigen(i);
          }
         msgP.data = posJointNext;
-
+        
         return rc;
         
      } 
@@ -174,6 +174,10 @@ class NextState {       // The class
 
         speedFromDS ={x,y,z};
         quatFromDS = {qx,qy,qz,qw};
+
+        if(initCheck == false && qx != 0 && qy != 0 && qz != 0 && qw != 0){
+            initCheck = true;
+        }
     }
 
 };
@@ -204,13 +208,18 @@ int main(int argc, char **argv)
     ros::Subscriber sub_DS =  Nh_.subscribe("/passive_control/vel_quat", 1000, &NextState::poseCallback, &nextState);
 
     //waiting for the first joint position
-    while(!actualState.initCheck){
+    while(!actualState.initCheck && !nextState.initCheck ){
         ros::spinOnce();
     } 
+
+
+    // rostopic pub /passive_control/vel_quat geometry_msgs/Pose '{position: {x: 0.05 ,y: 0.05, z: -0.0}, orientation: {x: 0, y: 0, z: 0, w: 1}}'
 
     //begin the ros loop
     while (ros::ok())
     {
+        //time step
+        float dt = 0.1;
         //FK
         actualState.getFK();
 
@@ -222,23 +231,24 @@ int main(int argc, char **argv)
         pub_speed.publish(twistActual);
 
         //use the speed from topic and convert the quat from topic to angular velocity
+
         VectorXd speed_eigen = speed_func(actualState.posCartActual, nextState.quatFromDS,nextState.speedFromDS);
 
         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
 
-        vector<double> NextQuatPosCart = Integral_func(actualState.posCartActual, speed_eigen, 0.1);
+        vector<double> NextQuatPosCart = Integral_func(actualState.posCartActual, speed_eigen, dt);
         vector<double> NextQuatPosCarts =  {nextState.quatFromDS[0],nextState.quatFromDS[1],nextState.quatFromDS[2],nextState.quatFromDS[3],NextQuatPosCart[4],NextQuatPosCart[5],NextQuatPosCart[6]};
 
         //get inverse kinematic 
-        nextState.getIK(actualState.posJointActual,NextQuatPosCarts);
-
+        int rc = nextState.getIK(actualState.posJointActual,NextQuatPosCarts);
+        if (rc<0){
+            ROS_INFO("no inverse kinematic found");
+        }
         //-----------------------------------------------------------------------
         //send next joint 
+          
         chatter_pub.publish(nextState.msgP);
 
-        // if(mseValue_cart()){
-        //     chatter_pub.publish(nextState.msgP);
-        // }
 
         //--------------------------------------------------------------------
         ros::spinOnce();        
