@@ -33,8 +33,6 @@ class ActualState {       // The class
   public:             // Access specifier
     int nJoint =7;
     bool initCheck= false;
-    vector<double> cart,joint;
-    VectorXd cart_eigen, joint_eigen;
     std_msgs::Float64MultiArray joint_std64;
 
     geometry_msgs::Quaternion Past_cart_quat;
@@ -45,7 +43,6 @@ class ActualState {       // The class
     vector<double> posJointActual;
     vector<double> posCartActual;
 
-    VectorXd posJointActualEigen;
     VectorXd posCartActualEigen;
     ros::ServiceClient client_FK;
 
@@ -57,7 +54,6 @@ class ActualState {       // The class
         posJointActual = vector0;
         posCartActual  = vector0;
         double* pt = &posJointActual[0];
-        joint_eigen = Map<VectorXd>(pt, 7);
         joint_std64.data = {posJointActual[0],posJointActual[1],posJointActual[2],posJointActual[3],posJointActual[4],posJointActual[5],posJointActual[6]};
         initFK();
         }
@@ -81,7 +77,7 @@ class ActualState {       // The class
     void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
     {
         posJointActual = msg->position;
-        posJointActualEigen = Map<VectorXd>(&posJointActual[0], nJoint);
+        joint_std64.data = {posJointActual[0],posJointActual[1],posJointActual[2],posJointActual[3],posJointActual[4],posJointActual[5],posJointActual[6]};
 
         if(initCheck == false){
             initCheck = true;
@@ -212,20 +208,21 @@ int main(int argc, char **argv)
         //use the speed from topic and convert the quat from topic to angular velocity
         VectorXd speed_eigen = speed_func(actualState.posCartActual, nextState.quatFromDS,nextState.speedFromDS);
 
-        ROS_INFO("%f,%f,%f,%f,%f,%f",speed_eigen(0),speed_eigen(1),speed_eigen(2),speed_eigen(3),speed_eigen(4),speed_eigen(5));
-
         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
         vector<double> NextQuatPosCart = Integral_func(actualState.posCartActual, speed_eigen, delta_t);
-        
-        ROS_INFO("%f,%f,%f,%f,%f,%f,%f",NextQuatPosCart[0],NextQuatPosCart[1],NextQuatPosCart[2],NextQuatPosCart[3],NextQuatPosCart[4],NextQuatPosCart[5],NextQuatPosCart[6]);
-        
+        vector<double> NextQuatPosCarts =  {nextState.quatFromDS[0],nextState.quatFromDS[1],nextState.quatFromDS[2],nextState.quatFromDS[3],NextQuatPosCart[4],NextQuatPosCart[5],NextQuatPosCart[6]};
+
         //get inverse kinematic 
-        nextState.getIK(actualState.posJointActual,NextQuatPosCart);
+        nextState.getIK(actualState.posJointActual,NextQuatPosCarts);
 
         //-----------------------------------------------------------------------
         //send next joint 
         chatter_pub.publish(nextState.msgP);
-        
+
+        if(mseValue_cart()){
+            chatter_pub.publish(nextState.msgP);
+        }
+
         //--------------------------------------------------------------------
         ros::spinOnce();        
         loop_rate.sleep();  
@@ -270,10 +267,10 @@ vector<double> Integral_func(vector<double> Pos_actual, VectorXd speed_actual, d
 {
     //Speed orientation integration
     
-    Quaterniond q2 ={Pos_actual[0],Pos_actual[1],Pos_actual[2],Pos_actual[3]};
+    Quaterniond q2(Pos_actual[0],Pos_actual[1],Pos_actual[2],Pos_actual[3]);
     //Vector3d euler = q.toRotationMatrix().eulerAngles(0, 1, 2);
     Vector3d Speedbis ={dt*speed_actual[0]/2,dt*speed_actual[1]/2,dt*speed_actual[2]/2};
-    Quaterniond q1 ={Speedbis[0],Speedbis[1],Speedbis[2],1};
+    Quaterniond q1(Speedbis[0],Speedbis[1],Speedbis[2],1);
 
     Quaterniond resultQ;
     resultQ.setIdentity();
@@ -285,9 +282,6 @@ vector<double> Integral_func(vector<double> Pos_actual, VectorXd speed_actual, d
     resultQ.vec() = q2.vec() + resultQ.vec();
     resultQ.normalize();
 
-    ////ROS_INFO(" %f %f %f %f ", q2.x(),q2.y(),q2.z(),q2.w());
-    //ROS_INFO(" %f %f %f %f ", resultQ.x(),resultQ.y(),resultQ.z(),resultQ.w());
-  
     //Speed position integration
     Vector3d speed_bis,past_bis,next_bis;
     speed_bis << speed_actual[3],speed_actual[4],speed_actual[5];
@@ -306,7 +300,7 @@ vector<double> Integral_func(vector<double> Pos_actual, VectorXd speed_actual, d
 bool mseValue_cart(vector<double> v1, vector<double> v2)
 {
     // tolerance of the errot between each point
-    float tol =0.05;
+    float tol =0.5;
     bool Reached = false;
     int crit =0;
     float err =0;
