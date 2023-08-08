@@ -1,10 +1,12 @@
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
-#include "std_msgs/Float64MultiArray.h"
+#include "geometry_msgs/Twist.h"
+#include "geometry_msgs/Pose.h"
 #include <cmath>
 #include <iostream>
 #include <sstream>
 #include "iiwa_tools/GetFK.h"
+#include <iiwa_tools/GetJacobian.h> 
 #include "std_srvs/Empty.h"
 #include <eigen3/Eigen/Dense>
 #include <stdio.h>
@@ -15,9 +17,10 @@
 using namespace Eigen;
 using namespace std;
 
-void CounterCallback(const sensor_msgs::JointState::ConstPtr msg);
+//return the twist speed
+geometry_msgs::Twist get_twist_fromService(vector<double> posJoint, vector<double> speedJoint,ros::ServiceClient client);
 
-  // Function that Calculate the speed with a DS
+// Function that Calculate the speed with a DS
 VectorXd speed_func(vector<double> Pos, vector<double> quat2,vector<double> speed);
 
 // Function that integrate the speed
@@ -35,17 +38,18 @@ class ActualState {       // The class
     bool initCheck= false;
     std_msgs::Float64MultiArray joint_std64;
 
-    geometry_msgs::Quaternion Past_cart_quat;
-    geometry_msgs::Pose Past_cart;
-    geometry_msgs::Point Past_cart_pos;
-
+    geometry_msgs::Pose actualCart;
+    geometry_msgs::Quaternion actualCartQuat;
+    geometry_msgs::Point actualCartPos;
 
     vector<double> posJointActual;
     vector<double> posCartActual;
 
-    VectorXd posCartActualEigen;
-    ros::ServiceClient client_FK;
+    vector<double> speedJointActual;
+    vector<double> speedCartActual;
 
+
+    ros::ServiceClient client_FK;
     iiwa_tools::GetFK  FK_state ;
 
     void init(ros::ServiceClient FK){
@@ -53,7 +57,6 @@ class ActualState {       // The class
         vector<double> vector0(nJoint, 0.0);
         posJointActual = vector0;
         posCartActual  = vector0;
-        double* pt = &posJointActual[0];
         joint_std64.data = {posJointActual[0],posJointActual[1],posJointActual[2],posJointActual[3],posJointActual[4],posJointActual[5],posJointActual[6]};
         initFK();
         }
@@ -68,15 +71,16 @@ class ActualState {       // The class
         // Take joints state actual and convert to cartesian state with the help of th FK service
         FK_state.request.joints.data =  joint_std64.data;
         client_FK.call(FK_state);
-        Past_cart = FK_state.response.poses[0], FK_state.response.poses[1];
-        Past_cart_pos = Past_cart.position;
-        Past_cart_quat = Past_cart.orientation;
-        posCartActual = {Past_cart_quat.x,Past_cart_quat.y,Past_cart_quat.z,Past_cart_quat.w,Past_cart_pos.x,Past_cart_pos.y,Past_cart_pos.z};
+        actualCart= FK_state.response.poses[0], FK_state.response.poses[1];
+        actualCartPos = actualCart.position;
+        actualCartQuat = actualCart.orientation;
+        posCartActual = {actualCartQuat.x,actualCartQuat.y,actualCartQuat.z,actualCartQuat.w,actualCartPos.x,actualCartPos.y,actualCartPos.z};
     }
 
     void CounterCallback(const sensor_msgs::JointState::ConstPtr msg)
     {
         posJointActual = msg->position;
+        speedJointActual = msg->velocity;
         joint_std64.data = {posJointActual[0],posJointActual[1],posJointActual[2],posJointActual[3],posJointActual[4],posJointActual[5],posJointActual[6]};
 
         if(initCheck == false){
@@ -176,13 +180,17 @@ class NextState {       // The class
 int main(int argc, char **argv)
 {
     //choose the time step
-    double delta_t = 0.1;
+    double delta_t = 0.02;
 
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Ds");
     ros::NodeHandle Nh_;
     ros::ServiceClient FK = Nh_.serviceClient<iiwa_tools::GetFK>("iiwa/iiwa_fk_server");
     ros::Publisher chatter_pub = Nh_.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
+    ros::Publisher pub_pos = Nh_.advertise<geometry_msgs::Pose>("/iiwa/ee_info/Pose", 1000);
+    ros::Publisher pub_speed = Nh_.advertise<geometry_msgs::Twist>("/iiwa/ee_info/Vel", 1000);
+    ros::ServiceClient client = Nh_.serviceClient<iiwa_tools::GetJacobian>("/iiwa/iiwa_jacobian_server");
+
     ros::Rate loop_rate(1/delta_t);
 
     //Define object position and speed
@@ -204,12 +212,20 @@ int main(int argc, char **argv)
     {
         //FK
         actualState.getFK();
-       
+
+        //publish state pos
+        pub_pos.publish(actualState.actualCart);
+
+        geometry_msgs::Twist twistActual = get_twist_fromService(actualState.posJointActual,actualState.speedJointActual,client);
+
+        pub_speed.publish(twistActual);
+
         //use the speed from topic and convert the quat from topic to angular velocity
         VectorXd speed_eigen = speed_func(actualState.posCartActual, nextState.quatFromDS,nextState.speedFromDS);
 
         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
-        vector<double> NextQuatPosCart = Integral_func(actualState.posCartActual, speed_eigen, delta_t);
+
+        vector<double> NextQuatPosCart = Integral_func(actualState.posCartActual, speed_eigen, 0.1);
         vector<double> NextQuatPosCarts =  {nextState.quatFromDS[0],nextState.quatFromDS[1],nextState.quatFromDS[2],nextState.quatFromDS[3],NextQuatPosCart[4],NextQuatPosCart[5],NextQuatPosCart[6]};
 
         //get inverse kinematic 
@@ -219,9 +235,9 @@ int main(int argc, char **argv)
         //send next joint 
         chatter_pub.publish(nextState.msgP);
 
-        if(mseValue_cart()){
-            chatter_pub.publish(nextState.msgP);
-        }
+        // if(mseValue_cart()){
+        //     chatter_pub.publish(nextState.msgP);
+        // }
 
         //--------------------------------------------------------------------
         ros::spinOnce();        
@@ -229,7 +245,40 @@ int main(int argc, char **argv)
     }
     return 0;
 }
+geometry_msgs::Twist get_twist_fromService(vector<double> posJoint, vector<double> speedJoint,ros::ServiceClient client){
+    iiwa_tools::GetJacobian srv;
+    srv.request.joint_angles = posJoint;
+    srv.request.joint_velocities = speedJoint;
 
+    client.call(srv);
+    vector<double> jac = srv.response.jacobian.data;
+
+    // Reshape the multi_array into an Eigen matrix
+    int rows = 6; // Specify the desired number of rows
+    int cols = 7; // Specify the desired number of columns
+
+    double* pt = &jac[0];
+    MatrixXd jacMatrix = Map<MatrixXd>(pt, rows, cols);
+
+    pt = &speedJoint[0];
+    VectorXd speedJointEigen = Map<VectorXd>(pt, 7);
+
+    VectorXd result = jacMatrix * speedJointEigen;
+
+    // Create a Twist message
+    geometry_msgs::Twist twist;
+
+    // Populate linear velocities
+    twist.linear.x = result(0);
+    twist.linear.y = result(1);
+    twist.linear.z = result(2);
+
+    // Populate angular velocities
+    twist.angular.x = result(3);
+    twist.angular.y = result(4);
+    twist.angular.z = result(5); // Angular velocity around the z-axis
+    return twist;
+}
 
 VectorXd speed_func(vector<double> Pos, vector<double> quat2,vector<double> speed)
 {
@@ -291,7 +340,6 @@ vector<double> Integral_func(vector<double> Pos_actual, VectorXd speed_actual, d
     vector<double> pos_cart_Next;
 
     pos_cart_Next ={ resultQ.x(),resultQ.y(),resultQ.z(),resultQ.w(),next_bis[0],next_bis[1],next_bis[2]};
-    //pos_cart_Next<< 0,0,0,1,next_bis;
 
     return pos_cart_Next;
 }
