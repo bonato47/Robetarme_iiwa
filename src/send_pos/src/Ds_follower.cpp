@@ -96,8 +96,8 @@ class NextState {       // The class
         string baseLink;
         string tipLink;
         string URDF_param="/robot_description";
-        TRAC_IK::SolveType type =TRAC_IK::Distance;
-        double error=1e-3; 
+        TRAC_IK::SolveType type =TRAC_IK::Speed;
+        double error=1e-2; 
         double timeoutInSecs=0.05;
         int nJoint{};
 
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
     while (ros::ok())
     {
         //time step
-        float dt = 0.1;
+        float dt = 0.05;
         //FK
         actualState.getFK();
 
@@ -237,7 +237,10 @@ int main(int argc, char **argv)
         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
 
         vector<double> NextQuatPosCart = Integral_func(actualState.posCartActual, speed_eigen, dt);
-        vector<double> NextQuatPosCarts =  {nextState.quatFromDS[0],nextState.quatFromDS[1],nextState.quatFromDS[2],nextState.quatFromDS[3],NextQuatPosCart[4],NextQuatPosCart[5],NextQuatPosCart[6]};
+        Quaterniond q(nextState.quatFromDS[3],nextState.quatFromDS[0],nextState.quatFromDS[1],nextState.quatFromDS[2]);
+        q.normalize();
+
+        vector<double> NextQuatPosCarts =  {q.x(),q.y(),q.z(),q.w(),NextQuatPosCart[4],NextQuatPosCart[5],NextQuatPosCart[6]};
 
         //get inverse kinematic 
         int rc = nextState.getIK(actualState.posJointActual,NextQuatPosCarts);
