@@ -55,8 +55,9 @@ class ActualState {       // The class
     void init(ros::ServiceClient FK){
         client_FK = FK;
         vector<double> vector0(nJoint, 0.0);
-        posJointActual = vector0;
-        posCartActual  = vector0;
+        posJointActual   = vector0;
+        posCartActual    = vector0;
+        speedJointActual = vector0;
         joint_std64.data = {posJointActual[0],posJointActual[1],posJointActual[2],posJointActual[3],posJointActual[4],posJointActual[5],posJointActual[6]};
         initFK();
         }
@@ -246,6 +247,10 @@ int main(int argc, char **argv)
     return 0;
 }
 geometry_msgs::Twist get_twist_fromService(vector<double> posJoint, vector<double> speedJoint,ros::ServiceClient client){
+
+    // Create a Twist message
+    geometry_msgs::Twist twist;
+
     iiwa_tools::GetJacobian srv;
     srv.request.joint_angles = posJoint;
     srv.request.joint_velocities = speedJoint;
@@ -256,17 +261,19 @@ geometry_msgs::Twist get_twist_fromService(vector<double> posJoint, vector<doubl
     // Reshape the multi_array into an Eigen matrix
     int rows = 6; // Specify the desired number of rows
     int cols = 7; // Specify the desired number of columns
-
     double* pt = &jac[0];
+    if (pt == nullptr){
+        return twist;   
+    }
     MatrixXd jacMatrix = Map<MatrixXd>(pt, rows, cols);
+    
+    double* pt2 = &speedJoint[0]; 
+    VectorXd speedJointEigen = Map<VectorXd>(pt2, 7);
 
-    pt = &speedJoint[0];
-    VectorXd speedJointEigen = Map<VectorXd>(pt, 7);
 
+    
     VectorXd result = jacMatrix * speedJointEigen;
 
-    // Create a Twist message
-    geometry_msgs::Twist twist;
 
     // Populate linear velocities
     twist.linear.x = result(0);
@@ -277,6 +284,7 @@ geometry_msgs::Twist get_twist_fromService(vector<double> posJoint, vector<doubl
     twist.angular.x = result(3);
     twist.angular.y = result(4);
     twist.angular.z = result(5); // Angular velocity around the z-axis
+
     return twist;
 }
 
