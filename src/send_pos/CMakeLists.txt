@@ -219,6 +219,8 @@ include_directories(
 
 #include/qpOASES/qpOASES.cpp
 
+add_executable(Ds src/Ds.cpp src/Utils.cpp)
+target_link_libraries(Ds ${catkin_LIBRARIES})
 
 
 add_executable(Ds_follower src/Ds_follower.cpp src/Utils.cpp)
