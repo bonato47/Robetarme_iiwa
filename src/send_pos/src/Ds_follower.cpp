@@ -160,6 +160,7 @@ class NextState {       // The class
         double qz = msg->orientation.z;
         double qw = msg->orientation.w;
 
+
         speedFromDS ={x,y,z};
         quatFromDS = {qx,qy,qz,qw};
 
@@ -169,6 +170,9 @@ class NextState {       // The class
     }
 
 };
+
+//do fk and publish
+void Fk_and_pub(ActualState& actu, ros::ServiceClient CL, ros::Publisher pos, ros::Publisher speed);
 
 //Compute the next position and publish actual state
 vector<double> send_next_position(ActualState& actu, NextState& next, ros::ServiceClient CL,ros::Publisher pos, ros::Publisher speed);
@@ -193,7 +197,7 @@ int main(int argc, char **argv)
     double delta_t = 0.05;
         
     //choose intial pose
-    vector<double> intialPos={0,0.7,0,0.7,0.2,0,1};
+    vector<double> intialPos={0,0.7,0,0.7,0.3,0,0.8};
     
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Ds");
@@ -231,12 +235,16 @@ int main(int argc, char **argv)
 
 
     while (!mseValue_cart(actualState.posJointActual,nextState.posJointNext) ){
+        Fk_and_pub(actualState,client,pub_pos,pub_speed);
         chatter_pub.publish(nextState.msgP);
         ros::spinOnce();        
         loop_rate.sleep();  
     }
     ROS_INFO("first position reached, please Press GO when ready to shotcreet");
     while( UserInput != "GO"){
+
+        Fk_and_pub(actualState,client,pub_pos,pub_speed);
+
         cin >> UserInput;
     }
     // rostopic pub /passive_control/vel_quat geometry_msgs/Pose '{position: {x: 0.05 ,y: 0.0, z: -0.05}, orientation: {x: 0, y: 0.9848, z: 0, w: 0.1736}}'
@@ -270,11 +278,8 @@ int main(int argc, char **argv)
     return 0;
 }
 
-// Function that takes an object as an argument
-vector<double> send_next_position( ActualState& actu,  NextState& next, ros::ServiceClient CL, ros::Publisher pos, ros::Publisher speed) {
-
-    float dt = 0.5;
-     //FK
+void Fk_and_pub(ActualState& actu, ros::ServiceClient CL, ros::Publisher pos, ros::Publisher speed){
+    //FK
     actu.getFK();
     //publish state pos
     pos.publish(actu.actualCart);
@@ -282,7 +287,14 @@ vector<double> send_next_position( ActualState& actu,  NextState& next, ros::Ser
     geometry_msgs::Twist twistActual = get_twist_fromService(actu.posJointActual,actu.speedJointActual,CL);
 
     speed.publish(twistActual);
+}
 
+// Function that takes an object as an argument
+vector<double> send_next_position( ActualState& actu,  NextState& next, ros::ServiceClient CL, ros::Publisher pos, ros::Publisher speed) {
+
+    float dt = 0.5;
+
+    Fk_and_pub(actu, CL,  pos, speed);
     //use the speed from topic and convert the quat from topic to angular velocity
 
     VectorXd speed_eigen = speed_func(actu.posCartActual, next.quatFromDS,next.speedFromDS);
