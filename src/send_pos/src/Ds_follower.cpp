@@ -83,7 +83,7 @@ class NextState {       // The class
         string URDF_param="/robot_description";
         TRAC_IK::SolveType type =TRAC_IK::Distance;
         double error=1e-2; 
-        double timeoutInSecs=0.05;
+        double timeoutInSecs=0.1;
         int nJoint{};
 
         std_msgs::Float64MultiArray msgP;
@@ -126,7 +126,10 @@ class NextState {       // The class
         KDL::JntArray actualJointTask; 
         actualJointTask.data = Map<VectorXd>(pt, L);
         KDL::Vector Vec(vectorQuatPos[4],vectorQuatPos[5],vectorQuatPos[6]);
-        KDL::Rotation Rot = KDL::Rotation::Quaternion(vectorQuatPos[0],vectorQuatPos[1],vectorQuatPos[2],vectorQuatPos[3]);
+
+        Quaterniond q(vectorQuatPos[3],vectorQuatPos[0],vectorQuatPos[1],vectorQuatPos[2]);
+        q.normalize();
+        KDL::Rotation Rot = KDL::Rotation::Quaternion(q.x(),q.y(),q.z(),q.w());
         KDL::Frame NextJointCartesian(Rot,Vec); 
         int rc = ikSolver->CartToJnt(actualJointTask, NextJointCartesian, NextJointTask);
 
@@ -190,16 +193,16 @@ int main(int argc, char **argv)
     double delta_t = 0.05;
         
     //choose intial pose
-    vector<double> intialPos={0,0,0,1,0.2,0,1};
+    vector<double> intialPos={0,0.7,0,0.7,0.2,0,1};
     
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::init(argc, argv, "Ds");
     ros::NodeHandle Nh_;
-    ros::ServiceClient FK = Nh_.serviceClient<iiwa_tools::GetFK>("iiwa/iiwa_fk_server");
+    ros::ServiceClient FK      = Nh_.serviceClient<iiwa_tools::GetFK>("iiwa/iiwa_fk_server");
     ros::Publisher chatter_pub = Nh_.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
-    ros::Publisher pub_pos = Nh_.advertise<geometry_msgs::Pose>("/iiwa/ee_info/Pose", 1000);
-    ros::Publisher pub_speed = Nh_.advertise<geometry_msgs::Twist>("/iiwa/ee_info/Vel", 1000);
-    ros::ServiceClient client = Nh_.serviceClient<iiwa_tools::GetJacobian>("/iiwa/iiwa_jacobian_server");
+    ros::Publisher pub_pos     = Nh_.advertise<geometry_msgs::Pose>("/iiwa/ee_info/Pose", 1000);
+    ros::Publisher pub_speed   = Nh_.advertise<geometry_msgs::Twist>("/iiwa/ee_info/Vel", 1000);
+    ros::ServiceClient client  = Nh_.serviceClient<iiwa_tools::GetJacobian>("/iiwa/iiwa_jacobian_server");
 
     ros::Rate loop_rate(1/delta_t);
 
@@ -218,7 +221,12 @@ int main(int argc, char **argv)
     } 
             
     //go to first pos     
-    nextState.getIK(actualState.posJointActual,intialPos);
+    int rc = nextState.getIK(actualState.posJointActual,intialPos);
+
+    if (rc< 0){
+        ROS_ERROR("your intial point is not achiveable");
+        return 1;
+    }
     string UserInput = "stop";
 
 
@@ -231,7 +239,8 @@ int main(int argc, char **argv)
     while( UserInput != "GO"){
         cin >> UserInput;
     }
-    // rostopic pub /passive_control/vel_quat geometry_msgs/Pose '{position: {x: 0.05 ,y: 0.0, z: -0.05}, orientation: {x: 0, y: 0, z: 0, w: 1}}'
+    // rostopic pub /passive_control/vel_quat geometry_msgs/Pose '{position: {x: 0.05 ,y: 0.0, z: -0.05}, orientation: {x: 0, y: 0.9848, z: 0, w: 0.1736}}'
+
 
     int firstloop = 0;
     //begin the ros loop
@@ -242,6 +251,7 @@ int main(int argc, char **argv)
         //get inverse kinematic 
         if (firstloop == 0 || mseValue_cart(actualState.posJointActual,nextState.posJointNext)){
             int rc = nextState.getIK(actualState.posJointActual,NextQuatPosCarts);
+
             if (rc<0){
                 ROS_INFO("no inverse kinematic found");
             }
