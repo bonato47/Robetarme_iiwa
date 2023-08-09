@@ -269,10 +269,6 @@ int main(int argc, char **argv)
     }
     return 0;
 }
-geometry_msgs::Twist get_twist_fromService(vector<double> posJoint, vector<double> speedJoint,ros::ServiceClient client){
-
-    // Create a Twist message
-    geometry_msgs::Twist twist;
 
 // Function that takes an object as an argument
 vector<double> send_next_position( ActualState& actu,  NextState& next, ros::ServiceClient CL, ros::Publisher pos, ros::Publisher speed) {
