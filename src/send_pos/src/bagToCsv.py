@@ -169,7 +169,7 @@ class Vec4d:
 
 def bagToCsv(Namefile):
 
-    bag = rosbag.Bag(Namefile+".bag")
+    bag = rosbag.Bag("../data/"+ Namefile+".bag")
 
     linearSpeedDesired  = Vec3d("linearSpeedDesired")
     linearSpeedActual  = Vec3d("linearSpeedActual")
@@ -196,8 +196,53 @@ def bagToCsv(Namefile):
             angularOrientationActual._add_(msg.orientation.x,msg.orientation.y,msg.orientation.z,msg.orientation.w)
 
     bag.close()
+
+
+    # Create a 2x2 grid of subplots
+    fig, axs = plt.subplots(1,3)
+    # Plot data in the subplots
+    axs[0].plot(linearSpeedDesired.x,label="desired")
+    axs[0].plot(linearSpeedActual.x,label="actual")
+    axs[0].set_title('linear speed x')
+    axs[0].legend()
     
-    plt.plot(angularOrientationActual.x)
+    axs[1].plot(linearSpeedDesired.y,label="desired")
+    axs[1].plot(linearSpeedActual.y,label="actual")
+    axs[1].legend()
+
+    axs[2].set_title('linear speed Y')
+    axs[2].plot(linearSpeedDesired.z,label="desired")
+    axs[2].plot(linearSpeedActual.z,label="actual")
+    axs[2].legend()
+    axs[2].set_title('linear speed Z')
+
+    # Adjust layout and show plot
+    plt.tight_layout()
+    plt.show()
+    
+    
+    
+    # Create a 2x2 grid of subplots
+    fig, axs = plt.subplots(2, 2)
+    # Plot data in the subplots
+    axs[0, 0].plot(angularOrientationActual.x,label="actual")
+    axs[0, 0].plot(angularOrientationDesired.x,label="desired")
+
+    axs[0, 0].set_title('OrientationActual x')
+    axs[0, 0].legend()
+    axs[0, 1].plot(angularOrientationActual.y,label="actual")
+    axs[0, 1].plot(angularOrientationDesired.y,label="desired")
+    axs[0, 1].set_title('OrientationActual Y')
+    
+    axs[1, 0].plot(angularOrientationActual.z,label="actual")
+    axs[1, 0].plot(angularOrientationDesired.z,label="desired")
+    axs[1, 0].set_title('OrientationActual Z')
+    
+    axs[1, 1].plot(angularOrientationActual.w,label="actual")
+    axs[1,1].plot(angularOrientationDesired.w,label="desired")
+    axs[1, 1].set_title('OrientationActual w')
+    # Adjust layout and show plot
+    plt.tight_layout()
     plt.show()
 
     """"
@@ -287,4 +332,6 @@ if __name__ == "__main__":
     argv = parser()
 
     bagToCsv(argv.name)
+
+
 
