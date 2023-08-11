@@ -1,0 +1,6 @@
+<launch>
+	<rosparam file="$(find robetarme)/config/config.yaml" />
+	<rosparam file="$(find robetarme)/config/param.yaml" />
+
+    <node pkg="robetarme" type="path_planning_node.py" name="pathPlanningNode" output="screen"></node>
+</launch>

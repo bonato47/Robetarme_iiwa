@@ -22,15 +22,10 @@ RUN if [ "HOST_GID" != "1000"] ; \
     usermod ${USER} -a -G ${USER_GROUP}; fi
 USER ${USER}
 
-# Setup git identity
-RUN git config --global user.name "${GIT_NAME}"
-RUN git config --global user.email "${GIT_EMAIL}"
-
 # Setup python version for noetic
 RUN sudo apt update
 RUN if [ "${ROS_DISTRO}" == "noetic" ] ; \
     then sudo apt install python-is-python3 ; fi
-
 
 ### Add a few tools
 RUN sudo apt-get update && sudo apt-get install -y \
@@ -43,7 +38,6 @@ RUN sudo apt-get update && sudo apt-get install -y \
     ros-${ROS_DISTRO}-ros-controllers \
     && sudo apt-get upgrade -y && sudo apt-get clean
    
-
 FROM ros-ws as iiwa-dependencies
 
 # Install gazebo (9 or 11 depending on distro)
@@ -64,6 +58,11 @@ RUN if [ "${USE_SIMD}" = "ON" ] ; \
 
 ### Install all dependencies of IIWA ROS
 # Clone KUKA FRI (need to be root to clone private repo)
+
+# Setup git identity to publish patch on SIMD
+RUN git config --global user.name "${GIT_NAME}"
+RUN git config --global user.email "${GIT_EMAIL}"
+
 WORKDIR /tmp
 USER root
 RUN --mount=type=ssh git clone git@github.com:epfl-lasa/kuka_fri.git
@@ -73,6 +72,10 @@ RUN if [ "${USE_SMID}" != "ON" ] ; \
     ; fi
 RUN --mount=type=ssh  if [ "${USE_SMID}" != "ON" ] ; \
     then git am 0001-Config-Disables-SIMD-march-native-by-default.patch ; fi
+
+# Remove git identity
+RUN git config --global --unset user.name
+RUN git config --global --unset user.email
 
 # Transfer repo back to original user after root clone
 WORKDIR /tmp
@@ -137,24 +140,64 @@ RUN git clone https://github.com/epfl-lasa/control-libraries.git --branch v6.3.1
 WORKDIR /home/${USER}/control-libraries/source
 RUN sudo bash install.sh -y
 
-
 #isntall universal robot
 WORKDIR /home/${USER}
 RUN git clone https://github.com/ros-industrial/universal_robot.git
 RUN cp -R universal_robot ros_ws/src/
 RUN rm universal_robot -r
 
+# Install relaxed ik
+RUN curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+RUN sudo apt-get install -y ros-noetic-kdl-parser ros-noetic-kdl-parser-py
+RUN python get-pip.py
+RUN rm get-pip.py 
+RUN pip install readchar python-fcl scipy PyYaml matplotlib scipy tf
+RUN pip install --upgrade numpy
+
+# Need to be root to use ssh inside docker build
+USER root
+WORKDIR /home/${USER}/ros_ws/src
+RUN --mount=type=ssh git clone git@github.com:lmunier/relaxed_ik_ros1.git
+WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1
+RUN git submodule init 
+RUN --mount=type=ssh git submodule update
+
+# Transfer repo back to original user after root clone
+WORKDIR /home/${USER}/ros_ws/src
+RUN chown -R ${USER}:${HOST_GID} relaxed_ik_ros1
+USER ${USER}
+
+# Install rust dependency
+RUN sudo apt-get install -y build-essential cmake
+RUN sudo chmod 777 ~/.bashrc
+RUN curl --proto '=https' --tlsv1.3 https://sh.rustup.rs -sSf | sh -s -- -y
+RUN sudo chmod 644 ~/.bashrc
+ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
+
+# Need to be root to use ssh inside docker build
+WORKDIR /home/${USER}
+USER root
+RUN --mount=type=ssh git clone git@github.com:lmunier/ncollide.git --branch fix_relaxed_ik
+
+# Transfer repo back to original user after root clone
+RUN chown -R ${USER}:${HOST_GID} ncollide
+USER ${USER}
+
+WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1/relaxed_ik_core
+
+# Modify crates used to have the ones with the fixes
+RUN sed -i 's/ncollide2d = \"0.19\"/ncollide2d = \{ path = \"..\/..\/..\/..\/ncollide\/build\/ncollide2d\" \}/' Cargo.toml
+RUN sed -i 's/ncollide3d = \"0.21.0\"/ncollide3d = \{ path = \"..\/..\/..\/..\/ncollide\/build\/ncollide3d\" \}/' Cargo.toml
+RUN cargo build
+RUN cargo fix --lib -p relaxed_ik_core --allow-dirty
 
 FROM inverse-kinematics as finalisation
-
-### Add environement variables to bashrc
-WORKDIR /home/${USER}
-
 
 ### Copy all src from github Robetarme_iwwa
 COPY --chown=${USER} ./src ./ros_ws/src
 
 # Give bashrc back to user
+WORKDIR /home/${USER}
 RUN sudo chown -R ${USER}:${HOST_GID} .bashrc
 
 # Add cmake option to bash rc if needed
@@ -167,4 +210,4 @@ RUN source /home/${USER}/.bashrc && rosdep install --from-paths src --ignore-src
 RUN source /home/${USER}/.bashrc && catkin_make;
 
 ### Final apt clean
-RUN sudo apt update && sudo apt upgrade -y   && sudo apt clean
+RUN sudo apt update && sudo apt upgrade -y && sudo apt clean

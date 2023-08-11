@@ -4,9 +4,10 @@ CONTAINER_NAME="${IMAGE_NAME//[\/.]/-}"
 USERNAME="ros"
 MODE=()
 USE_NVIDIA_TOOLKIT=()
+NO_GPU=false
 
 # Help
-HELP_MESSAGE="Usage: ./start_dockers.sh [interactive | server | connect] [-i, --image] [-u, --user]
+HELP_MESSAGE="Usage: ./start_dockers.sh [interactive | server | connect] [-i, --image] [-u, --user] [--no-gpu]
 Build the '${IMAGE_NAME}' image.
 Options:
   interactive            Spin the image in the console
@@ -15,6 +16,7 @@ Options:
   -i, --image            The name of the image to use to start the container
   -u, --user             Specify the name of the login user. (optional)
   -h, --help             Show this help message and the one from aica-docker
+  --no-gpu               Do not use the NVIDIA toolkit
   Additional arguments are passed to the aica-docker command.
   "
 
@@ -36,6 +38,10 @@ while [ "$#" -gt 0 ]; do
     -m | --mode)
         MODE=$2
         shift 2
+        ;;
+    --no-gpu)
+        NO_GPU=true
+        shift 1
         ;;
     -h | --help)
         SHOW_HELP=true
@@ -61,15 +67,14 @@ fi
 
 # Handle interactive/server specific arguments
 if [ "${MODE}" != "connect" ]; then
-
     # Check if a conitainer with this name is already running
     if [ "$( docker container inspect -f '{{.State.Status}}' ${CONTAINER_NAME} 2>/dev/null)" == "running" ]; then
         echo "A container named ${CONTAINER_NAME} is already running. Stopping it."
         docker stop ${CONTAINER_NAME}
     fi
 
-    # Check if a NVIDIA GPU is available
-    if [[ $(sudo lshw -C display | grep vendor) =~ NVIDIA ]]; then
+    # Check if a NVIDIA GPU is available, if user want to use it and if the NVIDIA toolkit is installed
+    if [[ ($(sudo lshw -C display | grep vendor) =~ NVIDIA) && $NO_GPU == false ]]; then
         USE_NVIDIA_TOOLKIT=true
         echo "Detected NVIDIA graphic card, giving access to the container."
     else
@@ -86,8 +91,7 @@ if [ "${MODE}" != "connect" ]; then
     # Other
     FWD_ARGS+=("--privileged")
     
-     #Add volume send_pos
-    
+    # Add volume send_pos
     docker volume rm send_pos
     docker volume create --driver local \
     --opt type="none" \
@@ -107,7 +111,18 @@ if [ "${MODE}" != "connect" ]; then
     
     FWD_ARGS+=(--volume="cobod_arm_study:/home/ros/ros_ws/src/cobod_arm_study:rw")
     
+       
+    docker volume rm path_planning
+    docker volume create --driver local \
+    --opt type="none" \
+    --opt device="${PWD}/src/path_planning" \
+    --opt o="bind" \
+    "path_planning"
+    
+    FWD_ARGS+=(--volume="path_planning:/home/ros/ros_ws/src/path_planning:rw")
 
+    # Setup git config
+    FWD_ARGS+=(--volume="${HOME}/.gitconfig:/home/ros/.gitconfig:ro")
 fi
 
 # Trick aica-docker into making a server on a host network container

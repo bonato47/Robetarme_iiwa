@@ -64,16 +64,14 @@ class State_robot {       // The class
 
 int main(int argc, char **argv)
 {
-
-
     //choose the attractor and the final orientation
-    Quaterniond QuatOrientation_des = {0.0000, 0.9848, 0.0000, 0.1736};
+    Quaterniond QuatOrientation_des = {0.5,0.5,0.5,1.0};
     QuatOrientation_des.normalize();
 
     Vector4d Orientation_des;
     Orientation_des << QuatOrientation_des.x(),QuatOrientation_des.y(),QuatOrientation_des.z(),QuatOrientation_des.w();
     Vector3d Position_des;
-    Position_des << 0.55,0.0,0.35;
+    Position_des << 0.5,0.5,0.5;
     
     //choose the time step
     double delta_t = 0.01;
@@ -119,7 +117,6 @@ int main(int argc, char **argv)
     //begin the ros loop
     while (ros::ok())
     {
-        float dt = 0.1;
         //Define object position and speed
         State_robot Robot_position;
         Robot_position.State_robot_actual(pos_joint_actual);
@@ -142,7 +139,7 @@ int main(int argc, char **argv)
         //-----------------------------------------------------------------------
 
         //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
-        Robot_position.cart_next_eigen = Integral_func(Robot_position.cart, Robot_speed.cart_next_eigen, dt);
+        Robot_position.cart_next_eigen = Integral_func(Robot_position.cart, Robot_speed.cart_next_eigen, delta_t);
         
         //------------------------------------------------------------------------
         //Convert cartesian to joint space
