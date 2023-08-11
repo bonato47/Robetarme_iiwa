@@ -184,8 +184,6 @@ void ds_speed(ros::Publisher dsPublisher);
 //do fk and publish
 void Fk_and_pub(ActualState& actu, ros::ServiceClient CL, ros::Publisher pos, ros::Publisher speed);
 
-//Compute the next position and publish actual state
-//vector<double> send_next_position(ActualState& actu, NextState& next, ros::ServiceClient CL,ros::Publisher pos, ros::Publisher speed);
 
 //return the twist speed
 geometry_msgs::Twist get_twist_fromService(vector<double> posJoint, vector<double> speedJoint,ros::ServiceClient client);
@@ -208,7 +206,7 @@ int main(int argc, char **argv)
 {
     //choose the time step
     double delta_t = 0.05;
-    double integrationTime = 0.1;
+    double integrationTime = 0.2;
         
     //choose intial pose
     vector<double> intialPos={0,0.7,0,0.7,0.3,0,0.8};
@@ -218,7 +216,7 @@ int main(int argc, char **argv)
     ros::NodeHandle Nh_;
     ros::ServiceClient FK      = Nh_.serviceClient<iiwa_tools::GetFK>("iiwa/iiwa_fk_server");
     ros::Publisher chatter_pub = Nh_.advertise<std_msgs::Float64MultiArray>("iiwa/PositionController/command", 1000);
-    ros::Publisher pub_ds = Nh_.advertise<geometry_msgs::Pose>("/passive_control/vel_quat", 1000);
+    ros::Publisher pub_ds = Nh_.advertise<geometry_msgs::Pose>("NOTUSED/passive_control/vel_quat", 1000);
 
     ros::Publisher pub_pos     = Nh_.advertise<geometry_msgs::Pose>("/iiwa/ee_info/Pose", 1000);
     ros::Publisher pub_speed   = Nh_.advertise<geometry_msgs::Twist>("/iiwa/ee_info/Vel", 1000);
@@ -235,8 +233,11 @@ int main(int argc, char **argv)
     ros::Subscriber sub =  Nh_.subscribe("iiwa/joint_states", 1000, &ActualState::CounterCallback, &actualState);
     ros::Subscriber sub_DS =  Nh_.subscribe("/passive_control/vel_quat", 1000, &NextState::poseCallback, &nextState);
 
+    ds_speed(pub_ds);//<--------------------------------------------------------------------------WARNING TO DELET 
+
     //waiting for the first joint position
-    while(!actualState.initCheck && !nextState.initCheck ){
+    while(actualState.initCheck && nextState.initCheck ){
+        Fk_and_pub(actualState,client,pub_pos,pub_speed);
         ros::spinOnce();
     } 
             
@@ -268,7 +269,6 @@ int main(int argc, char **argv)
         cin >> UserInput;
     }
     // rostopic pub /passive_control/vel_quat geometry_msgs/Pose '{position: {x: 0.05 ,y: 0.0, z: -0.05}, orientation: {x: 0, y: 0.9848, z: 0, w: 0.1736}}'
-        vector<double> NextQuatPosCarts= send_next_position(actualState,nextState,client,pub_pos,pub_speed);
 
     //------------------------------------------------------------------------------------------------------------------------//
     //send first pos
@@ -279,12 +279,25 @@ int main(int argc, char **argv)
 
     vector<double> nextPosCartTemp  = actualState.posCartActual;
     vector<double> nextPosJointTemp = nextState.posJointNext;
+        // Print the vector elements
+    cout << "Vector nextPosJointTemp: ";
+    for (const double& value : nextState.speedFromDS) {
+        cout << value << " ";
+    }
+    cout << endl;
 
     //use the speed from topic and convert the quat from topic to angular velocity
     VectorXd speed_eigen = speed_func(actualState.posCartActual, nextState.quatFromDS,nextState.speedFromDS);
 
     //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
     vector<double> NextQuatPosCart = Integral_func(actualState.posCartActual, speed_eigen, integrationTime, nextState);
+
+    // Print the vector elements
+    cout << "Vector elements: ";
+    for (const double& value : NextQuatPosCart) {
+        cout << value << " ";
+    }
+    cout << endl;
     
     //compute inverse kinematic
     nextState.getIK(nextPosJointTemp,NextQuatPosCart);
@@ -307,25 +320,25 @@ int main(int argc, char **argv)
     //begin the ros loop
 
     bool check_ik = true;
-
+    ROS_INFO("LETSGO");
     while (ros::ok())
     {
         if (check_ik == true){
             //compute nextpos +1 
             VectorXd speed_eigen = speed_func(nextPosCartTemp, nextState.quatFromDS,nextState.speedFromDS);
-            vector<double> NextQuatPosCart = Integral_func(nextPosJointTemp, speed_eigen, integrationTime, nextState);
+            vector<double> NextQuatPosCart = Integral_func(nextPosCartTemp, speed_eigen, integrationTime, nextState);
            
             nextState.getIK(nextPosJointTemp,NextQuatPosCart);
-            nextPosJointTempMsg = nextState.msgP;
 
             update_publisher_for_DS(actualState, nextState.posJointNext, pub_pos, pub_speed,client, loop_rate);
-            check_ik= false;
+            check_ik = false;
        }
 
         //get inverse kinematic 
         if (mseValue_cart(actualState.posJointActual,nextPosJointTemp)){
             nextPosJointTemp = nextState.posJointNext;
             nextPosCartTemp = actualState.getFK(nextPosJointTemp);
+            nextPosJointTempMsg = nextState.msgP;
 
             check_ik= true;
         }
@@ -379,7 +392,7 @@ int main(int argc, char **argv)
 }
 
 void ds_speed(ros::Publisher dsPublisher){
-    vector<double> speed= {0,0,0,1,0.05,0,-0.05};
+    vector<double> speed= {0,0,0,1,0.1,0,-0.05};
     geometry_msgs::Pose msg;
     msg.orientation.x = speed[0];
     msg.orientation.y = speed[1];
@@ -392,36 +405,15 @@ void ds_speed(ros::Publisher dsPublisher){
 }
 
 void Fk_and_pub(ActualState& actu, ros::ServiceClient CL, ros::Publisher pos, ros::Publisher speed){
-    //FK
-    actu.getFK();
+
+    actu.posCartActual = actu.getFK(actu.posJointActual);
     //publish state pos
     pos.publish(actu.actualCart);
-
-//     geometry_msgs::Twist twistActual = get_twist_fromService(actu.posJointActual,actu.speedJointActual,CL);
+    geometry_msgs::Twist twistActual = get_twist_fromService(actu.posJointActual,actu.speedJointActual,CL);
 
     speed.publish(twistActual);
 }
 
-// Function that takes an object as an argument
-vector<double> send_next_position( ActualState& actu,  NextState& next, ros::ServiceClient CL, ros::Publisher pos, ros::Publisher speed) {
-
-    float dt = 0.1;
-
-    Fk_and_pub(actu, CL,  pos, speed);
-    //use the speed from topic and convert the quat from topic to angular velocity
-
-//     VectorXd speed_eigen = speed_func(actu.posCartActual, next.quatFromDS,next.speedFromDS);
-
-//     //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
-
-//     vector<double> NextQuatPosCart = Integral_func(actu.posCartActual, speed_eigen, dt);
-//     Quaterniond q(next.quatFromDS[3],next.quatFromDS[0],next.quatFromDS[1],next.quatFromDS[2]);
-//     q.normalize();
-
-//     vector<double> nextVecQuatPos =  {q.x(),q.y(),q.z(),q.w(),NextQuatPosCart[4],NextQuatPosCart[5],NextQuatPosCart[6]};
-//     return nextVecQuatPos;
-
-// } 
 
 void update_publisher_for_DS(ActualState& actu,vector<double> vectorJoint, ros::Publisher pos, ros::Publisher speed,ros::ServiceClient CL,ros::Rate loop_rate){
     //FK
@@ -481,8 +473,7 @@ geometry_msgs::Twist get_twist_fromService(vector<double> posJoint, vector<doubl
     return twist;
 }
 
-VectorXd speed_func(vector<double> Pos, vector<double> quat2,vector<double> speed)
-{
+VectorXd speed_func(vector<double> Pos, vector<double> quat2,vector<double> speed){
     
      //orientation
     Vector4d q1,q2 ;
@@ -552,7 +543,7 @@ vector<double> Integral_func(vector<double> Pos_actual, VectorXd speed_actual, d
 bool mseValue_cart(vector<double> v1, vector<double> v2)
 {
     // tolerance of the errot between each point
-    float tol =0.1;
+    float tol =0.2;
     bool Reached = false;
     int crit =0;
     float err =0;
