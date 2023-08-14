@@ -124,7 +124,9 @@ RUN rm -rf /tmp/*
 
 ### Install IIWA ROS
 WORKDIR /home/${USER}/ros_ws/src
-RUN git clone https://github.com/epfl-lasa/iiwa_ros.git
+RUN git clone -b add_deep_camera https://github.com/RLoad/iiwa_ros.git
+
+RUN git clone -b add_deep_camera https://github.com/RLoad/iiwa_toolkit.git
 
 FROM iiwa-dependencies as inverse-kinematics
 
