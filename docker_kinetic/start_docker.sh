@@ -91,7 +91,19 @@ if [ "${MODE}" != "connect" ]; then
     # Other
     FWD_ARGS+=("--privileged")
     
-   
+       	
+    # add volume
+       
+    docker volume rm ds_motion_generator-1
+    docker volume create --driver local \
+    --opt type="none" \
+    --opt device="${PWD}/../../ds_motion_generator-1" \
+    --opt o="bind" \
+    "ds_motion_generator-1"
+    
+    FWD_ARGS+=(--volume="ds_motion_generator-1:/home/ros/catkin_ws/src/ds_motion_generator-1:rw")
+
+
     # Setup git config
     FWD_ARGS+=(--volume="${HOME}/.gitconfig:/home/ros/.gitconfig:ro")
 fi
