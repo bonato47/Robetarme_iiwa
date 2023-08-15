@@ -1,0 +1,5 @@
+<launch>
+    <arg name="name" default="noname"/>
+    <node pkg="send_pos" type="Ds_follower" name="Ds_follower" output= "screen" />
+    <node pkg="rosbag" type="record" name="recorder" args="record -a -O  $(find send_pos)/data/$(arg name).bag"/>
+</launch>

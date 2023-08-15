@@ -79,7 +79,6 @@ class inverseKin {       // The class
         init_general();
     }
     void init_general(){
-
         vector<double> vector0(nJoint, 0.0);;
         posJointNext = vector0;
         posJointActual= vector0;
@@ -172,7 +171,7 @@ int main(int argc, char **argv)
     ros::Rate loopRate(100);
 
     // Read trajectory from .csv 
-    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/csv_cobod/trajectory_twobyside_bis.csv");
+    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/csv_cobod/trajectory_normal_bis.csv");
 
     //waiting for the first joint position
      while(!IK.init){

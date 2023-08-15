@@ -155,8 +155,8 @@ RUN pip install readchar python-fcl scipy PyYaml matplotlib scipy tf
 RUN pip install --upgrade numpy
 
 # Need to be root to use ssh inside docker build
-USER root
 WORKDIR /home/${USER}/ros_ws/src
+USER root
 RUN --mount=type=ssh git clone git@github.com:lmunier/relaxed_ik_ros1.git
 WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1
 RUN git submodule init 
@@ -175,19 +175,9 @@ RUN sudo chmod 644 ~/.bashrc
 ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
 
 # Need to be root to use ssh inside docker build
-WORKDIR /home/${USER}
-USER root
-RUN --mount=type=ssh git clone git@github.com:lmunier/ncollide.git --branch fix_relaxed_ik
-
-# Transfer repo back to original user after root clone
-RUN chown -R ${USER}:${HOST_GID} ncollide
-USER ${USER}
-
 WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1/relaxed_ik_core
 
-# Modify crates used to have the ones with the fixes
-RUN sed -i 's/ncollide2d = \"0.19\"/ncollide2d = \{ path = \"..\/..\/..\/..\/ncollide\/build\/ncollide2d\" \}/' Cargo.toml
-RUN sed -i 's/ncollide3d = \"0.21.0\"/ncollide3d = \{ path = \"..\/..\/..\/..\/ncollide\/build\/ncollide3d\" \}/' Cargo.toml
+# Build relaxed ik
 RUN cargo build
 RUN cargo fix --lib -p relaxed_ik_core --allow-dirty
 
