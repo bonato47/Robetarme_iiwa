@@ -37,98 +37,9 @@ RUN sudo apt-get update && sudo apt-get install -y \
     ros-${ROS_DISTRO}-ros-control \
     ros-${ROS_DISTRO}-ros-controllers \
     && sudo apt-get upgrade -y && sudo apt-get clean
-   
-FROM ros-ws as iiwa-dependencies
-
-# Install gazebo (9 or 11 depending on distro)
-WORKDIR /home/${USER}
-RUN sudo apt-get update
-RUN if [ "$ROS_DISTRO" = "noetic" ] ; then sudo apt-get install -y gazebo11 ; fi
-RUN if [ "$ROS_DISTRO" = "melodic" ] ; then sudo apt-get install -y gazebo9 ; fi
-
-# Install gazebo ros packages
-RUN sudo apt install -y ros-${ROS_DISTRO}-gazebo-ros-pkgs ros-${ROS_DISTRO}-gazebo-ros-control
-
-# Install trak_ik_lib
-RUN sudo apt install -y ros-${ROS_DISTRO}-trac-ik
-
-# Handle SIMD option
-RUN if [ "${USE_SIMD}" = "ON" ] ; \ 
-    then export CMAKE_CXX_FLAGS="-march=native -faligned-new" ; fi
-
-### Install all dependencies of IIWA ROS
-# Clone KUKA FRI (need to be root to clone private repo)
-
-# Setup git identity to publish patch on SIMD
-RUN git config --global user.name "${GIT_NAME}"
-RUN git config --global user.email "${GIT_EMAIL}"
-
-WORKDIR /tmp
-USER root
-RUN --mount=type=ssh git clone git@github.com:epfl-lasa/kuka_fri.git
-WORKDIR /tmp/kuka_fri
-RUN if [ "${USE_SMID}" != "ON" ] ; \
-    then wget https://gist.githubusercontent.com/matthias-mayr/0f947982474c1865aab825bd084e7a92/raw/244f1193bd30051ae625c8f29ed241855a59ee38/0001-Config-Disables-SIMD-march-native-by-default.patch \
-    ; fi
-RUN --mount=type=ssh  if [ "${USE_SMID}" != "ON" ] ; \
-    then git am 0001-Config-Disables-SIMD-march-native-by-default.patch ; fi
-
-# Remove git identity
-RUN git config --global --unset user.name
-RUN git config --global --unset user.email
-
-# Transfer repo back to original user after root clone
-WORKDIR /tmp
-RUN chown -R ${USER}:${HOST_GID} kuka_fri
-
-# Install kuka Fri as USER
-USER ${USER}
-RUN cd kuka_fri && ./waf configure && ./waf && sudo ./waf install
-
-# Install SpaceVecAlg
-RUN git clone --recursive https://github.com/jrl-umi3218/SpaceVecAlg.git
-RUN cd SpaceVecAlg && mkdir build && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
-    && make -j && sudo make install
-
-# Install RBDyn
-RUN git clone --recursive https://github.com/jrl-umi3218/RBDyn.git
-RUN cd RBDyn && mkdir build && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
-    && make -j && sudo make install
-
-# Install mc_rbdyn_urdf
-RUN git clone --recursive -b v1.1.0 https://github.com/jrl-umi3218/mc_rbdyn_urdf.git
-RUN cd mc_rbdyn_urdf && mkdir build && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
-    && make -j && sudo make install
-
-# Install corrade
-RUN git clone https://github.com/mosra/corrade.git
-RUN cd corrade && git checkout 0d149ee9f26a6e35c30b1b44f281b272397842f5 \
-    && mkdir build && cd build && cmake .. && make -j && sudo make install
-
-# Install robot_controller
-RUN git clone https://github.com/epfl-lasa/robot_controllers.git
-RUN cd robot_controllers && mkdir build && cd build \
-    && cmake .. && make -j && sudo make install
-
-# Install qpPOASES
-RUN git clone https://github.com/coin-or/qpOASES.git
-RUN  cd qpOASES&& mkdir build && cd build \
-    && cmake .. && make -j && sudo make install
-
-# Remove temporari files
-RUN sudo ldconfig
-RUN rm -rf /tmp/*
-
-### Install IIWA ROS
-WORKDIR /home/${USER}/ros_ws/src
-RUN git clone -b add_deep_camera https://github.com/RLoad/iiwa_ros.git
-
-RUN git clone -b add_deep_camera https://github.com/RLoad/iiwa_toolkit.git
-
-FROM iiwa-dependencies as inverse-kinematics
+    
+    
+FROM ros-ws as inverse-kinematics
 
 # Install trak_ik
 WORKDIR /home/${USER}
@@ -192,11 +103,105 @@ RUN sed -i 's/ncollide2d = \"0.19\"/ncollide2d = \{ path = \"..\/..\/..\/..\/nco
 RUN sed -i 's/ncollide3d = \"0.21.0\"/ncollide3d = \{ path = \"..\/..\/..\/..\/ncollide\/build\/ncollide3d\" \}/' Cargo.toml
 RUN cargo build
 RUN cargo fix --lib -p relaxed_ik_core --allow-dirty
+   
+FROM inverse-kinematics as iiwa-dependencies
 
-FROM inverse-kinematics as finalisation
+# Install gazebo (9 or 11 depending on distro)
+WORKDIR /home/${USER}
+RUN sudo apt-get update
+RUN if [ "$ROS_DISTRO" = "noetic" ] ; then sudo apt-get install -y gazebo11 ; fi
+RUN if [ "$ROS_DISTRO" = "melodic" ] ; then sudo apt-get install -y gazebo9 ; fi
+
+# Install gazebo ros packages
+RUN sudo apt install -y ros-${ROS_DISTRO}-gazebo-ros-pkgs ros-${ROS_DISTRO}-gazebo-ros-control
+
+# Install trak_ik_lib
+RUN sudo apt install -y ros-${ROS_DISTRO}-trac-ik
+
+# Handle SIMD option
+RUN if [ "${USE_SIMD}" = "ON" ] ; \ 
+    then export CMAKE_CXX_FLAGS="-march=native -faligned-new" ; fi
+
+### Install all dependencies of IIWA ROS
+
+# Clone KUKA FRI (need to be root to clone private repo)
+
+# Setup git identity to publish patch on SIMD
+RUN git config --global user.name "${GIT_NAME}"
+RUN git config --global user.email "${GIT_EMAIL}"
+
+WORKDIR /tmp
+USER root
+RUN --mount=type=ssh git clone git@github.com:epfl-lasa/kuka_fri.git
+WORKDIR /tmp/kuka_fri
+RUN if [ "${USE_SMID}" != "ON" ] ; \
+    then wget https://gist.githubusercontent.com/matthias-mayr/0f947982474c1865aab825bd084e7a92/raw/244f1193bd30051ae625c8f29ed241855a59ee38/0001-Config-Disables-SIMD-march-native-by-default.patch \
+    ; fi
+RUN --mount=type=ssh  if [ "${USE_SMID}" != "ON" ] ; \
+    then git am 0001-Config-Disables-SIMD-march-native-by-default.patch ; fi
+
+# Remove git identity
+RUN git config --global --unset user.name
+RUN git config --global --unset user.email
+
+# Transfer repo back to original user after root clone
+WORKDIR /tmp
+RUN chown -R ${USER}:${HOST_GID} kuka_fri
+
+# Install kuka Fri as USER
+USER ${USER}
+RUN cd kuka_fri && ./waf configure && ./waf && sudo ./waf install
+
+# Install SpaceVecAlg
+
+RUN git clone --recursive https://github.com/costashatz/SpaceVecAlg.git
+RUN cd SpaceVecAlg && mkdir build && cd build \
+	&& cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
+	&& make -j && sudo make install
+
+# Install RBDyn
+RUN git clone --recursive https://github.com/costashatz/RBDyn.git
+RUN cd RBDyn && mkdir build && cd build \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
+    && make -j && sudo make install
+
+# Install mc_rbdyn_urdf
+RUN git clone --recursive https://github.com/costashatz/mc_rbdyn_urdf.git
+RUN cd mc_rbdyn_urdf && mkdir build && cd build \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
+    && make -j && sudo make install
+
+# Install corrade
+RUN git clone https://github.com/mosra/corrade.git
+RUN cd corrade && git checkout 0d149ee9f26a6e35c30b1b44f281b272397842f5 \
+    && mkdir build && cd build && cmake .. && make -j && sudo make install
+
+# Install robot_controller
+RUN git clone https://github.com/epfl-lasa/robot_controllers.git
+RUN cd robot_controllers && mkdir build && cd build \
+    && cmake .. && make -j && sudo make install
+
+# Install qpPOASES
+RUN git clone https://github.com/coin-or/qpOASES.git
+RUN  cd qpOASES&& mkdir build && cd build \
+    && cmake .. && make -j && sudo make install
+
+# Remove temporari files
+RUN sudo ldconfig
+RUN rm -rf /tmp/*
+
+### Install IIWA ROS
+WORKDIR /home/${USER}/ros_ws/src
+RUN git clone -b add_deep_camera https://github.com/RLoad/iiwa_ros.git
+
+RUN git clone -b add_deep_camera https://github.com/RLoad/iiwa_toolkit.git
+
+
+
+FROM  iiwa-dependencies as finalisation
 
 ### Copy all src from github Robetarme_iwwa
-COPY --chown=${USER} ./src ./ros_ws/src
+COPY update_git.sh ./update_git.sh
 
 # Give bashrc back to user
 WORKDIR /home/${USER}
