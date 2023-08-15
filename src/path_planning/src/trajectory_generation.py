@@ -78,15 +78,19 @@ class TrajectoryGeneration():
         self._trajectory = trajectory[:, :7]
         self._nb_segments.append(0)
 
-    def get_next_pose(self) -> Pose:
+    def get_next_pose(self, ascending: bool = True) -> Pose:
         """Getter function to have the next Pose on the trajectory.
 
         return:
             next_pose: The next target position for the robot, if any
+            ascending: Boolean to know if we want to go forward or backward in the trajectory
         """
-        self._idx_trajectory += 1
+        if ascending:
+            self._idx_trajectory += 1
+        else:
+            self._idx_trajectory -= 1
 
-        if self._idx_trajectory < np.shape(self._trajectory)[0]:
+        if 0 <= self._idx_trajectory < np.shape(self._trajectory)[0]:
             return numpy_to_pose(np.append(
                 self.get_worientations()[self._idx_trajectory, :],
                 self.get_wpositions()[self._idx_trajectory, :]
@@ -335,7 +339,10 @@ class StraightLine(TrajectoryGeneration):
         interp_positions = self._interpolate_positions(v_mean, timestep)
         interp_orientations = self._interpolate_orientation(v_mean, timestep)
 
-        self._trajectory = np.hstack((interp_orientations, interp_positions))
+        print(np.shape(interp_orientations))
+        print(np.shape(interp_positions))
+
+        self._trajectory = np.hstack((interp_orientations, interp_positions[:-1, :]))
 
 class Circle(TrajectoryGeneration):
     """Generate circular interpolated trajectory from list of waypoints.

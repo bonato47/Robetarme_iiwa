@@ -18,7 +18,7 @@ saved_trajectory_filename: "trajectory_to_tristan"
 read_trajectory: False
 
 # file to read the waypoints from
-waypoints_filename: "waypoints"
+waypoints_filename: "surface_finishing"
 
 # index for the first quaternions and positions
 ifirst_dt: 1
