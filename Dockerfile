@@ -175,9 +175,6 @@ RUN sudo chmod 644 ~/.bashrc
 ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
 
 # Need to be root to use ssh inside docker build
-WORKDIR /home/${USER}
-USER root
-
 WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1/relaxed_ik_core
 
 # Build relaxed ik
