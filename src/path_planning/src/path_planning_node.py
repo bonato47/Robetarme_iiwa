@@ -100,12 +100,11 @@ def ros_loop(ros_rate: rospy.Rate, obj_ik_interface: Union[TracIKInterface, Rela
 
     while not rospy.is_shutdown():
         target_pose = obj_trajectory.get_next_pose(loop)
-        print(target_pose, loop)
+        
         if target_pose is None and stop_condition is None:
             loop = not loop
             target_pose = obj_trajectory.get_next_pose(loop)
 
-            print(target_pose, loop)
         obj_ik_interface.compute_ik(target_pose)
         obj_ik_interface.send_position()
 
