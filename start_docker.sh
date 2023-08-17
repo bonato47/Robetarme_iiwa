@@ -102,6 +102,7 @@ if [ "${MODE}" != "connect" ]; then
     FWD_ARGS+=(--volume="send_pos:/home/ros/ros_ws/src/send_pos:rw")
     
        
+    # Add volume cobod_arm_study
     docker volume rm cobod_arm_study
     docker volume create --driver local \
     --opt type="none" \
@@ -112,6 +113,7 @@ if [ "${MODE}" != "connect" ]; then
     FWD_ARGS+=(--volume="cobod_arm_study:/home/ros/ros_ws/src/cobod_arm_study:rw")
     
        
+    # Add volume path_planning
     docker volume rm path_planning
     docker volume create --driver local \
     --opt type="none" \
@@ -130,6 +132,17 @@ if [ "${MODE}" != "connect" ]; then
     "simulation_tool"
     
     FWD_ARGS+=(--volume="simulation_tool:/home/ros/ros_ws/src/simulation_tool:rw")
+
+    # Add volume ros_ik_services/
+    docker volume rm ros_ik_services
+    docker volume create --driver local \
+    --opt type="none" \
+    --opt device="${PWD}/../ros_ik_services" \
+    --opt o="bind" \
+    "ros_ik_services"
+    
+    FWD_ARGS+=(--volume="ros_ik_services:/home/ros/ros_ws/src/ros_ik_services:rw")
+
 
     # Setup git config
     FWD_ARGS+=(--volume="${HOME}/.gitconfig:/home/ros/.gitconfig:ro")
