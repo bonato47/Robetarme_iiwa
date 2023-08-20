@@ -15,10 +15,10 @@ save_trajectory: False
 saved_trajectory_filename: "trajectory_to_tristan"
 
 # Read the trajectory from a given file
-read_trajectory: True
+read_trajectory: False
 
 # file to read the waypoints from
-waypoints_filename: "waypoints_tristan"
+waypoints_filename: "metal_additive"
 
 # index for the first quaternions and positions
 ifirst_dt: 1
