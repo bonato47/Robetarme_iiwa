@@ -37,8 +37,74 @@ RUN sudo apt-get update && sudo apt-get install -y \
     ros-${ROS_DISTRO}-ros-control \
     ros-${ROS_DISTRO}-ros-controllers \
     && sudo apt-get upgrade -y && sudo apt-get clean
+    
+    
+FROM ros-ws as inverse-kinematics
+
+# Install trak_ik
+WORKDIR /home/${USER}
+RUN git clone https://bitbucket.org/traclabs/trac_ik.git
+RUN cp -R trac_ik ros_ws/src/
+RUN rm trac_ik -r
+
+# Install pinochio and control libraire from epfl-lasa#
+WORKDIR /home/${USER}
+RUN git clone https://github.com/epfl-lasa/control-libraries.git --branch v6.3.1  --single-branch
+WORKDIR /home/${USER}/control-libraries/source
+RUN sudo bash install.sh -y
+
+#isntall universal robot
+WORKDIR /home/${USER}
+RUN git clone https://github.com/ros-industrial/universal_robot.git
+RUN cp -R universal_robot ros_ws/src/
+RUN rm universal_robot -r
+
+# Install relaxed ik
+RUN curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+RUN sudo apt-get install -y ros-noetic-kdl-parser ros-noetic-kdl-parser-py
+RUN python get-pip.py
+RUN rm get-pip.py 
+RUN pip install readchar python-fcl scipy PyYaml matplotlib scipy tf
+RUN pip install --upgrade numpy
+
+# Need to be root to use ssh inside docker build
+USER root
+WORKDIR /home/${USER}/ros_ws/src
+RUN --mount=type=ssh git clone git@github.com:lmunier/relaxed_ik_ros1.git
+WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1
+RUN git submodule init 
+RUN --mount=type=ssh git submodule update
+
+# Transfer repo back to original user after root clone
+WORKDIR /home/${USER}/ros_ws/src
+RUN chown -R ${USER}:${HOST_GID} relaxed_ik_ros1
+USER ${USER}
+
+# Install rust dependency
+RUN sudo apt-get install -y build-essential cmake
+RUN sudo chmod 777 ~/.bashrc
+RUN curl --proto '=https' --tlsv1.3 https://sh.rustup.rs -sSf | sh -s -- -y
+RUN sudo chmod 644 ~/.bashrc
+ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
+
+# Need to be root to use ssh inside docker build
+WORKDIR /home/${USER}
+USER root
+RUN --mount=type=ssh git clone git@github.com:lmunier/ncollide.git --branch fix_relaxed_ik
+
+# Transfer repo back to original user after root clone
+RUN chown -R ${USER}:${HOST_GID} ncollide
+USER ${USER}
+
+WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1/relaxed_ik_core
+
+# Modify crates used to have the ones with the fixes
+RUN sed -i 's/ncollide2d = \"0.19\"/ncollide2d = \{ path = \"..\/..\/..\/..\/ncollide\/build\/ncollide2d\" \}/' Cargo.toml
+RUN sed -i 's/ncollide3d = \"0.21.0\"/ncollide3d = \{ path = \"..\/..\/..\/..\/ncollide\/build\/ncollide3d\" \}/' Cargo.toml
+RUN cargo build
+RUN cargo fix --lib -p relaxed_ik_core --allow-dirty
    
-FROM ros-ws as iiwa-dependencies
+FROM inverse-kinematics as iiwa-dependencies
 
 # Install gazebo (9 or 11 depending on distro)
 WORKDIR /home/${USER}
@@ -57,6 +123,7 @@ RUN if [ "${USE_SIMD}" = "ON" ] ; \
     then export CMAKE_CXX_FLAGS="-march=native -faligned-new" ; fi
 
 ### Install all dependencies of IIWA ROS
+
 # Clone KUKA FRI (need to be root to clone private repo)
 
 # Setup git identity to publish patch on SIMD
@@ -86,21 +153,22 @@ USER ${USER}
 RUN cd kuka_fri && ./waf configure && ./waf && sudo ./waf install
 
 # Install SpaceVecAlg
-RUN git clone --recursive https://github.com/jrl-umi3218/SpaceVecAlg.git
+
+RUN git clone --recursive https://github.com/costashatz/SpaceVecAlg.git
 RUN cd SpaceVecAlg && mkdir build && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
-    && make -j && sudo make install
+	&& cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
+	&& make -j && sudo make install
 
 # Install RBDyn
-RUN git clone --recursive https://github.com/jrl-umi3218/RBDyn.git
+RUN git clone --recursive https://github.com/costashatz/RBDyn.git
 RUN cd RBDyn && mkdir build && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
     && make -j && sudo make install
 
 # Install mc_rbdyn_urdf
-RUN git clone --recursive -b v1.1.0 https://github.com/jrl-umi3218/mc_rbdyn_urdf.git
+RUN git clone --recursive https://github.com/costashatz/mc_rbdyn_urdf.git
 RUN cd mc_rbdyn_urdf && mkdir build && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
     && make -j && sudo make install
 
 # Install corrade
@@ -181,10 +249,10 @@ WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1/relaxed_ik_core
 RUN cargo build
 RUN cargo fix --lib -p relaxed_ik_core --allow-dirty
 
-FROM inverse-kinematics as finalisation
+FROM  iiwa-dependencies as finalisation
 
 ### Copy all src from github Robetarme_iwwa
-COPY --chown=${USER} ./src ./ros_ws/src
+COPY update_git.sh ./update_git.sh
 
 # Give bashrc back to user
 WORKDIR /home/${USER}

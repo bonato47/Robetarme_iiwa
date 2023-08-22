@@ -1,5 +1,5 @@
 #!/bin/bash
-IMAGE_NAME="epfl-lasa/iiwa_robetarme"
+IMAGE_NAME="epfl-lasa/iiwa_robetarme_rui"
 CONTAINER_NAME="${IMAGE_NAME//[\/.]/-}"
 USERNAME="ros"
 MODE=()
@@ -95,7 +95,7 @@ if [ "${MODE}" != "connect" ]; then
     docker volume rm send_pos
     docker volume create --driver local \
     --opt type="none" \
-    --opt device="${PWD}/src/send_pos" \
+    --opt device="${PWD}/../src/send_pos" \
     --opt o="bind" \
     "send_pos"
     
@@ -105,7 +105,7 @@ if [ "${MODE}" != "connect" ]; then
     docker volume rm cobod_arm_study
     docker volume create --driver local \
     --opt type="none" \
-    --opt device="${PWD}/src/cobod_arm_study" \
+    --opt device="${PWD}/../src/cobod_arm_study" \
     --opt o="bind" \
     "cobod_arm_study"
     
@@ -115,7 +115,7 @@ if [ "${MODE}" != "connect" ]; then
     docker volume rm path_planning
     docker volume create --driver local \
     --opt type="none" \
-    --opt device="${PWD}/src/path_planning" \
+    --opt device="${PWD}/../src/path_planning" \
     --opt o="bind" \
     "path_planning"
     
