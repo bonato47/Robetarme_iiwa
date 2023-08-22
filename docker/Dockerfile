@@ -129,7 +129,8 @@ RUN if [ "${USE_SIMD}" = "ON" ] ; \
 # Setup git identity to publish patch on SIMD
 RUN git config --global user.name "${GIT_NAME}"
 RUN git config --global user.email "${GIT_EMAIL}"
-
+### Install all dependencies of IIWA ROS
+# Clone KUKA FRI (need to be root to clone private repo)
 WORKDIR /tmp
 USER root
 RUN --mount=type=ssh git clone git@github.com:epfl-lasa/kuka_fri.git
@@ -140,10 +141,6 @@ RUN if [ "${USE_SMID}" != "ON" ] ; \
 RUN --mount=type=ssh  if [ "${USE_SMID}" != "ON" ] ; \
     then git am 0001-Config-Disables-SIMD-march-native-by-default.patch ; fi
 
-# Remove git identity
-RUN git config --global --unset user.name
-RUN git config --global --unset user.email
-
 # Transfer repo back to original user after root clone
 WORKDIR /tmp
 RUN chown -R ${USER}:${HOST_GID} kuka_fri
@@ -153,22 +150,21 @@ USER ${USER}
 RUN cd kuka_fri && ./waf configure && ./waf && sudo ./waf install
 
 # Install SpaceVecAlg
-
-RUN git clone --recursive https://github.com/costashatz/SpaceVecAlg.git
+RUN git clone --recursive https://github.com/jrl-umi3218/SpaceVecAlg.git
 RUN cd SpaceVecAlg && mkdir build && cd build \
-	&& cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
-	&& make -j && sudo make install
+    && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
+    && make -j && sudo make install
 
 # Install RBDyn
-RUN git clone --recursive https://github.com/costashatz/RBDyn.git
+RUN git clone --recursive https://github.com/jrl-umi3218/RBDyn.git
 RUN cd RBDyn && mkdir build && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
     && make -j && sudo make install
 
 # Install mc_rbdyn_urdf
-RUN git clone --recursive https://github.com/costashatz/mc_rbdyn_urdf.git
+RUN git clone --recursive -b v1.1.0 https://github.com/jrl-umi3218/mc_rbdyn_urdf.git
 RUN cd mc_rbdyn_urdf && mkdir build && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
     && make -j && sudo make install
 
 # Install corrade
@@ -181,11 +177,6 @@ RUN git clone https://github.com/epfl-lasa/robot_controllers.git
 RUN cd robot_controllers && mkdir build && cd build \
     && cmake .. && make -j && sudo make install
 
-# Install qpPOASES
-RUN git clone https://github.com/coin-or/qpOASES.git
-RUN  cd qpOASES&& mkdir build && cd build \
-    && cmake .. && make -j && sudo make install
-
 # Remove temporari files
 RUN sudo ldconfig
 RUN rm -rf /tmp/*
@@ -194,7 +185,15 @@ RUN rm -rf /tmp/*
 WORKDIR /home/${USER}/ros_ws/src
 RUN git clone https://github.com/epfl-lasa/iiwa_ros.git
 
+### Install IIWA toolkit
+RUN git clone https://github.com/fkhadivar/iiwa_toolkit.git
+
 FROM iiwa-dependencies as inverse-kinematics
+
+# Install qpPOASES
+RUN git clone https://github.com/coin-or/qpOASES.git
+RUN  cd qpOASES&& mkdir build && cd build \
+    && cmake .. && make -j && sudo make install
 
 # Install trak_ik
 WORKDIR /home/${USER}

@@ -279,7 +279,7 @@ int main(int argc, char **argv)
 
     vector<double> nextPosCartTemp  = actualState.posCartActual;
     vector<double> nextPosJointTemp = nextState.posJointNext;
-        // Print the vector elements
+    // Print the vector elements
     cout << "Vector nextPosJointTemp: ";
     for (const double& value : nextState.speedFromDS) {
         cout << value << " ";
