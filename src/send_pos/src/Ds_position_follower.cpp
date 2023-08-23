@@ -157,33 +157,29 @@ int main(int argc, char **argv)
     ROS_INFO("LETSGO");
     while (ros::ok())
     {
-        if (check_ik == true){
-            //compute nextpos +1 
-            VectorXd speed_eigen = speed_func(nextPosCartTemp, nextState.quatFromDS,nextState.speedFromDS);
-            vector<double> NextQuatPosCart = Integral_func(nextPosCartTemp, speed_eigen, integrationTime, nextState);
-           
-            nextState.getIK(nextPosJointTemp,NextQuatPosCart);
+                //compute nextpos +1 
+        VectorXd speed_eigen = speed_func(nextPosCartTemp, nextState.quatFromDS,nextState.speedFromDS);
+        vector<double> NextQuatPosCart = Integral_func(nextPosCartTemp, speed_eigen, integrationTime, nextState);
+        
+        nextState.getIK(nextPosJointTemp,NextQuatPosCart);
 
-            update_publisher_for_DS(actualState, nextState.posJointNext, pub_pos, pub_speed,client, loop_rate);
-            check_ik = false;
-       }
+        update_publisher_for_DS(actualState, nextState.posJointNext, pub_pos, pub_speed,client, loop_rate);
 
-        //get inverse kinematic 
-        if (mseValue_cart(actualState.posJointActual,nextPosJointTemp,tol_mse)){
-            nextPosJointTemp = nextState.posJointNext;
-            nextPosCartTemp = actualState.getFK(nextPosJointTemp);
-            nextPosJointTempMsg = nextState.msgP;
 
-            check_ik= true;
+        nextPosJointTemp = nextState.posJointNext;
+        nextPosCartTemp = actualState.getFK(nextPosJointTemp); 
+        nextPosJointTempMsg = nextState.msgP;
+        // Print the vector elements
+        cout << "Vector elements: ";
+        for (const double& value : NextQuatPosCart) {
+            cout << value << " ";
         }
-        //-----------------------------------------------------------------------
-        //send next joint 
-        chatter_pub.publish(nextPosJointTempMsg);
-
+        cout << endl;
         ros::spinOnce();        
         loop_rate.sleep();  
         //--------------------------------------------------------------------
-
+        //send next joint 
+        chatter_pub.publish(nextPosJointTempMsg);
     }
     return 0;    
 }

@@ -41,6 +41,13 @@ RUN sudo apt-get update && sudo apt-get install -y \
     
 FROM ros-ws as inverse-kinematics
 
+
+# Install qpPOASES
+RUN git clone https://github.com/coin-or/qpOASES.git
+RUN  cd qpOASES&& mkdir build && cd build \
+    && cmake .. && make -j && sudo make install
+
+
 # Install trak_ik
 WORKDIR /home/${USER}
 RUN git clone https://bitbucket.org/traclabs/trac_ik.git
@@ -188,65 +195,6 @@ RUN git clone https://github.com/epfl-lasa/iiwa_ros.git
 ### Install IIWA toolkit
 RUN git clone https://github.com/fkhadivar/iiwa_toolkit.git
 
-FROM iiwa-dependencies as inverse-kinematics
-
-# Install qpPOASES
-RUN git clone https://github.com/coin-or/qpOASES.git
-RUN  cd qpOASES&& mkdir build && cd build \
-    && cmake .. && make -j && sudo make install
-
-# Install trak_ik
-WORKDIR /home/${USER}
-RUN git clone https://bitbucket.org/traclabs/trac_ik.git
-RUN cp -R trac_ik ros_ws/src/
-RUN rm trac_ik -r
-
-# Install pinochio and control libraire from epfl-lasa#
-WORKDIR /home/${USER}
-RUN git clone https://github.com/epfl-lasa/control-libraries.git --branch v6.3.1  --single-branch
-WORKDIR /home/${USER}/control-libraries/source
-RUN sudo bash install.sh -y
-
-#isntall universal robot
-WORKDIR /home/${USER}
-RUN git clone https://github.com/ros-industrial/universal_robot.git
-RUN cp -R universal_robot ros_ws/src/
-RUN rm universal_robot -r
-
-# Install relaxed ik
-RUN curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-RUN sudo apt-get install -y ros-noetic-kdl-parser ros-noetic-kdl-parser-py
-RUN python get-pip.py
-RUN rm get-pip.py 
-RUN pip install readchar python-fcl scipy PyYaml matplotlib scipy tf
-RUN pip install --upgrade numpy
-
-# Need to be root to use ssh inside docker build
-WORKDIR /home/${USER}/ros_ws/src
-USER root
-RUN --mount=type=ssh git clone git@github.com:lmunier/relaxed_ik_ros1.git
-WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1
-RUN git submodule init 
-RUN --mount=type=ssh git submodule update
-
-# Transfer repo back to original user after root clone
-WORKDIR /home/${USER}/ros_ws/src
-RUN chown -R ${USER}:${HOST_GID} relaxed_ik_ros1
-USER ${USER}
-
-# Install rust dependency
-RUN sudo apt-get install -y build-essential cmake
-RUN sudo chmod 777 ~/.bashrc
-RUN curl --proto '=https' --tlsv1.3 https://sh.rustup.rs -sSf | sh -s -- -y
-RUN sudo chmod 644 ~/.bashrc
-ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
-
-# Need to be root to use ssh inside docker build
-WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1/relaxed_ik_core
-
-# Build relaxed ik
-RUN cargo build
-RUN cargo fix --lib -p relaxed_ik_core --allow-dirty
 
 FROM  iiwa-dependencies as finalisation
 

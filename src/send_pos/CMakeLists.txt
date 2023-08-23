@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   #qpOASESCONFIG REQUIRED
 )
 find_package(control_libraries 6.3.1 REQUIRED)
+find_package(Eigen3 REQUIRED)
 ## System dependencies are found with CMake's conventionsF
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -219,15 +220,18 @@ include_directories(
 
 #include/qpOASES/qpOASES.cpp
 
-add_executable(Ds src/Ds.cpp src/Utils.cpp)
-target_link_libraries(Ds ${catkin_LIBRARIES})
+# add_executable(Ds src/Ds.cpp src/Utils.cpp)
+# target_link_libraries(Ds ${catkin_LIBRARIES})
 
 
-add_executable(Ds_follower src/Ds_follower.cpp src/Utils.cpp)
+add_executable(Ds_follower src/Ds_follower.cpp src/control_function.cpp src/Utils.cpp)
 target_link_libraries(Ds_follower ${catkin_LIBRARIES})
 
-add_executable(Ds_Tikhonov src/Ds_Tikhonov.cpp src/Utils.cpp  )
-target_link_libraries(Ds_Tikhonov ${catkin_LIBRARIES} ${Eigen3_LIBRARIES} "stdc++fs" "-L/usr/local/lib" "qpOASES")
+add_executable(Ds_position_follower src/Ds_position_follower.cpp src/control_function.cpp src/Utils.cpp)
+target_link_libraries(Ds_position_follower ${catkin_LIBRARIES})
+
+# add_executable(Ds_Tikhonov src/Ds_Tikhonov.cpp src/Utils.cpp  )
+# target_link_libraries(Ds_Tikhonov ${catkin_LIBRARIES} ${Eigen3_LIBRARIES} "stdc++fs" "-L/usr/local/lib" "qpOASES")
 
 #add_executable(listener src/listener.cpp )
 #target_link_libraries(listener ${catkin_LIBRARIES})
