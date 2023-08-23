@@ -205,3 +205,8 @@ WORKDIR /home/${USER}
 RUN wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04.tar.xz
 RUN tar -xf CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04.tar.xz
 RUN rm CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04.tar.xz
+
+# Add zmq remote controle api plugin
+RUN python3 -m pip install coppeliasim-zmqremoteapi-client
+RUN pip install cbor pyzmq
+RUN echo PYTHONPATH="$PYTHONPATH:/home/ros/CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
