@@ -188,10 +188,6 @@ RUN git clone https://github.com/epfl-lasa/robot_controllers.git
 RUN cd robot_controllers && mkdir build && cd build \
     && cmake .. && make -j && sudo make install
 
-# Install qpPOASES
-RUN git clone https://github.com/coin-or/qpOASES.git
-RUN  cd qpOASES&& mkdir build && cd build \
-    && cmake .. && make -j && sudo make install
 
 # Remove temporari files
 RUN sudo ldconfig
@@ -199,10 +195,10 @@ RUN rm -rf /tmp/*
 
 ### Install IIWA ROS
 WORKDIR /home/${USER}/ros_ws/src
-RUN git clone https://github.com/epfl-lasa/iiwa_ros.git
+RUN git clone -b add-deep-camera https://github.com/RLoad/iiwa_ros.git
 
 ### Install IIWA toolkit
-RUN git clone https://github.com/fkhadivar/iiwa_toolkit.git
+RUN git clone -b add-deep-camera https://github.com/RLoad/iiwa_toolkit.git
 
 
 FROM  iiwa-dependencies as finalisation
