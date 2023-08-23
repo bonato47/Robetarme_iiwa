@@ -195,10 +195,10 @@ RUN rm -rf /tmp/*
 
 ### Install IIWA ROS
 WORKDIR /home/${USER}/ros_ws/src
-RUN git clone -b add-deep-camera https://github.com/RLoad/iiwa_ros.git
+RUN git clone -b add_deep_camera https://github.com/RLoad/iiwa_ros.git
 
 ### Install IIWA toolkit
-RUN git clone -b add-deep-camera https://github.com/RLoad/iiwa_toolkit.git
+RUN git clone -b add_deep_camera https://github.com/RLoad/iiwa_toolkit.git
 
 
 FROM  iiwa-dependencies as finalisation
