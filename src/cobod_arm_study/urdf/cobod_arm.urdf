@@ -3,20 +3,6 @@
   name="cobod_arm_study">
   <link
     name="Link_1">
-    <!--<inertial>
-      <origin
-        xyz="-3.52E-05 0.00025739 0.18016"
-        rpy="0 0 0" />
-      <mass
-        value="4.7914" />
-      <inertia
-        ixx="0.010294"
-        ixy="-5.0099E-06"
-        ixz="-1.4283E-07"
-        iyy="0.010294"
-        iyz="-5.2258E-08"
-        izz="0.014258" />
-    </inertial> -->
     <visual>
       <origin
         xyz="0 0 0"
