@@ -215,4 +215,4 @@ RUN pip install cbor pyzmq
 RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
 
 RUN echo export ROS_MASTER_URI=http://localhost:11311 >> ~/.bashrc
-RUN echo export ROS_IP=127.0.0.1 >> ~/.bashrc
+RUN echo export ROS_IP=localhost >> ~/.bashrc
