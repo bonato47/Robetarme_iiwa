@@ -1,8 +1,7 @@
 import os
-import roslib; roslib.load_manifest('urdfdom_py')
+import xml.etree.ElementTree as ET
 import rospy
 
-from urdf_parser_py.urdf import URDF
 from math import radians
 from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import JointState
@@ -14,6 +13,21 @@ from coppeliasim_zmqremoteapi_client import *
 current_dir = os.path.dirname(os.path.abspath(__file__))
 PATH_SCENE = current_dir + "/ds_trial.ttt"
 FREQUENCY = 100
+
+urdf_file = "path_to_your_robot.urdf"
+
+# Parse the URDF XML file
+tree = ET.parse(urdf_file)
+root = tree.getroot()
+
+# Extract information from the URDF
+robot_name = root.find("robot").attrib["name"]
+num_joints = len(root.findall(".//joint"))
+num_links = len(root.findall(".//link"))
+
+print("Robot Name:", robot_name)
+print("Number of Joints:", num_joints)
+print("Number of Links:", num_links)
 
 @dataclass()
 class Robot():
