@@ -6,7 +6,7 @@ from math import radians
 from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import JointState
 
-from dataclasses import dataclass ,field
+from dataclasses import dataclass, field, asdict
 from typing import List, Tuple
 from coppeliasim_zmqremoteapi_client import *
 
@@ -14,48 +14,46 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 PATH_SCENE = current_dir + "/ds_trial.ttt"
 FREQUENCY = 100
 
-urdf_file = "path_to_your_robot.urdf"
-
-# Parse the URDF XML file
-tree = ET.parse(urdf_file)
-root = tree.getroot()
-
-# Extract information from the URDF
-robot_name = root.find("robot").attrib["name"]
-num_joints = len(root.findall(".//joint"))
-num_links = len(root.findall(".//link"))
-
-print("Robot Name:", robot_name)
-print("Number of Joints:", num_joints)
-print("Number of Links:", num_links)
+URDF_FILE = current_dir + "/urdf/iiwa7.urdf"
 
 @dataclass()
 class Robot():
     """Robot dataclass."""
-    name: str = "iiwa14"
-    nb_dofs: int = 7
-    joints: List[int] = field(default_factory=list)
-    max_vel: float = radians(110) # [rad/s]
-    max_acc: float = radians(40) # [rad/s^2]
-    max_jerk: float = radians(80) # [rad/s^3]
+    name: str = ""
+    nb_dofs: int = 0
+    max_limits: Tuple[int, int] = (0.0, 0.0) # [rad]
+    max_vel: float = 0.0 # [rad/s]
+    max_acc: float = 0.0 # [rad/s^2]
+    max_jerk: float = 0.0 # [rad/s^3]
+    max_torque: float = 0.0 # [rad/s^3]
 
-    def __post_init__(self):
-        self.joints = [0 for _ in range(self.nb_dofs)]
+    lst_joints: List[int] = field(default_factory=list)
+    lst_joints_name: List[str] = field(default_factory=list)
+    lst_joints_type: List[str] = field(default_factory=list)
+    lst_limits: List[Tuple[int, int]] = field(default_factory=list)
+    lst_max_vel: List[int] = field(default_factory=list) # [rad/s]
+    lst_max_acc: List[int] = field(default_factory=list) # [rad/s^2]
+    lst_max_jerk: List[int] = field(default_factory=list) # [rad/s^3]
+    lst_max_torque: List[int] = field(default_factory=list) # [rad/s^3]
+
+    def print(self):
+        """Print the robot informations."""
+        print(f"Robot informations:")
+        for key, value in asdict(self).items():
+            print(f"\t{key}: {value}")
 
 client = RemoteAPIClient()
 sim = client.getObject("sim")
 client.setStepping(True)
 
-
 def main():
     """Main function."""
-    kuka_iiwa14 = Robot()
+    kuka_iiwa14 = read_urdf(URDF_FILE)
     sim.loadScene(PATH_SCENE)
-    setup_robot(kuka_iiwa14)
-    setup_rostopics()
 
-    robot = URDF.from_parameter_server()
-    print(robot)
+    link_joints(kuka_iiwa14)
+    kuka_iiwa14.print()
+    setup_rostopics()
 
     sim.startSimulation()
     while sim.getSimulationState() != sim.simulation_stopped:
@@ -63,14 +61,52 @@ def main():
     sim.stopSimulation()
 
 
-def setup_robot(robot: Robot):
-    """ Setup the robot.
+def read_urdf(str_urdf: str) -> Robot:
+    """ Read the URDF file using standard XML language.
+
+    args:
+        str_urdf (str): Path to the URDF file.
+
+    returns:
+        Robot: Robot dataclass containing all the informations from URDF file.
+    """
+    new_robot = Robot()
+    robot = ET.parse(str_urdf).getroot()
+
+    # Extract information from the URDF
+    new_robot.name = robot.attrib["name"]
+
+    nb_dofs = 0
+    for joint in robot.findall(".//joint"):
+        try:
+            joint.attrib["type"]
+        except:
+            continue
+
+        joint_limit = joint.find("limit")
+        if joint_limit is not None:
+            nb_dofs += 1
+            new_robot.lst_joints_name.append(joint.attrib["name"])
+            new_robot.lst_joints_type.append(joint.attrib["type"])
+
+            new_robot.lst_limits.append(
+                (joint_limit.attrib["lower"], joint_limit.attrib["upper"])
+            )
+            new_robot.lst_max_vel.append(joint_limit.attrib["velocity"])
+            new_robot.lst_max_torque.append(joint_limit.attrib["effort"])
+
+    new_robot.nb_dofs = nb_dofs
+
+    return new_robot
+
+def link_joints(robot: Robot):
+    """ Link the joint to the robot.
 
     args:
         robot (Robot): Robot dataclass.
     """
     for i in range(robot.nb_dofs):
-        robot.joints[i] = sim.getObject("./joint", {'index': i})
+        robot.lst_joints.append(sim.getObject("./joint", {'index': i}))
 
 def setup_rostopics():
     """Setup all the different ROS requirements."""
