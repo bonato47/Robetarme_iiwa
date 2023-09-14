@@ -1,6 +1,8 @@
 import os
+import time
 import xml.etree.ElementTree as ET
 import rospy
+import signal
 
 from math import radians, degrees
 from std_msgs.msg import Float64MultiArray
@@ -10,9 +12,11 @@ from dataclasses import dataclass, field, asdict
 from typing import List, Tuple
 from coppeliasim_zmqremoteapi_client import *
 
+new_torque = False
+cmd_torques = None
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-VERBOSE = True
+VERBOSE = False
 PATH_SCENE = current_dir + "/ds_trial.ttt"
 FREQUENCY = 100
 
@@ -65,22 +69,34 @@ class Robot():
 
 def main():
     """ Main function. """
+    global new_torque
+
     kuka_iiwa14 = read_urdf(URDF_FILE)
     kuka_iiwa14.init_default()
 
     if VERBOSE:
         kuka_iiwa14.print()
 
-    setup_rostopics()
+    ros_rate, pub_joint_states = setup_rostopics()
 
     client = RemoteAPIClient()
     sim = client.getObject("sim")
     client.setStepping(True)
     setup_simulation(sim, kuka_iiwa14)
 
-    sim.startSimulation()
-    while sim.getSimulationState() != sim.simulation_stopped:
-        client.step()
+    print("Simulation ready to start")
+    while not rospy.is_shutdown():
+        if new_torque:
+            if sim.getSimulationState() == sim.simulation_stopped:
+                sim.startSimulation()
+
+            new_torque = False
+            set_torque(sim, kuka_iiwa14)
+
+            client.step()
+
+        ros_rate.sleep()
+
     sim.stopSimulation()
 
 
@@ -134,7 +150,7 @@ def link_joints(robot: Robot, sim: any):
         robot.lst_joints.append(sim.getObject("./joint", {'index': i}))
 
 
-def setup_rostopics():
+def setup_rostopics() -> Tuple[rospy.Rate, rospy.Publisher]:
     """ Setup all the different ROS requirements. """
     rospy.init_node("ds_simulation", anonymous=True)
     ros_rate = rospy.Rate(FREQUENCY)
@@ -144,10 +160,9 @@ def setup_rostopics():
     rospy.Subscriber("/iiwa/TorqueController/command", Float64MultiArray, cbk_torque_command)
 
     # Publisher
-    rospy.Publisher("/iiwa/JointStates", Float64MultiArray, queue_size=10)
+    pub_joints_states = rospy.Publisher("/iiwa/JointStates", Float64MultiArray, queue_size=10)
 
-
-    return ros_rate
+    return ros_rate, pub_joints_states
 
 
 def setup_simulation(sim: any, robot: Robot):
@@ -158,11 +173,9 @@ def setup_simulation(sim: any, robot: Robot):
         robot (Robot): Robot dataclass.
     """
     sim.loadScene(PATH_SCENE)
-
     link_joints(robot, sim)
 
     for i in range(robot.nb_dofs):
-        print(i)
         robot_joint = robot.lst_joints[i]
 
         sim.setJointInterval(
@@ -172,29 +185,20 @@ def setup_simulation(sim: any, robot: Robot):
         )
 
         sim.setJointMode(robot_joint, sim.jointmode_dynamic, 0)
-        # sim.setObjectInt32Param(robot_joint, sim.jointdynctrl_force, 1)
+        sim.setObjectInt32Param(robot_joint, sim.jointintparam_dynctrlmode, sim.jointdynctrl_force)
 
-        sim.setObjectFloatParam(
-            robot_joint, sim.jointfloatparam_maxvel, robot.lst_max_vel[i]
-        )
 
-        sim.setObjectFloatParam(
-            robot_joint, sim.jointfloatparam_maxaccel, robot.lst_max_acc[i]
-        )
+def set_torque(sim: any, robot: Robot):
+    """ Set the torque to the robot.
 
-        sim.setObjectFloatParam(
-            robot_joint, sim.jointfloatparam_maxjerk, robot.lst_max_jerk[i]
-        )
+    args:
+        sim (any): CoppeliaSim simulated client.
+        robot (Robot): Robot dataclass.
+    """
+    for i in range(robot.nb_dofs):
+        robot_joint = robot.lst_joints[i]
+        sim.setJointTargetForce(robot_joint, cmd_torques[i])
 
-        print(
-            (degrees(robot.lst_limits[i][0]), degrees(robot.lst_limits[i][1])),
-            degrees(robot.lst_max_vel[i]),
-            degrees(robot.lst_max_acc[i]),
-            degrees(robot.lst_max_jerk[i]),
-            robot.lst_max_torque[i]
-        )
-
-    print("Hello World!!")
 
 def cbk_torque_command(msg_torques: Float64MultiArray):
     """ Callback function to retrieve the torques from the controller.
@@ -202,8 +206,17 @@ def cbk_torque_command(msg_torques: Float64MultiArray):
     args:
         msg_torques (Float64MultiArray): Torques from the controller.
     """
-    pass
+    global new_torque
+    global cmd_torques
+
+    new_torque = True
+    cmd_torques = msg_torques.data
+
+
+def handler(signum, frame):
+    exit(1)
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, handler)
     main()
