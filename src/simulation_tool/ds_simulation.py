@@ -1,5 +1,4 @@
 import os
-import time
 import xml.etree.ElementTree as ET
 import rospy
 import signal
@@ -21,6 +20,15 @@ PATH_SCENE = current_dir + "/ds_trial.ttt"
 FREQUENCY = 100
 
 URDF_FILE = current_dir + "/urdf/iiwa7.urdf"
+INIT_POS = [
+    -0.5919698011605155,
+    0.6201465625958642,
+    -0.0653170266187102,
+    -1.4804073686310648,
+    -0.9575874780333455,
+    -0.8252918783639069,
+    0.8145857988451297
+]
 
 @dataclass()
 class Robot():
@@ -77,12 +85,13 @@ def main():
     if VERBOSE:
         kuka_iiwa14.print()
 
-    ros_rate, pub_joint_states = setup_rostopics()
+    ros_rate = setup_rostopics()
 
     client = RemoteAPIClient()
     sim = client.getObject("sim")
-    client.setStepping(True)
+    # client.setStepping(True)
     setup_simulation(sim, kuka_iiwa14)
+    init_robot_pos(sim, kuka_iiwa14)
 
     print("Simulation ready to start")
     while not rospy.is_shutdown():
@@ -93,7 +102,7 @@ def main():
             new_torque = False
             set_torque(sim, kuka_iiwa14)
 
-            client.step()
+            # client.step()
 
         ros_rate.sleep()
 
@@ -160,9 +169,9 @@ def setup_rostopics() -> Tuple[rospy.Rate, rospy.Publisher]:
     rospy.Subscriber("/iiwa/TorqueController/command", Float64MultiArray, cbk_torque_command)
 
     # Publisher
-    pub_joints_states = rospy.Publisher("/iiwa/JointStates", Float64MultiArray, queue_size=10)
+    # pub_joints_states = rospy.Publisher("/iiwa/JointStates", Float64MultiArray, queue_size=10)
 
-    return ros_rate, pub_joints_states
+    return ros_rate#, pub_joints_states
 
 
 def setup_simulation(sim: any, robot: Robot):
@@ -185,7 +194,13 @@ def setup_simulation(sim: any, robot: Robot):
         )
 
         sim.setJointMode(robot_joint, sim.jointmode_dynamic, 0)
-        sim.setObjectInt32Param(robot_joint, sim.jointintparam_dynctrlmode, sim.jointdynctrl_force)
+        sim.setObjectInt32Param(robot_joint, sim.jointintparam_dynctrlmode, sim.jointdynctrl_position)
+
+
+def init_robot_pos(sim: any, robot: Robot):
+    """ Initialize the robot position. """
+    for i in range(robot.nb_dofs):
+        sim.setJointPosition(robot.lst_joints[i], INIT_POS[i])
 
 
 def set_torque(sim: any, robot: Robot):
@@ -213,7 +228,8 @@ def cbk_torque_command(msg_torques: Float64MultiArray):
     cmd_torques = msg_torques.data
 
 
-def handler(signum, frame):
+def handler():
+    """ Handler function to stop the simulation. """
     exit(1)
 
 
