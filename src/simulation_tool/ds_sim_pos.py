@@ -11,12 +11,12 @@ from dataclasses import dataclass, field, asdict
 from typing import List, Tuple
 from coppeliasim_zmqremoteapi_client import *
 
-new_torque = False
-cmd_torques = None
+new_pos = False
+cmd_pos = None
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 VERBOSE = False
-PATH_SCENE = current_dir + "/ds_trial.ttt"
+PATH_SCENE = current_dir + "/ds_trial_pos_no_script.ttt"
 FREQUENCY = 100
 
 URDF_FILE = current_dir + "/urdf/iiwa7.urdf"
@@ -77,7 +77,7 @@ class Robot():
 
 def main():
     """ Main function. """
-    global new_torque
+    global new_pos
 
     kuka_iiwa14 = read_urdf(URDF_FILE)
     kuka_iiwa14.init_default()
@@ -95,12 +95,12 @@ def main():
 
     print("Simulation ready to start")
     while not rospy.is_shutdown():
-        if new_torque:
+        if new_pos:
             if sim.getSimulationState() == sim.simulation_stopped:
                 sim.startSimulation()
 
-            new_torque = False
-            set_torque(sim, kuka_iiwa14)
+            new_pos = False
+            # set_pos(sim, kuka_iiwa14)
 
             # client.step()
 
@@ -166,7 +166,7 @@ def setup_rostopics() -> Tuple[rospy.Rate, rospy.Publisher]:
     rospy.sleep(2)
 
     # Subscriber
-    rospy.Subscriber("/iiwa/TorqueController/command", Float64MultiArray, cbk_torque_command)
+    rospy.Subscriber("/iiwa/joint_states", JointState, cbk_pos_command)
 
     # Publisher
     # pub_joints_states = rospy.Publisher("/iiwa/JointStates", Float64MultiArray, queue_size=10)
@@ -201,34 +201,34 @@ def init_robot_pos(sim: any, robot: Robot):
     """ Initialize the robot position. """
     for i in range(robot.nb_dofs):
         sim.setJointPosition(robot.lst_joints[i], INIT_POS[i])
+        sim.setJointTargetPosition(robot.lst_joints[i], INIT_POS[i])
 
 
-def set_torque(sim: any, robot: Robot):
-    """ Set the torque to the robot.
+def set_pos(sim: any, robot: Robot):
+    """ Set the position for each joint of the robot.
 
     args:
         sim (any): CoppeliaSim simulated client.
         robot (Robot): Robot dataclass.
     """
     for i in range(robot.nb_dofs):
-        robot_joint = robot.lst_joints[i]
-        sim.setJointTargetForce(robot_joint, cmd_torques[i])
+        sim.setJointTargetPosition(robot.lst_joints[i], cmd_pos[i])
 
 
-def cbk_torque_command(msg_torques: Float64MultiArray):
-    """ Callback function to retrieve the torques from the controller.
+def cbk_pos_command(msg_pos: JointState):
+    """ Callback function to retrieve the position from the controller.
 
     args:
-        msg_torques (Float64MultiArray): Torques from the controller.
+        msg_pos (JointState): Joint position from the controller.
     """
-    global new_torque
-    global cmd_torques
+    global new_pos
+    global cmd_pos
 
-    new_torque = True
-    cmd_torques = msg_torques.data
+    new_pos = True
+    cmd_pos = msg_pos.position
 
 
-def handler():
+def handler(signum, frame):
     """ Handler function to stop the simulation. """
     exit(1)
 
