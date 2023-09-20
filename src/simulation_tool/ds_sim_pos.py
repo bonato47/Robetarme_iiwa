@@ -2,6 +2,7 @@ import os
 import xml.etree.ElementTree as ET
 import rospy
 import signal
+import random
 
 from math import radians, degrees
 from std_msgs.msg import Float64MultiArray
@@ -16,7 +17,7 @@ cmd_pos = None
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 VERBOSE = False
-PATH_SCENE = current_dir + "/ds_trial_pos_no_script.ttt"
+PATH_SCENE = current_dir + "/ds_trial_pos.ttt"
 FREQUENCY = 100
 
 URDF_FILE = current_dir + "/urdf/iiwa7.urdf"
@@ -92,6 +93,16 @@ def main():
     # client.setStepping(True)
     setup_simulation(sim, kuka_iiwa14)
     init_robot_pos(sim, kuka_iiwa14)
+
+    numRows = 20
+    numCols = 20
+
+    lst_array = []
+    for i in range(numRows):
+        for j in range(numCols):
+            lst_array.append(random.random())
+
+    sim.createHeightfieldShape(0, 1.0, numRows, numCols, 10.0, lst_array)
 
     print("Simulation ready to start")
     while not rospy.is_shutdown():
