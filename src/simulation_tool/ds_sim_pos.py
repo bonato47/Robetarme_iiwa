@@ -1,4 +1,5 @@
 import os
+import csv
 import xml.etree.ElementTree as ET
 import rospy
 import signal
@@ -17,8 +18,9 @@ cmd_pos = None
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 VERBOSE = False
-PATH_SCENE = current_dir + "/ds_trial_pos.ttt"
-FREQUENCY = 100
+FREQUENCY = 1000 # [Hz]
+CSV_FILE = current_dir + "/data/2023-09-14_positions.csv"
+PATH_SCENE = current_dir + "/ds_trial_pos_laser_no_script.ttt"
 
 URDF_FILE = current_dir + "/urdf/iiwa7.urdf"
 INIT_POS = [
@@ -78,6 +80,7 @@ class Robot():
 
 def main():
     """ Main function. """
+    global cmd_pos
     global new_pos
 
     kuka_iiwa14 = read_urdf(URDF_FILE)
@@ -90,34 +93,48 @@ def main():
 
     client = RemoteAPIClient()
     sim = client.getObject("sim")
-    # client.setStepping(True)
+    client.setStepping(True)
     setup_simulation(sim, kuka_iiwa14)
     init_robot_pos(sim, kuka_iiwa14)
 
-    numRows = 20
-    numCols = 20
-
-    lst_array = []
-    for i in range(numRows):
-        for j in range(numCols):
-            lst_array.append(random.random())
-
-    sim.createHeightfieldShape(0, 1.0, numRows, numCols, 10.0, lst_array)
+    data_pos = read_csv(CSV_FILE)
 
     print("Simulation ready to start")
+    i = 0
     while not rospy.is_shutdown():
-        if new_pos:
-            if sim.getSimulationState() == sim.simulation_stopped:
-                sim.startSimulation()
+        if sim.getSimulationState() == sim.simulation_stopped:
+            sim.startSimulation()
 
-            new_pos = False
-            # set_pos(sim, kuka_iiwa14)
+        if i > 1000:
+            cmd_pos = data_pos[i]
+            set_pos(sim, kuka_iiwa14)
 
-            # client.step()
+            client.step()
+            ros_rate.sleep()
 
-        ros_rate.sleep()
-
+        i += 1
     sim.stopSimulation()
+
+
+def read_csv(str_csv: str) -> List[List[float]]:
+    """ Read the CSV file containing the positions.
+
+    args:
+        str_csv (str): Path to the CSV file.
+
+    returns:
+        List[List[float]]: List of positions.
+    """
+    lst_pos = []
+
+    with open(str_csv, "r") as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=",")
+        next(csv_reader)
+
+        for row in csv_reader:
+            lst_pos.append([float(x) for x in row[1:]])
+
+    return lst_pos
 
 
 def read_urdf(str_urdf: str) -> Robot:
