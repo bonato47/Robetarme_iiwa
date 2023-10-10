@@ -17,21 +17,17 @@ new_pos = False
 cmd_pos = None
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
+ID_FIRST_CMD = {
+    "230927_circle_positions.csv" : 830,
+    "230927_curver_positions.csv" : 3100,
+    "230928_curver_positions.csv" : 1000
+}
 VERBOSE = False
 FREQUENCY = 1000 # [Hz]
-CSV_FILE = current_dir + "/data/2023-09-14_positions.csv"
+CSV_FILE = current_dir + "/data/230927_circle_positions.csv"
 PATH_SCENE = current_dir + "/ds_trial_pos_laser_no_script.ttt"
 
 URDF_FILE = current_dir + "/urdf/iiwa7.urdf"
-INIT_POS = [
-    -0.5919698011605155,
-    0.6201465625958642,
-    -0.0653170266187102,
-    -1.4804073686310648,
-    -0.9575874780333455,
-    -0.8252918783639069,
-    0.8145857988451297
-]
 
 @dataclass()
 class Robot():
@@ -90,27 +86,30 @@ def main():
         kuka_iiwa14.print()
 
     ros_rate = setup_rostopics()
+    data_pos = read_csv(CSV_FILE)
 
     client = RemoteAPIClient()
     sim = client.getObject("sim")
     client.setStepping(True)
     setup_simulation(sim, kuka_iiwa14)
-    init_robot_pos(sim, kuka_iiwa14)
 
-    data_pos = read_csv(CSV_FILE)
+    init_robot_pos(sim, kuka_iiwa14, data_pos[ID_FIRST_CMD[
+        CSV_FILE.split("/")[-1]
+    ]])
 
     print("Simulation ready to start")
-    i = 0
+    i = ID_FIRST_CMD[
+        CSV_FILE.split("/")[-1]
+    ]
     while not rospy.is_shutdown():
         if sim.getSimulationState() == sim.simulation_stopped:
             sim.startSimulation()
 
-        if i > 1000:
-            cmd_pos = data_pos[i]
-            set_pos(sim, kuka_iiwa14)
+        cmd_pos = data_pos[i]
+        set_pos(sim, kuka_iiwa14)
 
-            client.step()
-            ros_rate.sleep()
+        client.step()
+        ros_rate.sleep()
 
         i += 1
     sim.stopSimulation()
@@ -225,11 +224,11 @@ def setup_simulation(sim: any, robot: Robot):
         sim.setObjectInt32Param(robot_joint, sim.jointintparam_dynctrlmode, sim.jointdynctrl_position)
 
 
-def init_robot_pos(sim: any, robot: Robot):
+def init_robot_pos(sim: any, robot: Robot, init_pos: List[float]):
     """ Initialize the robot position. """
     for i in range(robot.nb_dofs):
-        sim.setJointPosition(robot.lst_joints[i], INIT_POS[i])
-        sim.setJointTargetPosition(robot.lst_joints[i], INIT_POS[i])
+        sim.setJointPosition(robot.lst_joints[i], init_pos[i])
+        sim.setJointTargetPosition(robot.lst_joints[i], init_pos[i])
 
 
 def set_pos(sim: any, robot: Robot):

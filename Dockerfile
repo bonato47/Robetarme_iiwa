@@ -216,3 +216,13 @@ RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/CoppeliaSim_Edu
 
 RUN echo export ROS_MASTER_URI=http://localhost:11311 >> ~/.bashrc
 RUN echo export ROS_IP=localhost >> ~/.bashrc
+
+ARG CMAKE_VERSION="3.22.6"
+WORKDIR /home/${USER}/
+RUN sudo apt install build-essential libssl-dev
+RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz
+RUN tar -zxvf cmake-${CMAKE_VERSION}.tar.gz
+WORKDIR /home/${USER}/cmake-${CMAKE_VERSION}
+RUN ./bootstrap
+RUN make -j .
+RUN sudo make -j . install
