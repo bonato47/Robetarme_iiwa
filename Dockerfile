@@ -18,7 +18,7 @@ ENV USER_GROUP=${USER}
 USER root
 RUN if [ "HOST_GID" != "1000"] ; \
     then groupadd --gid ${HOST_GID} host_group && \
-    usermod ${USER} -g ${HOST_GID} && \ 
+    usermod ${USER} -g ${HOST_GID} && \
     usermod ${USER} -a -G ${USER_GROUP}; fi
 USER ${USER}
 
@@ -37,7 +37,7 @@ RUN sudo apt-get update && sudo apt-get install -y \
     ros-${ROS_DISTRO}-ros-control \
     ros-${ROS_DISTRO}-ros-controllers \
     && sudo apt-get upgrade -y && sudo apt-get clean
-   
+
 FROM ros-ws as iiwa-dependencies
 
 # Install gazebo (9 or 11 depending on distro)
@@ -53,7 +53,7 @@ RUN sudo apt install -y ros-${ROS_DISTRO}-gazebo-ros-pkgs ros-${ROS_DISTRO}-gaze
 RUN sudo apt install -y ros-${ROS_DISTRO}-trac-ik
 
 # Handle SIMD option
-RUN if [ "${USE_SIMD}" = "ON" ] ; \ 
+RUN if [ "${USE_SIMD}" = "ON" ] ; \
     then export CMAKE_CXX_FLAGS="-march=native -faligned-new" ; fi
 
 ### Install all dependencies of IIWA ROS
@@ -150,7 +150,7 @@ RUN rm universal_robot -r
 RUN curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN sudo apt-get install -y ros-noetic-kdl-parser ros-noetic-kdl-parser-py
 RUN python get-pip.py
-RUN rm get-pip.py 
+RUN rm get-pip.py
 RUN pip install readchar python-fcl scipy PyYaml matplotlib scipy tf
 RUN pip install --upgrade numpy
 
@@ -159,7 +159,7 @@ USER root
 WORKDIR /home/${USER}/ros_ws/src
 RUN --mount=type=ssh git clone git@github.com:lmunier/relaxed_ik_ros1.git
 WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1
-RUN git submodule init 
+RUN git submodule init
 RUN --mount=type=ssh git submodule update
 
 # Transfer repo back to original user after root clone
@@ -211,3 +211,31 @@ RUN source /home/${USER}/.bashrc && catkin_make;
 
 ### Final apt clean
 RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
+
+FROM finalisation as simulation_tool
+
+WORKDIR /home/${USER}
+RUN wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04.tar.xz
+RUN tar -xf CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04.tar.xz
+RUN rm CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04.tar.xz
+
+# Add zmq remote controle api plugin
+RUN python3 -m pip install coppeliasim-zmqremoteapi-client
+RUN pip install cbor pyzmq
+
+# Add coppeliasim to bashrc but has to be sourced first to fill PYTHONPATH
+# Use of && since a new terminal is instanciated for each RUN command
+RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
+
+RUN echo export ROS_MASTER_URI=http://localhost:11311 >> ~/.bashrc
+RUN echo export ROS_IP=localhost >> ~/.bashrc
+
+ARG CMAKE_VERSION="3.22.6"
+WORKDIR /home/${USER}/
+RUN sudo apt install build-essential libssl-dev
+RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz
+RUN tar -zxvf cmake-${CMAKE_VERSION}.tar.gz
+WORKDIR /home/${USER}/cmake-${CMAKE_VERSION}
+RUN ./bootstrap
+RUN make -j .
+RUN sudo make -j . install
