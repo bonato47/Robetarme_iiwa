@@ -46,6 +46,7 @@ RUN sudo apt-get update && sudo apt-get install -y \
     apt-transport-https \
     less \
     alsa-utils \
+    ros-noetic-vrpn-client-ros \
     ros-${ROS_DISTRO}-ros-control \
     ros-${ROS_DISTRO}-ros-controllers \
     && sudo apt-get upgrade -y && sudo apt-get clean
@@ -120,9 +121,6 @@ RUN if [ "$ROS_DISTRO" = "melodic" ] ; then sudo apt-get install -y gazebo9 ; fi
 # Install gazebo ros packages
 RUN sudo apt install -y ros-${ROS_DISTRO}-gazebo-ros-pkgs ros-${ROS_DISTRO}-gazebo-ros-control
 
-# add vrpn package for optitrack
-WORKDIR /home/${USER}/ros_ws/src
-RUN git clone -b kinetic-devel https://github.com/ros-drivers/vrpn_client_ros.git
 
 # add f/t package for optitrack
 RUN git clone https://github.com/epfl-lasa/net-ft-ros.git
@@ -195,12 +193,14 @@ RUN cd robot_controllers && mkdir build && cd build \
 RUN sudo ldconfig
 RUN rm -rf /tmp/*
 
-### Install IIWA ROS
-WORKDIR /home/${USER}/ros_ws/src
-RUN git clone -b multiple_iiwas https://github.com/epfl-lasa/iiwa_ros.git
-
 FROM  iiwa-dependencies as iiwa-developpement
 ### Install IIWA toolkit
+
+### Install IIWA ROS and toolkit
+WORKDIR /home/${USER}/ros_ws/src
+
+RUN git clone  -b add_deep_camera https://github.com/RLoad/iiwa_ros.git
+
 RUN git clone -b add_deep_camera https://github.com/RLoad/iiwa_toolkit.git
 
 ### Copy all src from github Robetarme_iwwa
