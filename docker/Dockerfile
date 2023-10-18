@@ -34,6 +34,7 @@ RUN sudo apt-get update && sudo apt-get install -y \
     apt-transport-https \
     less \
     alsa-utils \
+    ros-noetic-vrpn-client-ros \
     ros-${ROS_DISTRO}-ros-control \
     ros-${ROS_DISTRO}-ros-controllers \
     && sudo apt-get upgrade -y && sudo apt-get clean
@@ -121,9 +122,6 @@ RUN if [ "$ROS_DISTRO" = "melodic" ] ; then sudo apt-get install -y gazebo9 ; fi
 # Install gazebo ros packages
 RUN sudo apt install -y ros-${ROS_DISTRO}-gazebo-ros-pkgs ros-${ROS_DISTRO}-gazebo-ros-control
 
-# add vrpn package for optitrack
-WORKDIR /home/${USER}/ros_ws/src
-RUN git clone -b kinetic-devel https://github.com/ros-drivers/vrpn_client_ros.git
 
 # add f/t package for optitrack
 RUN git clone https://github.com/epfl-lasa/net-ft-ros.git
