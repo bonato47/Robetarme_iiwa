@@ -64,6 +64,14 @@ class inverseKin {       // The class
         nJoint = 5;
         init_general();
     }
+     
+    void init_IK_cobod_6DOF() {  // Method/function defined inside the class
+        baseLink = "Link_1";
+        tipLink = "Gripper_base";
+        jointsName = {"Joint_1","Joint_2","Joint_3","Joint_4","Joint_5","Joint_6"};
+        nJoint = 6;
+        init_general();
+    }
     void init_IK_ur5() {  // Method/function defined inside the class
         baseLink = "base_link";
         tipLink = "ee_link";
@@ -158,6 +166,9 @@ int main(int argc, char **argv)
     else if(robot_name == "ur10") { 
         IK.init_IK_ur10();
     }
+    else if(robot_name == "cobod_arm_6DOF") { 
+        IK.init_IK_cobod_6DOF();
+    }
 
     string path_urdf = "/home/ros/ros_ws/src/cobod_arm_study/urdf/" + robot_name + ".urdf";
     robot_model::Model model(robot_name,path_urdf);
@@ -171,7 +182,7 @@ int main(int argc, char **argv)
     ros::Rate loopRate(100);
 
     // Read trajectory from .csv 
-    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/csv_cobod/trajectory_normal_bis.csv");
+    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/csv_cobod/s_shape_trajectory_ur10.csv");
 
     //waiting for the first joint position
      while(!IK.init){
@@ -379,9 +390,11 @@ vector<vector<double>> CSVtoVectorVectorDouble(string fname)
         double pos_x = stod(content[i][4],&sz);
         double pos_y = stod(content[i][5],&sz);
         double pos_z = stod(content[i][6],&sz);
+        Quaterniond q(quat_w,quat_x,quat_y,quat_z);
+        q.normalize();
 
 
-        vector<double> Line = {quat_x,quat_y,quat_z,quat_w,pos_x,pos_y,pos_z};
+        vector<double> Line = {q.x(),q.y(),q.z(),q.w(),pos_x,pos_y,pos_z};
         Traj.push_back(Line);
     }
 

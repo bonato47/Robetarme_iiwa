@@ -9,7 +9,6 @@
 #include <eigen3/Eigen/Dense>
 #include <stdio.h>
 #include <trac_ik/trac_ik.hpp>
-#include "Send_pos_function.h"
 #include "Utils.h"
 
 using namespace Eigen;

@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot
+  name="cobod_arm_6dof">
+  <link
+    name="Link_1">
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Link_1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Link_1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="Link_2">
+    <inertial>
+      <origin
+        xyz="-7.83279842325735E-06 -0.0127760100856397 0.118732654083756"
+        rpy="0 0 0" />
+      <mass
+        value="7.36241775873832" />
+      <inertia
+        ixx="0.0334729981948421"
+        ixy="1.15960581221495E-07"
+        ixz="-3.25719911370062E-07"
+        iyy="0.0318195208402152"
+        iyz="-0.000113311466733358"
+        izz="0.0380550573667268" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Link_2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Link_2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Joint_1"
+    type="revolute">
+    <origin
+      xyz="0 0 0.3391"
+      rpy="0 0 0" />
+    <parent
+      link="Link_1" />
+    <child
+      link="Link_2" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-3.14159"
+      upper="3.14159"
+      effort="30"
+      velocity="1.0" />
+  </joint>
+  <link
+    name="Link_3">
+    <inertial>
+      <origin
+        xyz="0.23502 -0.0040139 7.212E-05"
+        rpy="0 0 0" />
+      <mass
+        value="28.605" />
+      <inertia
+        ixx="0.22406"
+        ixy="-0.00022136"
+        ixz="1.9312E-07"
+        iyy="0.22626"
+        iyz="-0.00021886"
+        izz="0.31856" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Link_3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Link_3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Joint_2"
+    type="revolute">
+    <origin
+      xyz="0 0 0.2005"
+      rpy="0 0 0" />
+    <parent
+      link="Link_2" />
+    <child
+      link="Link_3" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-2.61799"
+      upper="0"
+      effort="10"
+      velocity="1.0" />
+  </joint>
+  <link
+    name="Link_4">
+    <inertial>
+      <origin
+        xyz="-1.4591E-08 0.001966 0.013983"
+        rpy="0 0 0" />
+      <mass
+        value="10.074" />
+      <inertia
+        ixx="0.11261"
+        ixy="-4.6742E-08"
+        ixz="-5.0482E-10"
+        iyy="0.051007"
+        iyz="6.8893E-09"
+        izz="0.10897" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Link_4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Link_4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Joint_3"
+    type="revolute">
+    <origin
+      xyz="0.585 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="Link_3" />
+    <child
+      link="Link_4" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="0"
+      upper="3.14159"
+      effort="8"
+      velocity="1.0" />
+  </joint>
+  <link
+    name="Link_5">
+    <inertial>
+      <origin
+        xyz="-0.19694 -0.0075129 0.12929"
+        rpy="0 0 0" />
+      <mass
+        value="32.009" />
+      <inertia
+        ixx="0.25201"
+        ixy="0.00014911"
+        ixz="-1.4091E-09"
+        iyy="0.31685"
+        iyz="0.00021879"
+        izz="0.30494" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Link_5.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Link_5.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Joint_4"
+    type="revolute">
+    <origin
+      xyz="0 0.0019673 0.107"
+      rpy="0 0 0" />
+    <parent
+      link="Link_4" />
+    <child
+      link="Link_5" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-3.14159"
+      upper="3.14159"
+      effort="6"
+      velocity="1.0" />
+  </joint>
+  <link
+    name="Link_6">
+    <inertial>
+      <origin
+        xyz="-0.0225 -0.0092568 0.17444"
+        rpy="0 0 0" />
+      <mass
+        value="16.529" />
+      <inertia
+        ixx="0.16805"
+        ixy="-2.3455E-05"
+        ixz="1.2694E-09"
+        iyy="0.14815"
+        iyz="-7.2441E-09"
+        izz="0.10397" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Link_6.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Link_6.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Joint_5"
+    type="revolute">
+    <origin
+      xyz="-0.585 0 0.122"
+      rpy="0 0 0" />
+    <parent
+      link="Link_5" />
+    <child
+      link="Link_6" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-2.61799"
+      upper="0"
+      effort="4"
+      velocity="1.0" />
+  </joint>
+  <link
+    name="Gripper_base">
+    <inertial>
+      <origin
+        xyz="-4.305E-06 0.0005579 0.044226"
+        rpy="0 0 0" />
+      <mass
+        value="0.28869" />
+      <inertia
+        ixx="0.00012313"
+        ixy="-8.8747E-06"
+        ixz="1.1977E-07"
+        iyy="0.00013954"
+        iyz="-2.1242E-06"
+        izz="0.0002004" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Gripper_base.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cobod_arm_study/meshes/cobod_arm_6DOF/Gripper_base.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Joint_6"
+    type="revolute">
+    <origin
+      xyz="0 -0.0029673 0.4354"
+      rpy="0 0 0" />
+    <parent
+      link="Link_6" />
+    <child
+      link="Gripper_base" />
+    <axis
+      xyz="0 0 1" />
+     <limit
+      lower="-1.5707963268"
+      upper="1.5707963268"
+      effort="4"
+      velocity="1.0" />
+  </joint>
+    <gazebo reference="Link_1">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  
+<!--######################################################################-->
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/</robotNamespace>
+      <controlPeriod>0.001</controlPeriod>
+      <legacyModeNS>false</legacyModeNS>
+    </plugin>
+  </gazebo>
+
+<!--######################################################################-->
+  <gazebo>
+    <plugin name="joint_state_publisher" filename="libgazebo_ros_joint_state_publisher.so">
+      <jointName>Joint_1, Joint_2, Joint_3, Joint_4, Joint_5, Joint_6</jointName>
+    </plugin>
+  </gazebo>
+
+</robot>
