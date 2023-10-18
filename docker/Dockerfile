@@ -41,12 +41,11 @@ RUN sudo apt-get update && sudo apt-get install -y \
     
 FROM ros-ws as inverse-kinematics
 
-
 # Install qpPOASES
 RUN git clone https://github.com/coin-or/qpOASES.git
 RUN  cd qpOASES&& mkdir build && cd build \
     && cmake .. && make -j && sudo make install
-
+RUN rm qpOASES -r
 
 # Install trak_ik
 WORKDIR /home/${USER}
@@ -60,7 +59,7 @@ RUN git clone https://github.com/epfl-lasa/control-libraries.git --branch v6.3.1
 WORKDIR /home/${USER}/control-libraries/source
 RUN sudo bash install.sh -y
 
-#isntall universal robot
+#install universal robot
 WORKDIR /home/${USER}
 RUN git clone https://github.com/ros-industrial/universal_robot.git
 RUN cp -R universal_robot ros_ws/src/
@@ -111,7 +110,7 @@ RUN sed -i 's/ncollide3d = \"0.21.0\"/ncollide3d = \{ path = \"..\/..\/..\/..\/n
 RUN cargo build
 RUN cargo fix --lib -p relaxed_ik_core --allow-dirty
    
-FROM inverse-kinematics as iiwa-dependencies
+
 
 # Install gazebo (9 or 11 depending on distro)
 WORKDIR /home/${USER}
@@ -121,6 +120,16 @@ RUN if [ "$ROS_DISTRO" = "melodic" ] ; then sudo apt-get install -y gazebo9 ; fi
 
 # Install gazebo ros packages
 RUN sudo apt install -y ros-${ROS_DISTRO}-gazebo-ros-pkgs ros-${ROS_DISTRO}-gazebo-ros-control
+
+# add vrpn package for optitrack
+WORKDIR /home/${USER}/ros_ws/src
+RUN git clone -b kinetic-devel https://github.com/ros-drivers/vrpn_client_ros.git
+
+# add f/t package for optitrack
+RUN git clone https://github.com/epfl-lasa/net-ft-ros.git
+
+
+FROM inverse-kinematics as iiwa-dependencies
 
 # Install trak_ik_lib
 RUN sudo apt install -y ros-${ROS_DISTRO}-trac-ik
@@ -136,8 +145,7 @@ RUN if [ "${USE_SIMD}" = "ON" ] ; \
 # Setup git identity to publish patch on SIMD
 RUN git config --global user.name "${GIT_NAME}"
 RUN git config --global user.email "${GIT_EMAIL}"
-### Install all dependencies of IIWA ROS
-# Clone KUKA FRI (need to be root to clone private repo)
+
 WORKDIR /tmp
 USER root
 RUN --mount=type=ssh git clone git@github.com:epfl-lasa/kuka_fri.git
@@ -157,19 +165,19 @@ USER ${USER}
 RUN cd kuka_fri && ./waf configure && ./waf && sudo ./waf install
 
 # Install SpaceVecAlg
-RUN git clone --recursive https://github.com/jrl-umi3218/SpaceVecAlg.git
+RUN git clone --recursive https://github.com/costashatz/SpaceVecAlg.git
 RUN cd SpaceVecAlg && mkdir build && cd build \
     && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
     && make -j && sudo make install
 
 # Install RBDyn
-RUN git clone --recursive https://github.com/jrl-umi3218/RBDyn.git
+RUN git clone --recursive https://github.com/costashatz/RBDyn.git
 RUN cd RBDyn && mkdir build && cd build \
     && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
     && make -j && sudo make install
 
 # Install mc_rbdyn_urdf
-RUN git clone --recursive -b v1.1.0 https://github.com/jrl-umi3218/mc_rbdyn_urdf.git
+RUN git clone --recursive https://github.com/costashatz/mc_rbdyn_urdf.git
 RUN cd mc_rbdyn_urdf && mkdir build && cd build \
     && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
     && make -j && sudo make install
@@ -183,23 +191,28 @@ RUN cd corrade && git checkout 0d149ee9f26a6e35c30b1b44f281b272397842f5 \
 RUN git clone https://github.com/epfl-lasa/robot_controllers.git
 RUN cd robot_controllers && mkdir build && cd build \
     && cmake .. && make -j && sudo make install
-
+    
 # Remove temporari files
 RUN sudo ldconfig
 RUN rm -rf /tmp/*
 
 ### Install IIWA ROS
 WORKDIR /home/${USER}/ros_ws/src
-RUN git clone https://github.com/epfl-lasa/iiwa_ros.git
+RUN git clone -b multiple_iiwas https://github.com/epfl-lasa/iiwa_ros.git
 
+FROM  iiwa-dependencies as iiwa-developpement
 ### Install IIWA toolkit
-RUN git clone https://github.com/fkhadivar/iiwa_toolkit.git
-
-
-FROM  iiwa-dependencies as finalisation
+RUN git clone -b add_deep_camera https://github.com/RLoad/iiwa_toolkit.git
 
 ### Copy all src from github Robetarme_iwwa
 COPY update_git.sh ./update_git.sh
+
+FROM  iiwa-developpement as iiwa-simulation
+
+## add your code here Louis 
+
+FROM  iiwa-simulation as finalisation
+
 
 # Give bashrc back to user
 WORKDIR /home/${USER}
@@ -208,11 +221,15 @@ RUN sudo chown -R ${USER}:${HOST_GID} .bashrc
 # Add cmake option to bash rc if needed
 RUN if [ "${USE_SIMD}" = "ON" ] ; \
     then echo "export ENABLE_SIMD=ON" >> /home/${USER}/.bashrc ; fi
+    
+### Final apt clean
+RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
+
+FROM  finalisation as catkin-make
 
 ### Build ros workspace
 WORKDIR /home/${USER}/ros_ws
 RUN source /home/${USER}/.bashrc && rosdep install --from-paths src --ignore-src -r -y
 RUN source /home/${USER}/.bashrc && catkin_make;
 
-### Final apt clean
-RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
+
