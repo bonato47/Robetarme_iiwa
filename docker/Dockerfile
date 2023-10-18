@@ -196,12 +196,14 @@ RUN cd robot_controllers && mkdir build && cd build \
 RUN sudo ldconfig
 RUN rm -rf /tmp/*
 
-### Install IIWA ROS
-WORKDIR /home/${USER}/ros_ws/src
-RUN git clone -b multiple_iiwas https://github.com/epfl-lasa/iiwa_ros.git
-
 FROM  iiwa-dependencies as iiwa-developpement
 ### Install IIWA toolkit
+
+### Install IIWA ROS and toolkit
+WORKDIR /home/${USER}/ros_ws/src
+
+RUN git clone  -b add_deep_camera https://github.com/RLoad/iiwa_ros.git
+
 RUN git clone -b add_deep_camera https://github.com/RLoad/iiwa_toolkit.git
 
 ### Copy all src from github Robetarme_iwwa
