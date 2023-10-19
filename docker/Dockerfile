@@ -124,8 +124,12 @@ FROM inverse-kinematics as iiwa-dependencies
 
 # Install trak_ik_lib
 RUN sudo apt install -y ros-${ROS_DISTRO}-trac-ik
+<<<<<<< HEAD
 RUN rosdep update && rosdep install trac_ik_lib
 
+=======
+RUN source /home/${USER}/.bashrc && rosdep update &&  rosdep install -y trac_ik_lib
+>>>>>>> 78359b8e7ab72bd73a847cef58282383e1d9acf5
 # Handle SIMD option
 RUN if [ "${USE_SIMD}" = "ON" ] ; \
     then export CMAKE_CXX_FLAGS="-march=native -faligned-new" ; fi
@@ -233,6 +237,7 @@ FROM  finalisation as catkin-make
 ### Build ros workspace
 WORKDIR /home/${USER}/ros_ws
 RUN source /home/${USER}/.bashrc && rosdep install --from-paths src --ignore-src -r -y
+
 RUN source /home/${USER}/.bashrc && catkin_make;
 
 ### Final apt clean
