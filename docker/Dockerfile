@@ -124,7 +124,7 @@ FROM inverse-kinematics as iiwa-dependencies
 
 # Install trak_ik_lib
 RUN sudo apt install -y ros-${ROS_DISTRO}-trac-ik
-RUN rosdep update && rosdep install trac_ik_lib
+RUN source /home/${USER}/.bashrc && rosdep update && rosdep install -y trac_ik_lib
 
 # Handle SIMD option
 RUN if [ "${USE_SIMD}" = "ON" ] ; \
