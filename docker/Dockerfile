@@ -61,14 +61,13 @@ RUN  cd qpOASES&& mkdir build && cd build \
     && cmake .. && make -j && sudo make install
 RUN rm qpOASES -r
 
-
 # Install pinochio and control libraire from epfl-lasa#
 WORKDIR /home/${USER}
 RUN git clone https://github.com/epfl-lasa/control-libraries.git --branch v6.3.1  --single-branch
 WORKDIR /home/${USER}/control-libraries/source
 RUN sudo bash install.sh -y
 
-#install universal robot
+# Install universal robot
 WORKDIR /home/${USER}
 RUN git clone https://github.com/ros-industrial/universal_robot.git
 RUN cp -R universal_robot ros_ws/src/
@@ -76,7 +75,7 @@ RUN rm universal_robot -r
 
 # Install relaxed ik
 RUN curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-RUN sudo apt-get install -y ros-noetic-kdl-parser ros-noetic-kdl-parser-py
+RUN sudo apt-get install -y ros-${ROS_DISTRO}-kdl-parser ros-${ROS_DISTRO}-kdl-parser-py
 RUN python get-pip.py
 RUN rm get-pip.py
 RUN pip install readchar python-fcl scipy PyYaml matplotlib scipy tf
@@ -117,8 +116,7 @@ RUN if [ "$ROS_DISTRO" = "melodic" ] ; then sudo apt-get install -y gazebo9 ; fi
 # Install gazebo ros packages
 RUN sudo apt install -y ros-${ROS_DISTRO}-gazebo-ros-pkgs ros-${ROS_DISTRO}-gazebo-ros-control
 
-
-# add f/t package for optitrack
+# Add f/t package for optitrack
 RUN git clone https://github.com/epfl-lasa/net-ft-ros.git
 
 
@@ -126,13 +124,13 @@ FROM inverse-kinematics as iiwa-dependencies
 
 # Install trak_ik_lib
 RUN sudo apt install -y ros-${ROS_DISTRO}-trac-ik
+RUN rosdep update && rosdep install trac_ik_lib
 
 # Handle SIMD option
 RUN if [ "${USE_SIMD}" = "ON" ] ; \
     then export CMAKE_CXX_FLAGS="-march=native -faligned-new" ; fi
 
 ### Install all dependencies of IIWA ROS
-
 # Clone KUKA FRI (need to be root to clone private repo)
 
 # Setup git identity to publish patch on SIMD
@@ -185,49 +183,23 @@ RUN git clone https://github.com/epfl-lasa/robot_controllers.git
 RUN cd robot_controllers && mkdir build && cd build \
     && cmake .. && make -j && sudo make install
 
-# Remove temporari files
+# Remove temp files
 RUN sudo ldconfig
 RUN rm -rf /tmp/*
+
 
 FROM  iiwa-dependencies as iiwa-developpement
 ### Install IIWA ROS and toolkit
 WORKDIR /home/${USER}/ros_ws/src
 
-RUN git clone  -b add_deep_camera https://github.com/RLoad/iiwa_ros.git
-
+RUN git clone -b add_deep_camera https://github.com/RLoad/iiwa_ros.git
 RUN git clone -b add_deep_camera https://github.com/RLoad/iiwa_toolkit.git
 
 ### Copy all src from github Robetarme_iwwa
 COPY update_git.sh ./update_git.sh
 
+
 FROM  iiwa-developpement as iiwa-simulation
-
-## add your code here Louis
-
-FROM  iiwa-simulation as finalisation
-
-# Give bashrc back to user
-WORKDIR /home/${USER}
-RUN sudo chown -R ${USER}:${HOST_GID} .bashrc
-
-# Add cmake option to bash rc if needed
-RUN if [ "${USE_SIMD}" = "ON" ] ; \
-    then echo "export ENABLE_SIMD=ON" >> /home/${USER}/.bashrc ; fi
-
-### Final apt clean
-RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
-
-FROM  finalisation as catkin-make
-
-### Build ros workspace
-WORKDIR /home/${USER}/ros_ws
-RUN source /home/${USER}/.bashrc && rosdep install --from-paths src --ignore-src -r -y
-RUN source /home/${USER}/.bashrc && catkin_make;
-
-### Final apt clean
-RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
-
-FROM finalisation as simulation_tool
 
 WORKDIR /home/${USER}
 RUN wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04.tar.xz
@@ -240,7 +212,31 @@ RUN pip install cbor pyzmq
 
 # Add coppeliasim to bashrc but has to be sourced first to fill PYTHONPATH
 # Use of && since a new terminal is instanciated for each RUN command
+USER root
 RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
+USER ${USER}
+
+
+FROM  iiwa-simulation as finalisation
+
+# Give bashrc back to user
+WORKDIR /home/${USER}
+RUN sudo chown -R ${USER}:${HOST_GID} .bashrc
+
+# Add cmake option to bash rc if needed
+RUN if [ "${USE_SIMD}" = "ON" ] ; \
+    then echo "export ENABLE_SIMD=ON" >> /home/${USER}/.bashrc ; fi
+
+
+FROM  finalisation as catkin-make
+
+### Build ros workspace
+WORKDIR /home/${USER}/ros_ws
+RUN source /home/${USER}/.bashrc && rosdep install --from-paths src --ignore-src -r -y
+RUN source /home/${USER}/.bashrc && catkin_make;
+
+### Final apt clean
+RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
 
 RUN echo export ROS_MASTER_URI=http://localhost:11311 >> ~/.bashrc
 RUN echo export ROS_IP=localhost >> ~/.bashrc
