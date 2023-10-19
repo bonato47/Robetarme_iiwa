@@ -46,9 +46,10 @@ RUN sudo apt-get update && sudo apt-get install -y \
     apt-transport-https \
     less \
     alsa-utils \
-    ros-noetic-vrpn-client-ros \
+    ros-${ROS_DISTRO}-vrpn-client-ros \
     ros-${ROS_DISTRO}-ros-control \
     ros-${ROS_DISTRO}-ros-controllers \
+    ros-${ROS_DISTRO}-moveit \
     && sudo apt-get upgrade -y && sudo apt-get clean
 
 
@@ -60,11 +61,6 @@ RUN  cd qpOASES&& mkdir build && cd build \
     && cmake .. && make -j && sudo make install
 RUN rm qpOASES -r
 
-# Install trak_ik
-WORKDIR /home/${USER}
-RUN git clone https://bitbucket.org/traclabs/trac_ik.git
-RUN cp -R trac_ik ros_ws/src/
-RUN rm trac_ik -r
 
 # Install pinochio and control libraire from epfl-lasa#
 WORKDIR /home/${USER}
@@ -194,8 +190,6 @@ RUN sudo ldconfig
 RUN rm -rf /tmp/*
 
 FROM  iiwa-dependencies as iiwa-developpement
-### Install IIWA toolkit
-
 ### Install IIWA ROS and toolkit
 WORKDIR /home/${USER}/ros_ws/src
 
