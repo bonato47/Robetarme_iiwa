@@ -67,12 +67,6 @@ RUN git clone https://github.com/epfl-lasa/control-libraries.git --branch v6.3.1
 WORKDIR /home/${USER}/control-libraries/source
 RUN sudo bash install.sh -y
 
-# Install universal robot
-WORKDIR /home/${USER}
-RUN git clone https://github.com/ros-industrial/universal_robot.git
-RUN cp -R universal_robot ros_ws/src/
-RUN rm universal_robot -r
-
 # Install relaxed ik
 RUN curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN sudo apt-get install -y ros-${ROS_DISTRO}-kdl-parser ros-${ROS_DISTRO}-kdl-parser-py
@@ -158,19 +152,19 @@ RUN cd kuka_fri && ./waf configure && ./waf && sudo ./waf install
 # Install SpaceVecAlg
 RUN git clone --recursive https://github.com/costashatz/SpaceVecAlg.git
 RUN cd SpaceVecAlg && mkdir build && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
     && make -j && sudo make install
 
 # Install RBDyn
 RUN git clone --recursive https://github.com/costashatz/RBDyn.git
 RUN cd RBDyn && mkdir build && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
     && make -j && sudo make install
 
 # Install mc_rbdyn_urdf
 RUN git clone --recursive https://github.com/costashatz/mc_rbdyn_urdf.git
 RUN cd mc_rbdyn_urdf && mkdir build && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDING=OFF .. \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
     && make -j && sudo make install
 
 # Install corrade
@@ -202,9 +196,9 @@ COPY update_git.sh ./update_git.sh
 FROM  iiwa-developpement as iiwa-simulation
 
 WORKDIR /home/${USER}
-RUN wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04.tar.xz
-RUN tar -xf CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04.tar.xz
-RUN rm CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04.tar.xz
+RUN wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V4_6_0_rev0_Ubuntu20_04.tar.xz
+RUN tar -xf CoppeliaSim_Edu_V4_6_0_rev0_Ubuntu20_04.tar.xz
+RUN rm CoppeliaSim_Edu_V4_6_0_rev0_Ubuntu20_04.tar.xz
 
 # Add zmq remote controle api plugin
 RUN python3 -m pip install coppeliasim-zmqremoteapi-client
@@ -215,6 +209,26 @@ RUN pip install cbor pyzmq
 USER root
 RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
 USER ${USER}
+
+RUN sudo apt-get install -y \
+    python3-vcstool \
+    ros-noetic-rqt-joint-trajectory-controller \
+    ros-noetic-moveit-commander \
+    ros-noetic-teleop-twist-keyboard
+
+WORKDIR /home/${USER}/ros_ws
+RUN vcs import --input https://raw.githubusercontent.com/RobotnikAutomation/rbvogui_sim/noetic-devel/repos/rbvogui_sim.repos
+RUN rosdep install --from-paths src --ignore-src -y -r
+RUN sudo dpkg -i src/rbvogui_common/libraries/*
+
+WORKDIR /home/${USER}/ros_ws/src/rbvogui_sim/
+RUN git checkout cart
+
+WORKDIR /home/${USER}/ros_ws/src/rbvogui_common/
+RUN git checkout cart
+
+WORKDIR /home/${USER}/ros_ws/src/robotnik_sensors
+RUN git checkout noetic-devel
 
 
 FROM  iiwa-simulation as finalisation
