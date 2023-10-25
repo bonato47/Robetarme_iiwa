@@ -134,20 +134,20 @@ if [ "${MODE}" != "connect" ]; then
     FWD_ARGS+=(--volume="simulation_tool:/home/ros/ros_ws/src/simulation_tool:rw")
 
     # Add volume ros_ik_services/
-    docker volume rm ros_ik_services
-    docker volume create --driver local \
-    --opt type="none" \
-    --opt device="${PWD}/../../ros_ik_services" \
-    --opt o="bind" \
-    "ros_ik_services"
+    # docker volume rm ros_ik_services
+    # docker volume create --driver local \
+    # --opt type="none" \
+    # --opt device="${PWD}/../../ros_ik_services" \
+    # --opt o="bind" \
+    # "ros_ik_services"
 
-    FWD_ARGS+=(--volume="ros_ik_services:/home/ros/ros_ws/src/ros_ik_services:rw")
+    # FWD_ARGS+=(--volume="ros_ik_services:/home/ros/ros_ws/src/ros_ik_services:rw")
 
     # Add volume simulation_utils/
     docker volume rm simulation_utils
     docker volume create --driver local \
     --opt type="none" \
-    --opt device="${PWD}/../../robetarme_simulations" \
+    --opt device="${PWD}/../../simulations" \
     --opt o="bind" \
     "simulation_utils"
 
