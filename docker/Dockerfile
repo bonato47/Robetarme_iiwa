@@ -196,9 +196,9 @@ COPY update_git.sh ./update_git.sh
 FROM  iiwa-developpement as iiwa-simulation
 
 WORKDIR /home/${USER}
-RUN wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V4_6_0_rev0_Ubuntu20_04.tar.xz
-RUN tar -xf CoppeliaSim_Edu_V4_6_0_rev0_Ubuntu20_04.tar.xz
-RUN rm CoppeliaSim_Edu_V4_6_0_rev0_Ubuntu20_04.tar.xz
+RUN wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V4_6_0_rev2_Ubuntu20_04.tar.xz
+RUN tar -xf CoppeliaSim_Edu_V4_6_0_rev2_Ubuntu20_04.tar.xz
+RUN rm CoppeliaSim_Edu_V4_6_0_rev2_Ubuntu20_04.tar.xz
 
 # Add zmq remote controle api plugin
 RUN python3 -m pip install coppeliasim-zmqremoteapi-client
