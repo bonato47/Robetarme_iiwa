@@ -141,13 +141,13 @@ int main(int argc, char **argv)
     std::ofstream myfile;
     myfile.open ("src/send_pos/src/trajectory_joints_cobod.csv");
 
+    KDL::JntArray Next_joint_task;
+    KDL::JntArray actual_joint_task; 
     //Convert cartesian to joint space
     int size = int(traj_cart.size());
     vector<double> pos_joint_next(IK.n_joint);
     for(int i = 0; i< size;i++)
     {
-        KDL::JntArray Next_joint_task;
-        KDL::JntArray actual_joint_task; 
         VectorXd pos_joint_next_eigen ;
 
         if(i == 0){

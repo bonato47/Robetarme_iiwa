@@ -47,9 +47,9 @@ int main(int argc, char **argv)
     //iniailization Invers Kinematics
     string base_link = "iiwa_link_0";
     string tip_link = "iiwa_link_ee";
-    string URDF_param="/robot_description";
+    string URDF_param="/iiwa/robot_description";
     double timeout_in_secs=0.01;
-    double error=1e-4; // a voir la taille
+    double error=1e-2; // a voir la taille
     TRAC_IK::SolveType type=TRAC_IK::Distance;
     TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
 
@@ -67,37 +67,44 @@ int main(int argc, char **argv)
 
     //Convert cartesian to joint space
     vector<double> pos_joint_next(7);
-    double* ptr;
     int size = int(traj_cart.size());
 
     double timeInit = ros::Time::now().toSec();
     ROS_INFO("%f", timeInit);
+    KDL::JntArray Next_joint_task;
+    KDL::JntArray actual_joint_task; 
     for(int i = 0; i< size;i++)
     {
-        KDL::JntArray Next_joint_task;
-        KDL::JntArray actual_joint_task; 
+
         if(i == 0){
-            ptr = &pos_joint_actual[0];
-            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7); 
+            Eigen::VectorXd pos_joint_actual_eigen(7); 
+            for(int i = 0 ;i<7;++i){
+                pos_joint_actual_eigen(i) =pos_joint_actual[i];
+            }
             actual_joint_task.data = pos_joint_actual_eigen; 
         }
         else {
-            ptr = &pos_joint_next[0];
-            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7); 
+            Eigen::VectorXd pos_joint_actual_eigen(7); 
+            for(int i = 0 ;i<7;++i){
+                pos_joint_actual_eigen(i) =pos_joint_next[i];}
             actual_joint_task.data = pos_joint_actual_eigen; 
             std::fill(pos_joint_next.begin(), pos_joint_next.end(), 0);
-        }       
+        }   
+    
         KDL::Vector Vec(traj_cart[i][4],traj_cart[i][5],traj_cart[i][6]);
         KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[i][0],traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
         KDL::Frame Next_joint_cartesian(Rot,Vec); 
-
         Eigen::VectorXd pos_joint_next_eigen ;
         int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
-        pos_joint_next_eigen = Next_joint_task.data;
+
+
         for(int i = 0 ;i<7;++i){
-            pos_joint_next[i] =pos_joint_next_eigen(i);
+            pos_joint_next[i] =Next_joint_task.data(i);
         }
+        
+
         traj_joint.push_back(pos_joint_next);
+
         std::stringstream ss;
         if(i > 15){
             for (auto it = pos_joint_next.begin(); it != pos_joint_next.end(); it++)    {
@@ -123,9 +130,11 @@ int main(int argc, char **argv)
         if(i == round(int(traj_cart.size())/2)){
             ROS_INFO("Half of the the trajectory load, please wait... ");
         }
+        
     }
 
-   
+           cout<<"hels"<<endl;
+
     //-----------------------------------------
     myfile.close();
 
