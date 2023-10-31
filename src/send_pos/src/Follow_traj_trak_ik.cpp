@@ -41,17 +41,17 @@ int main(int argc, char **argv)
         ros::spinOnce();
     }
 
-    // Read trajectory from .csv 
+    // Read trajectory from .csv
     vector<vector<double>> traj_cart = CSVtoVectorVectorDouble();
 
     //iniailization Invers Kinematics
     string base_link = "iiwa_link_0";
     string tip_link = "iiwa_link_ee";
-    string URDF_param="/robot_description";
+    string URDF_param="/iiwa/robot_description";
     double timeout_in_secs=0.01;
     double error=1e-4; // a voir la taille
     TRAC_IK::SolveType type=TRAC_IK::Distance;
-    TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);  
+    TRAC_IK::TRAC_IK ik_solver(base_link, tip_link, URDF_param, timeout_in_secs, error, type);
 
     KDL::Chain chain;
     bool valid = ik_solver.getKDLChain(chain);
@@ -75,21 +75,21 @@ int main(int argc, char **argv)
     for(int i = 0; i< size;i++)
     {
         KDL::JntArray Next_joint_task;
-        KDL::JntArray actual_joint_task; 
+        KDL::JntArray actual_joint_task;
         if(i == 0){
             ptr = &pos_joint_actual[0];
-            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7); 
-            actual_joint_task.data = pos_joint_actual_eigen; 
+            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7);
+            actual_joint_task.data = pos_joint_actual_eigen;
         }
         else {
             ptr = &pos_joint_next[0];
-            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7); 
-            actual_joint_task.data = pos_joint_actual_eigen; 
+            Eigen::Map<Eigen::VectorXd> pos_joint_actual_eigen(ptr, 7);
+            actual_joint_task.data = pos_joint_actual_eigen;
             std::fill(pos_joint_next.begin(), pos_joint_next.end(), 0);
-        }       
+        }
         KDL::Vector Vec(traj_cart[i][4],traj_cart[i][5],traj_cart[i][6]);
         KDL::Rotation Rot = KDL::Rotation::Quaternion(traj_cart[i][0],traj_cart[i][1],traj_cart[i][2],traj_cart[i][3]);
-        KDL::Frame Next_joint_cartesian(Rot,Vec); 
+        KDL::Frame Next_joint_cartesian(Rot,Vec);
 
         Eigen::VectorXd pos_joint_next_eigen ;
         int rc = ik_solver.CartToJnt(actual_joint_task, Next_joint_cartesian, Next_joint_task);
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
         }
     }
 
-   
+
     //-----------------------------------------
     myfile.close();
 
@@ -153,11 +153,11 @@ int main(int argc, char **argv)
             ++Next;
             if(Next == int(traj_cart.size())){
                 ROS_INFO("Last point reached, stop ");
-                return 0; 
+                return 0;
             }
             //ROS_INFO("target reached, go next one ");
             count = 0;
-        }   
+        }
         ++count;
         chatter_pub.publish(msgP);
         ros::spinOnce();
@@ -215,7 +215,7 @@ vector<vector<double>> CSVtoVectorVectorDouble()
         while(getline(file, line))
         {
             row.clear();
-            
+
             stringstream str(line);
             while(getline(str, word, ','))
                 row.push_back(word);
