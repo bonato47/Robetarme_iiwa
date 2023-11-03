@@ -91,15 +91,15 @@ if [ "${MODE}" != "connect" ]; then
     # Other
     FWD_ARGS+=("--privileged")
 
-    # Add volume send_pos
-    docker volume rm send_pos
+    # Add volume controller_iiwa
+    docker volume rm controller_iiwa
     docker volume create --driver local \
     --opt type="none" \
-    --opt device="${PWD}/../src/send_pos" \
+    --opt device="${PWD}/../src/controller_iiwa" \
     --opt o="bind" \
-    "send_pos"
+    "controller_iiwa"
 
-    FWD_ARGS+=(--volume="send_pos:/home/ros/ros_ws/src/send_pos:rw")
+    FWD_ARGS+=(--volume="controller_iiwa:/home/ros/ros_ws/src/controller_iiwa:rw")
 
 
     # Add volume cobod_arm_study
@@ -133,27 +133,7 @@ if [ "${MODE}" != "connect" ]; then
 
     FWD_ARGS+=(--volume="simulation_tool:/home/ros/ros_ws/src/simulation_tool:rw")
 
-    # Add volume ros_ik_services/
-    docker volume rm ros_ik_services
-    docker volume create --driver local \
-    --opt type="none" \
-    --opt device="${PWD}/../../ros_ik_services" \
-    --opt o="bind" \
-    "ros_ik_services"
-
-    FWD_ARGS+=(--volume="ros_ik_services:/home/ros/ros_ws/src/ros_ik_services:rw")
-
-    # Add volume simulation_utils/
-    docker volume rm simulation_utils
-    docker volume create --driver local \
-    --opt type="none" \
-    --opt device="${PWD}/../../robetarme_simulations" \
-    --opt o="bind" \
-    "simulation_utils"
-
-    FWD_ARGS+=(--volume="simulation_utils:/home/ros/simulation_utils:rw")
-
-
+    
     # Setup git config
     FWD_ARGS+=(--volume="${HOME}/.gitconfig:/home/ros/.gitconfig:ro")
 fi

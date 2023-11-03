@@ -251,6 +251,6 @@ target_link_libraries(Follow_traj_pinochio ${catkin_LIBRARIES} ${control_librari
 add_executable(ItoK src/ItoK.cpp)
 target_link_libraries(ItoK ${catkin_LIBRARIES})
 
-add_executable(Send_pos src/Send_pos.cpp)
-target_link_libraries(Send_pos ${catkin_LIBRARIES})
+add_executable(controller_iiwa src/controller_iiwa.cpp)
+target_link_libraries(controller_iiwa ${catkin_LIBRARIES})
 

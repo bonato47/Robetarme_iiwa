@@ -1,0 +1,4 @@
+<launch>
+    <rosparam file="$(find send_pos)/config/params_IK.yaml" />
+    <node pkg="send_pos" name="Follow_traj_pinochio" type="Follow_traj_pinochio" output="screen"/>
+</launch>
