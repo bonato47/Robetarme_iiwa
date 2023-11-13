@@ -40,7 +40,7 @@ RUN if [ "${ROS_DISTRO}" == "noetic" ] ; \
     then sudo apt install python-is-python3 ; fi
 
 ### Add a few tools
-RUN sudo apt-get update && sudo apt-get install -y \
+RUN sudo apt update && sudo apt install -y \
     bash-completion \
     silversearcher-ag \
     apt-transport-https \
@@ -50,7 +50,7 @@ RUN sudo apt-get update && sudo apt-get install -y \
     ros-${ROS_DISTRO}-ros-control \
     ros-${ROS_DISTRO}-ros-controllers \
     ros-${ROS_DISTRO}-moveit \
-    && sudo apt-get upgrade -y && sudo apt-get clean
+    && sudo apt upgrade -y && sudo apt clean
 
 
 FROM ros-ws as inverse-kinematics
@@ -69,7 +69,7 @@ RUN sudo bash install.sh -y
 
 # Install relaxed ik
 RUN curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-RUN sudo apt-get install -y ros-${ROS_DISTRO}-kdl-parser ros-${ROS_DISTRO}-kdl-parser-py
+RUN sudo apt install -y ros-${ROS_DISTRO}-kdl-parser ros-${ROS_DISTRO}-kdl-parser-py
 RUN python get-pip.py
 RUN rm get-pip.py
 RUN pip install readchar python-fcl scipy PyYaml matplotlib scipy tf
@@ -89,7 +89,7 @@ RUN chown -R ${USER}:${HOST_GID} relaxed_ik_ros1
 USER ${USER}
 
 # Install rust dependency
-RUN sudo apt-get install -y build-essential cmake
+RUN sudo apt install -y build-essential cmake
 RUN sudo chmod 777 ~/.bashrc
 RUN curl --proto '=https' --tlsv1.3 https://sh.rustup.rs -sSf | sh -s -- -y
 RUN sudo chmod 644 ~/.bashrc
@@ -103,9 +103,9 @@ RUN cargo fix --lib -p relaxed_ik_core --allow-dirty
 
 # Install gazebo (9 or 11 depending on distro)
 WORKDIR /home/${USER}
-RUN sudo apt-get update
-RUN if [ "$ROS_DISTRO" = "noetic" ] ; then sudo apt-get install -y gazebo11 ; fi
-RUN if [ "$ROS_DISTRO" = "melodic" ] ; then sudo apt-get install -y gazebo9 ; fi
+RUN sudo apt update
+RUN if [ "$ROS_DISTRO" = "noetic" ] ; then sudo apt install -y gazebo11 ; fi
+RUN if [ "$ROS_DISTRO" = "melodic" ] ; then sudo apt install -y gazebo9 ; fi
 
 # Install gazebo ros packages
 RUN sudo apt install -y ros-${ROS_DISTRO}-gazebo-ros-pkgs ros-${ROS_DISTRO}-gazebo-ros-control
@@ -195,10 +195,13 @@ COPY update_git.sh ./update_git.sh
 
 FROM  iiwa-developpement as iiwa-simulation
 
+### apt update and clean
+RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
+
 WORKDIR /home/${USER}
-RUN wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V4_6_0_rev2_Ubuntu20_04.tar.xz
-RUN tar -xf CoppeliaSim_Edu_V4_6_0_rev2_Ubuntu20_04.tar.xz
-RUN rm CoppeliaSim_Edu_V4_6_0_rev2_Ubuntu20_04.tar.xz
+RUN wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V4_6_0_rev6_Ubuntu20_04.tar.xz
+RUN tar -xf CoppeliaSim_Edu_V4_6_0_rev6_Ubuntu20_04.tar.xz
+RUN rm CoppeliaSim_Edu_V4_6_0_rev6_Ubuntu20_04.tar.xz
 
 # Add zmq remote controle api plugin
 RUN python3 -m pip install coppeliasim-zmqremoteapi-client
@@ -207,10 +210,10 @@ RUN pip install cbor pyzmq
 # Add coppeliasim to bashrc but has to be sourced first to fill PYTHONPATH
 # Use of && since a new terminal is instanciated for each RUN command
 USER root
-RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/CoppeliaSim_Edu_V4_5_1_rev4_Ubuntu20_04/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
+RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/CoppeliaSim_Edu_V4_6_0_rev6_Ubuntu20_04/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
 USER ${USER}
 
-RUN sudo apt-get install -y \
+RUN sudo apt install -y \
     python3-vcstool \
     ros-noetic-rqt-joint-trajectory-controller \
     ros-noetic-moveit-commander \
@@ -218,7 +221,7 @@ RUN sudo apt-get install -y \
 
 WORKDIR /home/${USER}/ros_ws
 RUN vcs import --input https://raw.githubusercontent.com/RobotnikAutomation/rbvogui_sim/noetic-devel/repos/rbvogui_sim.repos
-RUN rosdep install --from-paths src --ignore-src -y -r
+RUN source /home/${USER}/.bashrc && rosdep install --from-paths src --ignore-src -y -r
 RUN sudo dpkg -i src/rbvogui_common/libraries/*
 
 WORKDIR /home/${USER}/ros_ws/src/rbvogui_sim/
