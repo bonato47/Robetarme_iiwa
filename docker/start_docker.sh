@@ -91,15 +91,15 @@ if [ "${MODE}" != "connect" ]; then
     # Other
     FWD_ARGS+=("--privileged")
 
-    # Add volume send_pos
-    docker volume rm send_pos
+    # Add volume controller_iiwa
+    docker volume rm controller_iiwa
     docker volume create --driver local \
     --opt type="none" \
-    --opt device="${PWD}/../src/send_pos" \
+    --opt device="${PWD}/../src/controller_iiwa" \
     --opt o="bind" \
-    "send_pos"
+    "controller_iiwa"
 
-    FWD_ARGS+=(--volume="send_pos:/home/ros/ros_ws/src/send_pos:rw")
+    FWD_ARGS+=(--volume="controller_iiwa:/home/ros/ros_ws/src/controller_iiwa:rw")
 
 
     # Add volume cobod_arm_study

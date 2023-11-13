@@ -48,6 +48,8 @@ class inverseKin {       // The class
         ros::V_string jointsName;
         bool init= false;
         TRAC_IK::TRAC_IK* ikSolver = nullptr;  
+        KDL::JntArray NextJointTask;
+        KDL::JntArray actualJointTask; 
 
 
     void init_IK_iiwa() {  // Method/function defined inside the class
@@ -91,19 +93,21 @@ class inverseKin {       // The class
         posJointNext = vector0;
         posJointActual= vector0;
         velJointActual= vector0;
-        posJointNextEigen = Map<VectorXd>(&posJointNext[0], nJoint);
+        Eigen::VectorXd myVector(nJoint);
+        myVector.setZero();
+        posJointNextEigen = myVector;
         ikSolver= new TRAC_IK::TRAC_IK(baseLink, tipLink, URDF_param, timeoutInSecs, error, type);  
         KDL::Chain chain;
         bool valid = ikSolver->getKDLChain(chain);
         if (!valid) {
         ROS_ERROR("There was no valid KDL chain found");
         } 
+
     }
 
     int getIK(vector<double> vectorQuatPos ) {  
         //Inverse kinematics trac-IK
-        KDL::JntArray NextJointTask;
-        KDL::JntArray actualJointTask; 
+
         actualJointTask.data = posJointNextEigen; 
         std::fill(posJointNext.begin(), posJointNext.end(), 0);
         KDL::Vector Vec(vectorQuatPos[4],vectorQuatPos[5],vectorQuatPos[6]);
@@ -171,7 +175,8 @@ int main(int argc, char **argv)
     }
 
     string path_urdf = "/home/ros/ros_ws/src/cobod_arm_study/urdf/" + robot_name + ".urdf";
-    robot_model::Model model(robot_name,path_urdf);
+
+    //robot_model::Model model(robot_name,path_urdf);
 
     //Initialisation of the Ros Node (Service, Subscrber and Publisher)
     ros::Subscriber sub = Nh.subscribe("joint_states", 1000, &inverseKin::CounterCallback, &IK);
@@ -182,7 +187,8 @@ int main(int argc, char **argv)
     ros::Rate loopRate(100);
 
     // Read trajectory from .csv 
-    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/csv_cobod/s_shape_trajectory_ur10.csv");
+
+    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble("/home/ros/ros_ws/src/cobod_arm_study/src/csv_cobod/trajectory_normal_far.csv");
 
     //waiting for the first joint position
      while(!IK.init){
@@ -209,65 +215,67 @@ int main(int argc, char **argv)
         //trac-ik inverse kinematic
         double err = IK.error;
         IK.updateIK(IK.error);
+
         int rc = IK.getIK(traj_cart[i]);
+
         while(rc  < 0){
             err= err*5;
             IK.updateIK(err);
             rc = IK.getIK(traj_cart[i]);
         }
- 
+
         traj_joint.push_back(IK.posJointNext);
 
-        vector<double> output_csv;
-        //compute jaocbian to have the manipulability matrix
-        state_representation::JointPositions  actualJointPos =  state_representation::JointPositions(robot_name,IK.posJointNextEigen);        
-        state_representation::Jacobian jacobian = model.compute_jacobian(actualJointPos);
+        vector<double> output_csv= IK.posJointNext;
 
-        Eigen::MatrixXd manipulabilityEigen =jacobian.data()*jacobian.transpose().data();
-        Eigen::EigenSolver<Eigen::MatrixXd> eigensolver;
+        // //compute jaocbian to have the manipulability matrix
+        // state_representation::JointPositions  actualJointPos =  state_representation::JointPositions(robot_name,IK.posJointNextEigen);        
+        // state_representation::Jacobian jacobian = model.compute_jacobian(actualJointPos);
 
-        //manipulability
-        eigensolver.compute(manipulabilityEigen);
-        Eigen::VectorXd eigen_values = eigensolver.eigenvalues().real();  
+        // Eigen::MatrixXd manipulabilityEigen =jacobian.data()*jacobian.transpose().data();
+        // Eigen::EigenSolver<Eigen::MatrixXd> eigensolver;
+
+        // //manipulability
+        // eigensolver.compute(manipulabilityEigen);
+        // Eigen::VectorXd eigen_values = eigensolver.eigenvalues().real();  
         
-        output_csv.push_back(eigen_values(0));
-        output_csv.push_back(eigen_values(1));
-        output_csv.push_back(eigen_values(2));
+        // output_csv.push_back(eigen_values(0));
+        // output_csv.push_back(eigen_values(1));
+        // output_csv.push_back(eigen_values(2));
 
       
-        //force
-        eigensolver.compute(manipulabilityEigen.inverse());
-        Eigen::VectorXd eigen_values_force = eigensolver.eigenvalues().real();  
-        output_csv.push_back(eigen_values_force(0));
-        output_csv.push_back(eigen_values_force(1));
-        output_csv.push_back(eigen_values_force(2));          
+        // //force
+        // eigensolver.compute(manipulabilityEigen.inverse());
+        // Eigen::VectorXd eigen_values_force = eigensolver.eigenvalues().real();  
+        // output_csv.push_back(eigen_values_force(0));
+        // output_csv.push_back(eigen_values_force(1));
+        // output_csv.push_back(eigen_values_force(2));          
  
-        //error
-        state_representation::CartesianPose nextCartesianPose = model.forward_kinematics(actualJointPos,IK.tipLink);
-        Vector3d p1Prime = nextCartesianPose.get_position();
+        // //error
+        // state_representation::CartesianPose nextCartesianPose = model.forward_kinematics(actualJointPos,IK.tipLink);
+        // Vector3d p1Prime = nextCartesianPose.get_position();
 
-        Vector3d p2Prime = {traj_cart[i][4],traj_cart[i][5],traj_cart[i][6]} ;
-        Vector3d errorEigen =  p1Prime-p2Prime;
+        // Vector3d p2Prime = {traj_cart[i][4],traj_cart[i][5],traj_cart[i][6]} ;
+        // Vector3d errorEigen =  p1Prime-p2Prime;
 
-        output_csv.push_back(errorEigen.norm());
+        // output_csv.push_back(errorEigen.norm());
 
-        Quaterniond q1Prime = nextCartesianPose.get_orientation();
-        Quaterniond q2Prime = {traj_cart[i][3],traj_cart[i][0],traj_cart[i][1],traj_cart[i][2]};
-        Quaterniond errorQuatEigen =  q1Prime.inverse()*q2Prime;
-        errorQuatEigen.normalize();
+        // Quaterniond q1Prime = nextCartesianPose.get_orientation();
+        // Quaterniond q2Prime = {traj_cart[i][3],traj_cart[i][0],traj_cart[i][1],traj_cart[i][2]};
+        // Quaterniond errorQuatEigen =  q1Prime.inverse()*q2Prime;
+        // errorQuatEigen.normalize();
 
-        // Prendre en compte le modulo 2π
-        double angle = 2.0 * std::atan2(errorQuatEigen.vec().norm(), std::abs(errorQuatEigen.w()));
-        // Ramener l'angle dans l'intervalle [0, 2π]
-        if (angle > M_PI) {
-            angle = 2.0 * M_PI - angle;
-        }
+        // // Prendre en compte le modulo 2π
+        // double angle = 2.0 * std::atan2(errorQuatEigen.vec().norm(), std::abs(errorQuatEigen.w()));
+        // // Ramener l'angle dans l'intervalle [0, 2π]
+        // if (angle > M_PI) {
+        //     angle = 2.0 * M_PI - angle;
+        // }
 
-        output_csv.push_back(angle); 
-        output_csv.push_back(p1Prime(0));
-        output_csv.push_back(p1Prime(1));
-        output_csv.push_back(p1Prime(2));  
- 
+        // output_csv.push_back(angle); 
+        // output_csv.push_back(p1Prime(0));
+        // output_csv.push_back(p1Prime(1));
+        // output_csv.push_back(p1Prime(2));  
         std::stringstream ss;
         if(i > 1){
             for (auto it = output_csv.begin(); it != output_csv.end(); it++)    {
@@ -316,7 +324,7 @@ int main(int argc, char **argv)
                 return 0; 
             }
             //ROS_INFO("target reached, go next one ");
-            count = 0;
+            count = 0;§
         }   
         ++count;  */
        
