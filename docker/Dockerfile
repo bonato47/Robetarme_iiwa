@@ -40,7 +40,7 @@ RUN if [ "${ROS_DISTRO}" == "noetic" ] ; \
     then sudo apt install python-is-python3 ; fi
 
 ### Add a few tools
-RUN sudo apt update && sudo apt install -y \
+RUN sudo apt update && sudo apt install -y --fix-missing \
     bash-completion \
     silversearcher-ag \
     apt-transport-https \
@@ -69,7 +69,7 @@ RUN sudo bash install.sh -y
 
 # Install relaxed ik
 RUN curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-RUN sudo apt install -y ros-${ROS_DISTRO}-kdl-parser ros-${ROS_DISTRO}-kdl-parser-py
+RUN sudo apt install -y --fix-missing ros-${ROS_DISTRO}-kdl-parser ros-${ROS_DISTRO}-kdl-parser-py
 RUN python get-pip.py
 RUN rm get-pip.py
 RUN pip install readchar python-fcl scipy PyYaml matplotlib scipy tf
@@ -89,7 +89,7 @@ RUN chown -R ${USER}:${HOST_GID} relaxed_ik_ros1
 USER ${USER}
 
 # Install rust dependency
-RUN sudo apt install -y build-essential cmake
+RUN sudo apt install -y --fix-missing build-essential cmake
 RUN sudo chmod 777 ~/.bashrc
 RUN curl --proto '=https' --tlsv1.3 https://sh.rustup.rs -sSf | sh -s -- -y
 RUN sudo chmod 644 ~/.bashrc
@@ -104,11 +104,11 @@ RUN cargo fix --lib -p relaxed_ik_core --allow-dirty
 # Install gazebo (9 or 11 depending on distro)
 WORKDIR /home/${USER}
 RUN sudo apt update
-RUN if [ "$ROS_DISTRO" = "noetic" ] ; then sudo apt install -y gazebo11 ; fi
-RUN if [ "$ROS_DISTRO" = "melodic" ] ; then sudo apt install -y gazebo9 ; fi
+RUN if [ "$ROS_DISTRO" = "noetic" ] ; then sudo apt install -y --fix-missing gazebo11 ; fi
+RUN if [ "$ROS_DISTRO" = "melodic" ] ; then sudo apt install -y --fix-missing gazebo9 ; fi
 
 # Install gazebo ros packages
-RUN sudo apt install -y ros-${ROS_DISTRO}-gazebo-ros-pkgs ros-${ROS_DISTRO}-gazebo-ros-control
+RUN sudo apt install -y --fix-missing ros-${ROS_DISTRO}-gazebo-ros-pkgs ros-${ROS_DISTRO}-gazebo-ros-control
 
 # Add f/t package for optitrack
 RUN git clone https://github.com/epfl-lasa/net-ft-ros.git
@@ -117,7 +117,7 @@ RUN git clone https://github.com/epfl-lasa/net-ft-ros.git
 FROM inverse-kinematics as iiwa-dependencies
 
 # Install trak_ik_lib
-RUN sudo apt install -y ros-${ROS_DISTRO}-trac-ik
+RUN sudo apt install -y --fix-missing ros-${ROS_DISTRO}-trac-ik
 RUN source /home/${USER}/.bashrc && rosdep update &&  rosdep install -y trac_ik_lib
 
 # Handle SIMD option
@@ -196,12 +196,14 @@ COPY update_git.sh ./update_git.sh
 FROM  iiwa-developpement as iiwa-simulation
 
 ### apt update and clean
-RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
+RUN sudo apt update && sudo apt upgrade -y --fix-missing && sudo apt clean
+
+ARG COPPELIASIM_VERSION="4_6_0_rev8"
 
 WORKDIR /home/${USER}
-RUN wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V4_6_0_rev6_Ubuntu20_04.tar.xz
-RUN tar -xf CoppeliaSim_Edu_V4_6_0_rev6_Ubuntu20_04.tar.xz
-RUN rm CoppeliaSim_Edu_V4_6_0_rev6_Ubuntu20_04.tar.xz
+RUN wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V${COPPELIASIM_VERSION}_Ubuntu20_04.tar.xz
+RUN tar -xf CoppeliaSim_Edu_V${COPPELIASIM_VERSION}_Ubuntu20_04.tar.xz
+RUN rm CoppeliaSim_Edu_V${COPPELIASIM_VERSION}_Ubuntu20_04.tar.xz
 
 # Add zmq remote controle api plugin
 RUN python3 -m pip install coppeliasim-zmqremoteapi-client
@@ -210,10 +212,10 @@ RUN pip install cbor pyzmq
 # Add coppeliasim to bashrc but has to be sourced first to fill PYTHONPATH
 # Use of && since a new terminal is instanciated for each RUN command
 USER root
-RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/CoppeliaSim_Edu_V4_6_0_rev6_Ubuntu20_04/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
+RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/CoppeliaSim_Edu_V${COPPELIASIM_VERSION}_Ubuntu20_04/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
 USER ${USER}
 
-RUN sudo apt install -y \
+RUN sudo apt install -y --fix-missing \
     python3-vcstool \
     ros-noetic-rqt-joint-trajectory-controller \
     ros-noetic-moveit-commander \
@@ -258,3 +260,22 @@ RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
 
 RUN echo export ROS_MASTER_URI=http://localhost:11311 >> ~/.bashrc
 RUN echo export ROS_IP=localhost >> ~/.bashrc
+
+
+FROM  catkin-make as install_boost
+
+# ARG BOOST_VERSION_DOT="1.83.0"
+# ARG BOOST_REVISION="rc2"
+# ARG BOOST_VERSION="1_83_0"
+
+WORKDIR /home/${USER}
+RUN sudo apt install -y --fix-missing build-essential g++ python3-dev autotools-dev libicu-dev libbz2-dev libboost-all-dev
+# RUN wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION_DOT}/source/boost_${BOOST_VERSION}_${BOOST_REVISION}.tar.gz
+# RUN tar xvf boost_${BOOST_VERSION}_${BOOST_REVISION}.tar.gz
+# RUN rm boost_${BOOST_VERSION}_${BOOST_REVISION}.tar.gz
+
+# WORKDIR /home/${USER}/boost_${BOOST_VERSION}
+# RUN bash bootstrap.sh --prefix=/usr/ --with-python=python3
+# RUN sudo ./b2 install
+
+# WORKDIR /home/${USER}

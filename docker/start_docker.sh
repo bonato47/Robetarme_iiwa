@@ -153,6 +153,15 @@ if [ "${MODE}" != "connect" ]; then
 
     FWD_ARGS+=(--volume="simulation_utils:/home/ros/simulation_utils:rw")
 
+    # Add volume metal_additive_manufacturing/
+    docker volume rm metal_additive_manufacturing
+    docker volume create --driver local \
+    --opt type="none" \
+    --opt device="${PWD}/../src/metal_additive_manufacturing" \
+    --opt o="bind" \
+    "metal_additive_manufacturing"
+
+    FWD_ARGS+=(--volume="metal_additive_manufacturing:/home/ros/ros_ws/src/metal_additive_manufacturing:rw")
 
     # Setup git config
     FWD_ARGS+=(--volume="${HOME}/.gitconfig:/home/ros/.gitconfig:ro")

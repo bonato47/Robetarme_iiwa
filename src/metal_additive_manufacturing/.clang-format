@@ -1,0 +1,10 @@
+# We'll use defaults from the Google style
+
+Language: Cpp
+BasedOnStyle: Google
+AlignAfterOpenBracket: BlockIndent
+NamespaceIndentation: All
+
+AllowAllConstructorInitializersOnNextLine: true
+BreakConstructorInitializers: AfterColon
+PenaltyBreakComment: 0
