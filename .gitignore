@@ -29,8 +29,8 @@ iiwa_toolkit
 
 .DS_Store
 .idea
-*.vs_code*
-.vscode
+.vs_code
+*.vscode/*
 .catkin_workspace
 
 # Too big data
