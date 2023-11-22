@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
 project(metal_additive_manufacturing)
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_CXX_STANDARD 20)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -12,7 +11,10 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS
+  system
+  unit_test_framework
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -39,6 +41,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 add_executable(${PROJECT_NAME}
@@ -48,3 +51,18 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES} ${Boost_LIBRARIES}
 )
+
+add_executable(${PROJECT_NAME}_sml
+  src/maplanner_sml.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}_sml
+  ${catkin_LIBRARIES} ${Boost_LIBRARIES}
+)
+
+# Test suite
+add_executable(${PROJECT_NAME}_test tests/test_maplanner.cpp)
+target_link_libraries(${PROJECT_NAME}_test ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+
+enable_testing()
+add_test(NAME TestInitialState COMMAND ${PROJECT_NAME}_test)

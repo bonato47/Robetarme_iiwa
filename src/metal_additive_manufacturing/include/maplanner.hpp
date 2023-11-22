@@ -1,24 +1,26 @@
-#ifndef MAPLANNER_H
-#define MAPLANNER_H
+#ifndef MAPLANNER_HPP
+#define MAPLANNER_HPP
 
+#include <fstream>
 #include <iostream>
+
 // back-end
 #include <boost/msm/back/state_machine.hpp>
+
 // front-end
-#include <boost/msm/front/euml/common.hpp>
+#include <boost/mp11/mpl.hpp>
 #include <boost/msm/front/functor_row.hpp>
 #include <boost/msm/front/state_machine_def.hpp>
-// for And_ operator
-#include <boost/msm/front/euml/operator.hpp>
 
 namespace msm = boost::msm;
-namespace mpl = boost::mpl;
+namespace mp11 = boost::mp11;
 
 using namespace std;
 using namespace msm::front;
-using namespace msm::front::euml;  // for And_ operator
 
 namespace MAPlanner {
+  struct ExtractingWaypoints;
+
   // events
   struct start {};
   struct stop {};
@@ -66,16 +68,7 @@ namespace MAPlanner {
       }
     };
 
-    struct ExtractingWaypoints : public msm::front::state<> {
-      template <class Event, class FSM>
-      void on_entry(Event const&, FSM&) {
-        std::cout << "entering: ExtractingWaypoints" << std::endl;
-      }
-      template <class Event, class FSM>
-      void on_exit(Event const&, FSM&) {
-        std::cout << "leaving: ExtractingWaypoints" << std::endl;
-      }
-    };
+    struct ExtractingWaypoints : public msm::front::state<> {};
 
     struct Sending : public msm::front::state<> {
       template <class Event, class FSM>
@@ -125,7 +118,7 @@ namespace MAPlanner {
 
     // clang-format off
     // Transition table for player
-    struct transition_table : mpl::vector<
+    using transition_table = mp11::mp_list<
         //    Start                 Event                 Next                  Action              Guard
         //  +---------------------+---------------------+---------------------+-------------------+------+
         Row < Stopped             , start               , Waiting             , start_waiting_cad , none >,
@@ -138,7 +131,7 @@ namespace MAPlanner {
         //  +---------------------+---------------------+---------------------+-------------------+------+
         Row < Sending             , waypoints_sent      , Waiting             , start_waiting_cad , none >
         //  +---------------------+---------------------+---------------------+-------------------+------+
-    > {};
+    >;
     // clang-format on
 
     // Replaces the default no-transition response.
@@ -148,11 +141,6 @@ namespace MAPlanner {
                 << typeid(e).name() << std::endl;
     }
   };
-  // Pick a back-end
-  typedef msm::back::state_machine<planner_> planner;
-
-  void test();
-  void pstate(planner const& p);
 }  // namespace MAPlanner
 
-#endif  // MAPLANNER_H
+#endif  // MAPLANNER_HPP
