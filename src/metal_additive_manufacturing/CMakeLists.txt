@@ -52,14 +52,6 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES} ${Boost_LIBRARIES}
 )
 
-add_executable(${PROJECT_NAME}_class
-  src/maplanner_class.cpp
-)
-
-target_link_libraries(${PROJECT_NAME}_class
-  ${catkin_LIBRARIES} ${Boost_LIBRARIES}
-)
-
 # Test suite
 add_executable(${PROJECT_NAME}_test tests/test_maplanner.cpp)
 target_link_libraries(${PROJECT_NAME}_test ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})

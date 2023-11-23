@@ -17,137 +17,113 @@ namespace mp11 = boost::mp11;
 using namespace std;
 using namespace msm::front;
 
-namespace MAPlanner {
-  struct ExtractingWaypoints;
+// events
+class Start {};
+class Stop {};
+class CadReceived {};
+class CadLoaded {};
+class WaypointsExtracted {};
+class WaypointsSent {};
 
-  // events
-  struct start {};
-  struct stop {};
-  struct cad_received {};
-  struct cad_loaded {};
-  struct waypoints_extracted {};
-  struct waypoints_sent {};
+// The list of FSM states
+class Stopped : public msm::front::state<> {
+ public:
+  template <class Event, class FSM>
+  void on_entry(Event const&, FSM&) {
+    std::cout << "entering: Stopped" << std::endl;
+  }
 
-  // front-end: define the FSM structure
-  struct planner_ : public msm::front::state_machine_def<planner_> {
-    // The list of FSM states
-    struct Stopped : public msm::front::state<> {
-      template <class Event, class FSM>
-      void on_entry(Event const&, FSM&) {
-        std::cout << "entering: Stopped" << std::endl;
-      }
+  template <class Event, class FSM>
+  void on_exit(Event const&, FSM&) {
+    std::cout << "leaving: Stopped" << std::endl;
+  }
+};
 
-      template <class Event, class FSM>
-      void on_exit(Event const&, FSM&) {
-        std::cout << "leaving: Stopped" << std::endl;
-      }
-    };
+class Waiting : public msm::front::state<> {
+ public:
+  template <class Event, class FSM>
+  void on_entry(Event const&, FSM&) {
+    std::cout << "entering: Waiting" << std::endl;
+  }
 
-    struct Waiting : public msm::front::state<> {
-      template <class Event, class FSM>
-      void on_entry(Event const&, FSM&) {
-        std::cout << "entering: Waiting" << std::endl;
-      }
+  template <class Event, class FSM>
+  void on_exit(Event const&, FSM&) {
+    std::cout << "leaving: Waiting" << std::endl;
+    test_function();
+  }
 
-      template <class Event, class FSM>
-      void on_exit(Event const&, FSM&) {
-        std::cout << "leaving: Waiting" << std::endl;
-      }
-    };
+ private:
+  void test_function() { std::cout << "test_function" << std::endl; }
+};
 
-    struct Loading : public msm::front::state<> {
-      template <class Event, class FSM>
-      void on_entry(Event const&, FSM&) {
-        std::cout << "entering: Loading" << std::endl;
-      }
+class Loading : public msm::front::state<> {
+ public:
+  template <class Event, class FSM>
+  void on_entry(Event const&, FSM&) {
+    std::cout << "entering: Loading" << std::endl;
+  }
 
-      template <class Event, class FSM>
-      void on_exit(Event const&, FSM&) {
-        std::cout << "leaving: Loading" << std::endl;
-      }
-    };
+  template <class Event, class FSM>
+  void on_exit(Event const&, FSM&) {
+    std::cout << "leaving: Loading" << std::endl;
+  }
+};
 
-    struct ExtractingWaypoints : public msm::front::state<> {
-      template <class Event, class FSM>
-      void on_entry(Event const& event, FSM& fsm) {
-        std::cout << "entering: ExtractingWaypoints" << std::endl;
-      }
+class ExtractingWaypoints : public msm::front::state<> {
+ public:
+  template <class Event, class FSM>
+  void on_entry(Event const& event, FSM& fsm) {
+    std::cout << "entering: ExtractingWaypoints" << std::endl;
+  }
 
-      template <class Event, class FSM>
-      void on_exit(Event const& event, FSM& fsm) {
-        std::cout << "leaving: ExtractingWaypoints" << std::endl;
-      }
-    };
+  template <class Event, class FSM>
+  void on_exit(Event const& event, FSM& fsm) {
+    std::cout << "leaving: ExtractingWaypoints" << std::endl;
+  }
+};
 
-    struct Sending : public msm::front::state<> {
-      template <class Event, class FSM>
-      void on_entry(Event const&, FSM&) {
-        std::cout << "entering: Sending" << std::endl;
-      }
-      template <class Event, class FSM>
-      void on_exit(Event const&, FSM&) {
-        std::cout << "leaving: Sending" << std::endl;
-      }
-    };
+class Sending : public msm::front::state<> {
+ public:
+  template <class Event, class FSM>
+  void on_entry(Event const&, FSM&) {
+    std::cout << "entering: Sending" << std::endl;
+  }
+  template <class Event, class FSM>
+  void on_exit(Event const&, FSM&) {
+    std::cout << "leaving: Sending" << std::endl;
+  }
+};
 
-    // state not defining any entry or exit
-    struct Paused : public msm::front::state<> {};
+// state not defining any entry or exit
+class Paused : public msm::front::state<> {};
 
-    // the initial state of the player SM. Must be defined
-    typedef Waiting initial_state;
+// front-end: define the FSM structure
+class Planner : public msm::front::state_machine_def<Planner> {
+ public:
+  // the initial state of the player SM. Must be defined
+  typedef Waiting initial_state;
 
-    // transition actions
-    struct start_waiting_cad {
-      template <class EVT, class FSM, class SourceState, class TargetState>
-      void operator()(EVT const&, FSM&, SourceState&, TargetState&) {
-        cout << "planner::start_waiting_cad" << endl;
-      }
-    };
-
-    struct load_cad {
-      template <class EVT, class FSM, class SourceState, class TargetState>
-      void operator()(EVT const&, FSM&, SourceState&, TargetState&) {
-        cout << "planner::load_cad" << endl;
-      }
-    };
-
-    struct extract_waypoints {
-      template <class EVT, class FSM, class SourceState, class TargetState>
-      void operator()(EVT const&, FSM&, SourceState&, TargetState&) {
-        cout << "planner::extract_waypoints" << endl;
-      }
-    };
-
-    struct send_to_planner {
-      template <class EVT, class FSM, class SourceState, class TargetState>
-      void operator()(EVT const&, FSM&, SourceState&, TargetState&) {
-        cout << "planner::send_to_planner" << endl;
-      }
-    };
-
-    // clang-format off
-    // Transition table for player
-    using transition_table = mp11::mp_list<
-        //    Start                 Event                 Next                  Action              Guard
-        //  +---------------------+---------------------+---------------------+-------------------+------+
-        Row < Stopped             , start               , Waiting             , start_waiting_cad , none >,
-        //  +---------------------+---------------------+---------------------+-------------------+------+
-        Row < Waiting             , cad_received        , Loading             , load_cad          , none >,
-        //  +---------------------+---------------------+---------------------+-------------------+------+
-        Row < Loading             , cad_loaded          , ExtractingWaypoints , extract_waypoints , none >,
-        //  +---------------------+---------------------+---------------------+-------------------+------+
-        Row < ExtractingWaypoints , waypoints_extracted , Sending             , send_to_planner   , none >,
-        //  +---------------------+---------------------+---------------------+-------------------+------+
-        Row < Sending             , waypoints_sent      , Waiting             , start_waiting_cad , none >
-        //  +---------------------+---------------------+---------------------+-------------------+------+
-    >;
-    // clang-format on
-
-    // Replaces the default no-transition response.
-    template <class FSM, class Event>
-    void no_transition(Event const& e, FSM&, int state) {
-      std::cout << "no transition from state " << state << " on event "
-                << typeid(e).name() << std::endl;
-    }
-  };
-}  // namespace MAPlanner
+  // clang-format off
+  // Transition table for player
+  using transition_table = mp11::mp_list<
+      //    Start                 Event                 Next                  Action   Guard
+      //  +---------------------+---------------------+---------------------+--------+------+
+      Row < Stopped             , Start               , Waiting             , none   , none >,
+      Row < Stopped             , Stop                , Stopped             , none   , none >,
+      //  +---------------------+---------------------+---------------------+--------+------+
+      Row < Waiting             , Start               , Waiting             , none   , none >,
+      Row < Waiting             , Stop                , Stopped             , none   , none >,
+      Row < Waiting             , CadReceived         , Loading             , none   , none >,
+      //  +---------------------+---------------------+---------------------+--------+------+
+      Row < Loading             , Stop                , Stopped             , none   , none >,
+      Row < Loading             , CadLoaded           , ExtractingWaypoints , none   , none >,
+      //  +---------------------+---------------------+---------------------+--------+------+
+      Row < ExtractingWaypoints , Stop                , Stopped             , none   , none >,
+      Row < ExtractingWaypoints , WaypointsExtracted  , Sending             , none   , none >,
+      //  +---------------------+---------------------+---------------------+--------+------+
+      Row < Sending             , Stop                , Stopped             , none   , none >,
+      Row < Sending             , WaypointsSent       , Waiting             , none   , none >
+      //  +---------------------+---------------------+---------------------+--------+------+
+  >;
+  // clang-format on
+};

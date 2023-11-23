@@ -4,7 +4,7 @@
 #include "maplanner.hpp"
 
 BOOST_AUTO_TEST_CASE(TestInitialState) {
-  msm::back::state_machine<MAPlanner::planner_> planner;
+  msm::back::state_machine<Planner> planner;
   planner.start();
 
   // Check initial state
