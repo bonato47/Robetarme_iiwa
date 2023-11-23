@@ -1,5 +1,4 @@
-#ifndef MAPLANNER_HPP
-#define MAPLANNER_HPP
+#pragma once
 
 #include <fstream>
 #include <iostream>
@@ -68,7 +67,17 @@ namespace MAPlanner {
       }
     };
 
-    struct ExtractingWaypoints : public msm::front::state<> {};
+    struct ExtractingWaypoints : public msm::front::state<> {
+      template <class Event, class FSM>
+      void on_entry(Event const& event, FSM& fsm) {
+        std::cout << "entering: ExtractingWaypoints" << std::endl;
+      }
+
+      template <class Event, class FSM>
+      void on_exit(Event const& event, FSM& fsm) {
+        std::cout << "leaving: ExtractingWaypoints" << std::endl;
+      }
+    };
 
     struct Sending : public msm::front::state<> {
       template <class Event, class FSM>
@@ -142,5 +151,3 @@ namespace MAPlanner {
     }
   };
 }  // namespace MAPlanner
-
-#endif  // MAPLANNER_HPP

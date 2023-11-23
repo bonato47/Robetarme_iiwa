@@ -52,11 +52,11 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES} ${Boost_LIBRARIES}
 )
 
-add_executable(${PROJECT_NAME}_sml
-  src/maplanner_sml.cpp
+add_executable(${PROJECT_NAME}_class
+  src/maplanner_class.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_sml
+target_link_libraries(${PROJECT_NAME}_class
   ${catkin_LIBRARIES} ${Boost_LIBRARIES}
 )
 

@@ -2,17 +2,6 @@
 
 void test(msm::back::state_machine<MAPlanner::planner_> &p);
 
-template <class Event, class FSM>
-void MAPlanner::ExtractingWaypoints::on_entry(Event const& event, FSM& fsm) {
-  std::cout << "entering: ExtractingWaypoints" << std::endl;
-}
-
-template <class Event, class FSM>
-void MAPlanner::ExtractingWaypoints::on_exit(Event const& event, FSM& fsm) {
-  std::cout << "leaving: ExtractingWaypoints" << std::endl;
-}
-
-
 int main() {
   msm::back::state_machine<MAPlanner::planner_> planner;
   msm::back::state_machine<MAPlanner::planner_> planner2;
