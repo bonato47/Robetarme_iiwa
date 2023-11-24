@@ -64,5 +64,41 @@
     ],
     "python.analysis.extraPaths": [
         "/opt/ros/noetic/lib/python3/dist-packages"
-    ]
+    ],
+    "editor.tokenColorCustomizations": {
+        "[*Light*]": {
+            "textMateRules": [
+                {
+                    "scope": "ref.matchtext",
+                    "settings": {
+                        "foreground": "#000"
+                    }
+                }
+            ]
+        },
+        "[*Dark*]": {
+            "textMateRules": [
+                {
+                    "scope": "ref.matchtext",
+                    "settings": {
+                        "foreground": "#fff"
+                    }
+                }
+            ]
+        },
+        "textMateRules": [
+            {
+                "scope": "support.function.be.latex, support.function.general.tex",
+                "settings": {
+                    "foreground": "#C586C0"
+                }
+            },
+            {
+                "scope": "text.tex.latex",
+                "settings": {
+                    "foreground": "#dfa678"
+                }
+            }
+        ]
+    }
 }

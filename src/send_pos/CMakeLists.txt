@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
 project(send_pos)
 
-set (CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_BUILD_TYPE Release)
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -131,7 +131,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   #Third_party/qpOASES/include
-	
+
 )
 
 ## Declare a C++ library
