@@ -3,7 +3,9 @@
 void test(msm::back::state_machine<Planner> &p);
 
 int main() {
-  msm::back::state_machine<Planner> planner;
+  std::string context = "FSM - Planner";
+  msm::back::state_machine<Planner> planner(context);
+
   test(planner);
   return 0;
 }

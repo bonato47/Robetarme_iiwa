@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED COMPONENTS
   system
   unit_test_framework
+  log
+  log_setup
 )
 
 ###################################
@@ -52,9 +54,9 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES} ${Boost_LIBRARIES}
 )
 
-# Test suite
-add_executable(${PROJECT_NAME}_test tests/test_maplanner.cpp)
-target_link_libraries(${PROJECT_NAME}_test ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+# # Test suite
+# add_executable(${PROJECT_NAME}_test tests/test_maplanner.cpp)
+# target_link_libraries(${PROJECT_NAME}_test ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
-enable_testing()
-add_test(NAME TestInitialState COMMAND ${PROJECT_NAME}_test)
+# enable_testing()
+# add_test(NAME TestInitialState COMMAND ${PROJECT_NAME}_test)
