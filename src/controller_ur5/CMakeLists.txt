@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.3)
-project(send_pos)
+project(ur5_controller)
 
 set (CMAKE_CXX_STANDARD 14)
-set(CMAKE_BUILD_TYPE Release)
+# set(CMAKE_BUILD_TYPE Release)
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
@@ -223,34 +223,6 @@ include_directories(
 # add_executable(Ds src/Ds.cpp src/Utils.cpp)
 # target_link_libraries(Ds ${catkin_LIBRARIES})
 
-
-add_executable(Ds_follower src/Ds_follower.cpp src/control_function.cpp src/Utils.cpp)
-target_link_libraries(Ds_follower ${catkin_LIBRARIES})
-
-add_executable(Ds_position_follower src/Ds_position_follower.cpp src/control_function.cpp src/Utils.cpp)
-target_link_libraries(Ds_position_follower ${catkin_LIBRARIES})
-
-# add_executable(Ds_Tikhonov src/Ds_Tikhonov.cpp src/Utils.cpp  )
-# target_link_libraries(Ds_Tikhonov ${catkin_LIBRARIES} ${Eigen3_LIBRARIES} "stdc++fs" "-L/usr/local/lib" "qpOASES")
-
-#add_executable(listener src/listener.cpp )
-#target_link_libraries(listener ${catkin_LIBRARIES})
-
-add_executable(Follow_traj_trak_ik_cobod src/Follow_traj_trak_ik_cobod.cpp)
-target_link_libraries(Follow_traj_trak_ik_cobod ${catkin_LIBRARIES})
-
-add_executable(Follow_traj_trak_ik src/Follow_traj_trak_ik.cpp)
-target_link_libraries(Follow_traj_trak_ik ${catkin_LIBRARIES})
-
-add_executable(Follow_trajV2 src/Follow_trajV2.cpp)
-target_link_libraries(Follow_trajV2 ${catkin_LIBRARIES})
-
-add_executable(Follow_traj_pinochio src/Follow_traj_pinochio.cpp src/Utils.cpp)
-target_link_libraries(Follow_traj_pinochio ${catkin_LIBRARIES} ${control_libraries_LIBRARIES})
-
-add_executable(ItoK src/ItoK.cpp)
-target_link_libraries(ItoK ${catkin_LIBRARIES})
-
-add_executable(controller_iiwa src/controller_iiwa.cpp)
-target_link_libraries(controller_iiwa ${catkin_LIBRARIES})
+add_executable(ur5_speed_controller src/ur5_speed_controller.cpp src/control_function_ur5.cpp src/Utils.cpp)
+target_link_libraries(ur5_speed_controller ${catkin_LIBRARIES} ${control_libraries_LIBRARIES})
 

@@ -1,0 +1,22 @@
+#choose between inverse Kineatics and Inverse Dynamics
+IK: "kinematics"
+#IK : "dynamics"
+
+# Parameter for invers kinematics
+
+InversKinematics: {
+  damp : 1e-4,
+  alphaKin : 0.5,
+  gamma : 0.8,
+  margin : 0.07,
+  tolerance : 0.001,
+}
+
+# Parameter for inverse velocities
+InversDynamics: {
+  alphaVel : 0.8,
+  proportional_gain : 1.0,
+  linear_velocity_limit : 1.0 ,
+  angular_velocity_limit : 1.0,
+  }
+

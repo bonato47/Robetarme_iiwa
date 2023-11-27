@@ -18,6 +18,11 @@
         "cmath": "cpp",
         "complex": "cpp",
         "initializer_list": "cpp",
-        "ios": "cpp"
+        "ios": "cpp",
+        "bitset": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "utility": "cpp",
+        "sstream": "cpp"
     }
 }

@@ -1,0 +1,9 @@
+In this package there is different code in c++
+
+Everything should be run from the docker, to have all dependencies installed.
+
+the code sned_tpo_cartesian_state  will send the iiwa to a position set  in the rosparam: send_pos/Nextpos
+
+The different code that begin with ds has to purpose to make the iiwa folow a Ds with different type of controller.
+
+And then the codes that begins with follows, can compute joint path path from a cartesian path given by csv and the save the path and show it in simulation.

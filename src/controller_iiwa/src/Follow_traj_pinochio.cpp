@@ -36,7 +36,7 @@ vector<double> posJointActual(n);
 vector<double> velJointActual(n);
 vector<double> posJointNext(7);
 vector<double> posDesJoint(n);
-std_msgs::Float64MultiArray msgP;
+std_msgs::Float64MultiArray msg
 vector<vector<double>> trajJoint;
 double* ptr;
 float pi =3.14;

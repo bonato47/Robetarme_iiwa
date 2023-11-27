@@ -133,10 +133,6 @@ int main(int argc, char **argv)
 
     }
 
-<<<<<<< HEAD:src/send_pos/src/Follow_traj_trak_ik.cpp
-=======
-           cout<<"hels"<<endl;
->>>>>>> 36f4574eabf6ded1b7d7f083b966361973092920:src/controller_iiwa/src/Follow_traj_trak_ik.cpp
 
     //-----------------------------------------
     myfile.close();
