@@ -53,7 +53,6 @@ class JointStateHandler {
 };
 
 
-
 int main(int argc, char **argv)
 {
     //choose the time step for ros

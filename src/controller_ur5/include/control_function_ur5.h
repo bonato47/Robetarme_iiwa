@@ -26,9 +26,7 @@ class RobotParameter {       // The class
     vector<double> getFK(vector<double> );
     geometry_msgs::Twist get_twist(vector<double> , vector<double> );
     MatrixXd getJacobian(vector<double> );
-
 };
-
 
 class InverseKinematics {       // The class
   public:
@@ -48,9 +46,6 @@ class InverseKinematics {       // The class
     pair<int, vector<double>> getIK(vector<double> , vector<double> ) ;
     void updateIK(double , double );
 };
-
-
-
 
 
 // void InverseKinematics::poseCallback(const geometry_msgs::Pose::ConstPtr& msg) {

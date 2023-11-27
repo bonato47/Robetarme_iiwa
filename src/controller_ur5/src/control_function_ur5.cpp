@@ -82,12 +82,6 @@ MatrixXd RobotParameter::getJacobian(vector<double> vectJoint){
 //     speed.publish(twistActual);
 // }
 
-
-
-
-
-
-
 //--------------------------------------IK-------------------------------------------------------------------------------
 
 InverseKinematics::InverseKinematics(double error,double timeoutInSecs) {  // Method/function defined inside the class
@@ -95,8 +89,9 @@ InverseKinematics::InverseKinematics(double error,double timeoutInSecs) {  // Me
     tipLink    = "wrist_3_link";
     URDF_param = "/robot_description";
     nJoint    = 6;
-    vector<double> posJointNext(nJoint, 0.0);
-    type =TRAC_IK::Distance;
+    vector<double> vector_0(nJoint, 0.0);
+    posJointNext = vector_0;
+    type = TRAC_IK::Distance;
     ikSolver= new TRAC_IK::TRAC_IK(baseLink, tipLink, URDF_param, timeoutInSecs, error, type);  
     
     valid = ikSolver->getKDLChain(chain);
