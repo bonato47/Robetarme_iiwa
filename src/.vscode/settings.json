@@ -23,6 +23,8 @@
         "hash_map": "cpp",
         "hash_set": "cpp",
         "utility": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp"
     }
 }

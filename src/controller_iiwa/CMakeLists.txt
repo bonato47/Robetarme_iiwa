@@ -21,7 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 
   #qpOASESCONFIG REQUIRED
 )
-find_package(control_libraries 6.3.1 REQUIRED)
+find_package(control_libraries 6.0.0 REQUIRED)
 find_package(Eigen3 REQUIRED)
 ## System dependencies are found with CMake's conventionsF
 # find_package(Boost REQUIRED COMPONENTS system)

@@ -108,8 +108,6 @@ int main(int argc, char **argv)
     }
 
 
-
-
     ROS_INFO("first position reached, please Press GO when ready to shotcreet");
     while( UserInput != "GO"){
 

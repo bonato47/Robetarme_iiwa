@@ -13,19 +13,35 @@ using namespace std;
 using namespace Eigen;
 
 
-class RobotParameter {       // The class
-  public:     
+class RobotParameter { 
+    
+  private:
+    //param robot
     string robot_name = "";
     string tipLink = ""  ;
+    string tipJoint = ""  ;
     string reference_frame = "";
     string path_urdf = "";
-    robot_model::Model *model = nullptr;
-    int nJoint    = 0;
 
+    //parameter for inverse velocities
+    double alphaVel = 0.0;
+    double proportional_gain = 0.0;
+    double linear_velocity_limit = 0.0;
+    double angular_velocity_limit = 0.0;
+    
+    struct robot_model::QPInverseVelocityParameters paramsVel = {};
+
+    // Unique pointer to a robot_model::Model object
+    unique_ptr<robot_model::Model> model; 
+
+
+  public:     
+    int nJoint    = 0;
     RobotParameter();
     vector<double> getFK(vector<double> );
-    geometry_msgs::Twist get_twist(vector<double> , vector<double> );
+    geometry_msgs::Twist getTwist(vector<double> , vector<double> );
     MatrixXd getJacobian(vector<double> );
+    vector<double> getIDynamics(vector<double> vectJoint, VectorXd speed_eigen);
 };
 
 class InverseKinematics {       // The class
@@ -34,6 +50,8 @@ class InverseKinematics {       // The class
     string tipLink ="" ;
     string URDF_param="";
     int  nJoint = 0  ;
+    double error = 0.01;
+    double timeoutInSecs = 0.01;
 
     vector<double> posJointNext = {};
     int rc = 0;
@@ -42,10 +60,15 @@ class InverseKinematics {       // The class
     KDL::Chain chain = {};
     bool valid = false ;
 
-    InverseKinematics(double ,double);
+    InverseKinematics();
     pair<int, vector<double>> getIK(vector<double> , vector<double> ) ;
     void updateIK(double , double );
 };
+
+void update_publisher_for_DS(RobotParameter &Rp,vector<double> ,vector<double> , ros::Publisher pos, ros::Publisher speed);
+VectorXd speed_func(vector<double> Pos, vector<double> quat2,vector<double> speed);
+vector<double> Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double dt, vector<double> quatPos);
+bool mseValue_cart(vector<double> v1, vector<double> v2,float tol);
 
 
 // void InverseKinematics::poseCallback(const geometry_msgs::Pose::ConstPtr& msg) {
@@ -70,15 +93,6 @@ class InverseKinematics {       // The class
 // }
 
 
-// void Fk_and_pub(ActualState& actu, ros::ServiceClient CL, ros::Publisher pos, ros::Publisher speed){
-
-//     actu.posCartActual = actu.getFK(actu.posJointActual);
-//     //publish state pos
-//     pos.publish(actu.actualCart);
-//     geometry_msgs::Twist twistActual = get_twist_fromService(actu.posJointActual,actu.speedJointActual,CL);
-
-//     speed.publish(twistActual);
-// }
 
 
 

@@ -36,7 +36,7 @@ vector<double> posJointActual(n);
 vector<double> velJointActual(n);
 vector<double> posJointNext(7);
 vector<double> posDesJoint(n);
-std_msgs::Float64MultiArray msg
+std_msgs::Float64MultiArray msgP;
 vector<vector<double>> trajJoint;
 double* ptr;
 float pi =3.14;
@@ -55,13 +55,15 @@ int main(int argc, char **argv){
     ros::Rate loop_rate(200);
 
     // Read trajectory from .csv 
-    vector<vector<double>> traj_cart = CSVtoVectorVectorDouble();
+    vector<vector<double>> traj_cart ;//= CSVtoVectorVectorDouble();
 
     //iniailization Invers Kinematics
     string robot_name = "iiwa7";
     string last_joint = "iiwa_link_ee";
 
-    robot_model::Model model(robot_name, "/home/ros/ros_ws/src/send_pos/urdf/iiwa7.urdf");
+    cout<<"hwllll----------------"<<endl;
+    robot_model::Model model(robot_name, "/home/ros/ros_ws/src/controller_iiwa/urdf/iiwa7.urdf");
+    cout<<"hwllll----------------"<<endl;
 
     ROS_INFO("Preparing trajectory...");
 
@@ -69,7 +71,7 @@ int main(int argc, char **argv){
     myfile.open ("/home/ros/ros_ws/src/send_pos/src/trajectory_joints_Trajectory_Transform_pinochio.csv");
 
     string IK = "init" ;
-     //parameter for inverse velocities
+    //parameter for inverse velocities
     double alphaVel;
     double proportional_gain;
     double linear_velocity_limit; 
@@ -166,7 +168,8 @@ int main(int argc, char **argv){
             state_representation::JointVelocities nextJoinStateSpeed = model.inverse_velocity(nextPostwist,actualJoinState,paramsVel,last_joint);
             posJointNext_eigen = nextJoinStateSpeed.data()  * dt + posJointActualEigen;
 
-       /*      state_representation::JointPositions nextJoinState =  state_representation::JointPositions(robot_name,posJointNext_eigen);        
+       /*      
+            state_representation::JointPositions nextJoinState =  state_representation::JointPositions(robot_name,posJointNext_eigen);        
             state_representation::CartesianPose nextCartesianPose = model.forward_kinematics(nextJoinState,"iiwa_link_ee");
             Vector3d p1Prime = nextCartesianPose.get_position();
             Quaterniond q1Prime = nextCartesianPose.get_orientation();
