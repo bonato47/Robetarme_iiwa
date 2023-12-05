@@ -22,6 +22,7 @@ class RobotParameter {
     string tipJoint = ""  ;
     string reference_frame = "";
     string path_urdf = "";
+    vector<string> joint_names = {};
 
     //parameter for inverse velocities
     double alphaVel = 0.0;
@@ -69,6 +70,7 @@ void update_publisher_for_DS(RobotParameter &Rp,vector<double> ,vector<double> ,
 VectorXd speed_func(vector<double> Pos, vector<double> quat2,vector<double> speed);
 vector<double> Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double dt, vector<double> quatPos);
 bool mseValue_cart(vector<double> v1, vector<double> v2,float tol);
+vector<vector<double>> interpolatePath(const vector<double>& start, const vector<double>& end, int steps);
 
 
 // void InverseKinematics::poseCallback(const geometry_msgs::Pose::ConstPtr& msg) {

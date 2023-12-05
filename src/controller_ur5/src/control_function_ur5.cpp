@@ -18,18 +18,18 @@ using namespace Eigen;
 
 RobotParameter::RobotParameter(){
     robot_name = "ur5_robot";
-    tipLink  = "wrist_3_link";
+    tipLink  = "tool0";
     tipJoint = "wrist_3_joint";
-
+    joint_names = {"shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"};
     reference_frame = "world";
     path_urdf = "/home/ros/ros_ws/src/controller_ur5/urdf/ur5.urdf";
     nJoint    = 6;
 
     //parameter for inverse velocities
-    alphaVel = 0.1;
-    proportional_gain = 1.0;
-    linear_velocity_limit = 2.0;
-    angular_velocity_limit = 2.0;  
+    alphaVel = 0.6;
+    proportional_gain = 0.3;
+    linear_velocity_limit = 0.2;
+    angular_velocity_limit = 0.3;  
     chrono::nanoseconds t = 1000ns;
     paramsVel = {alphaVel,proportional_gain,linear_velocity_limit,angular_velocity_limit,t};
 
@@ -39,15 +39,16 @@ RobotParameter::RobotParameter(){
 
 vector<double> RobotParameter::getFK(vector<double> vectJoint){
     Map<VectorXd> posJoint_eigen(vectJoint.data(), vectJoint.size());
-    state_representation::JointPositions nextJoinState =  state_representation::JointPositions(robot_name,posJoint_eigen);        
+    state_representation::JointPositions nextJoinState =  state_representation::JointPositions(robot_name,joint_names,posJoint_eigen);        
     state_representation::CartesianPose nextCartesianPose = model->forward_kinematics(nextJoinState,tipLink);
 
     Vector3d p1Prime = nextCartesianPose.get_position();
     Quaterniond q1Prime = nextCartesianPose.get_orientation();
 
-    vector<double> posCart ={ q1Prime.x(),q1Prime.y(),q1Prime.z(),q1Prime.w(),p1Prime[0],p1Prime[1],p1Prime[2]};
+    vector<double> posCart ={q1Prime.x(),q1Prime.y(),q1Prime.z(),q1Prime.w(),p1Prime[0],p1Prime[1],p1Prime[2]};
     return posCart;
 }
+
 geometry_msgs::Twist RobotParameter::getTwist(vector<double> posJoint, vector<double> speedJoint){
 
     // Create a Twist message
@@ -77,7 +78,7 @@ geometry_msgs::Twist RobotParameter::getTwist(vector<double> posJoint, vector<do
 
 MatrixXd RobotParameter::getJacobian(vector<double> vectJoint){
     Map<VectorXd> posJoint_eigen(vectJoint.data(), vectJoint.size());
-    state_representation::JointPositions actualJoinState = state_representation::JointPositions(robot_name,posJoint_eigen);  
+    state_representation::JointPositions actualJoinState = state_representation::JointPositions(robot_name,joint_names,posJoint_eigen);  
     state_representation::Jacobian jacobianObject = model->compute_jacobian(actualJoinState); 
     MatrixXd jacobian = jacobianObject.data();
 
@@ -85,18 +86,28 @@ MatrixXd RobotParameter::getJacobian(vector<double> vectJoint){
 }
 
 vector<double> RobotParameter::getIDynamics(vector<double> vectJoint, VectorXd speed_eigen){
-    vector<double> speedJointNext;
+
+    vector<double> speedJointNext(nJoint);
     Matrix<double,6,1> twist = speed_eigen;
+
+    Vector3d  angular_velocity(3);
+    angular_velocity << speed_eigen(0),speed_eigen(1),speed_eigen(2);
+    Vector3d  linear_velocity(3);
+    linear_velocity << speed_eigen(3),speed_eigen(4),speed_eigen(5);
+
 
     Map<VectorXd> posJoint_eigen(vectJoint.data(), vectJoint.size());
 
-    state_representation::JointPositions actualJoinState = state_representation::JointPositions(robot_name,posJoint_eigen);       
-    state_representation::CartesianTwist nextPostwist = state_representation::CartesianTwist("nextPosTwist",twist);
-    state_representation::JointVelocities nextJoinStateSpeed = model->inverse_velocity(nextPostwist,actualJoinState,paramsVel,tipJoint);
+    state_representation::JointPositions actualJoinState = state_representation::JointPositions(robot_name,joint_names,posJoint_eigen);       
+    state_representation::CartesianTwist nextPostwist = state_representation::CartesianTwist(robot_name, linear_velocity, angular_velocity, reference_frame); 	
+    state_representation::JointVelocities nextJoinStateSpeed = model->inverse_velocity(nextPostwist,actualJoinState,tipJoint);
+     //state_representation::JointVelocities nextJoinStateSpeed = model->inverse_velocity(nextPostwist,actualJoinState,paramsVel,tipJoint);
     VectorXd speedJointNext_eigen = nextJoinStateSpeed.data() ;
-    for (int i = 0; i < speedJointNext_eigen.size(); ++i) {
+    for (int i = 0; i < nJoint; ++i) {
         speedJointNext[i] = speedJointNext_eigen(i);
+
     }
+
     return speedJointNext;
 }
 
@@ -106,7 +117,7 @@ vector<double> RobotParameter::getIDynamics(vector<double> vectJoint, VectorXd s
 
 InverseKinematics::InverseKinematics() {  // Method/function defined inside the class
     baseLink   = "base_link";
-    tipLink    = "wrist_3_link";
+    tipLink    = "tool0";
     URDF_param = "/robot_description";
     nJoint    = 6;
     vector<double> vector_0(nJoint, 0.0);
@@ -192,8 +203,8 @@ VectorXd speed_func(vector<double> Pos, vector<double> quat2,vector<double> spee
     
      //orientation
     Vector4d q1,q2 ;
-    q1 << Pos[0],Pos[1],Pos[2],Pos[3];
-    q2 << quat2[0],quat2[1],quat2[2],quat2[3];
+    q1 << Pos[3], Pos[0],Pos[1],Pos[2]; //qw,qx,qy,qz
+    q2 << quat2[3],quat2[0],quat2[1],quat2[2]; //qw,qx,qy,qz
 
     Vector4d dqd = Utils<double>::slerpQuaternion(q1, q2 ,0.5);    
     Vector4d deltaQ = dqd -  q1;
@@ -274,3 +285,23 @@ bool mseValue_cart(vector<double> v1, vector<double> v2,float tol)
     return Reached;
 }
 
+    // Function to create a path between two joint configurations using linear interpolation
+    vector<vector<double>> interpolatePath(const vector<double>& start, const vector<double>& end, int steps) {
+        vector<vector<double>> path;
+        if (start.size() != end.size()) {
+            cerr << "Mismatch in joint dimensions." << endl;
+            return path;
+        }
+
+        // Perform linear interpolation for each joint
+        for (int i = 0; i <= steps; ++i) {
+            vector<double> intermediate;
+            for (size_t j = 0; j < start.size(); ++j) {
+                double interpolated_joint = start[j] + (end[j] - start[j]) * (static_cast<double>(i) / steps);
+                intermediate.push_back(interpolated_joint);
+            }
+            path.push_back(intermediate);
+        }
+
+        return path;
+    }

@@ -1,9 +1,0 @@
-<launch>
-  <arg name="model" />
-  <param name="robot_description"
-    textfile="$(find ur5_controller)/urdf/ur5.urdf" />
-
-
-  <node pkg="ur5_controller" name="ur5_speed_controller" type="ur5_speed_controller" output="screen"/>
-    
-</launch>

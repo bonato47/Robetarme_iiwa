@@ -56,10 +56,11 @@ class DsStateHandler {
     public:
         vector<double> quatDs;
         vector<double> speedCartDs;
+        int loopDS= 0;
 
         bool init_Ds;
         DsStateHandler(ros::NodeHandle& nh) : nh_(nh) {
-            quatDs    = {0,0,0,1,0,0,0};
+            quatDs    = {0,0,0,1};
             speedCartDs = {0,0,0};
 
             init_Ds = true;
@@ -70,16 +71,21 @@ class DsStateHandler {
     void DsStateCallback(const geometry_msgs::Pose::ConstPtr& msg) {
         if (msg){
 
-                quatDs.push_back(msg->orientation.x);
-                quatDs.push_back(msg->orientation.y);
-                quatDs.push_back(msg->orientation.z);
-                quatDs.push_back(msg->orientation.w);
-                speedCartDs.push_back(msg->position.x);
-                speedCartDs.push_back(msg->position.y);
-                speedCartDs.push_back(msg->position.z);
-
-
+                quatDs = {msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w};
+                //speedCartDs={msg->position.x,msg->position.y,msg->position.z};
                 init_Ds = false;
+
+                loopDS++;
+                if (loopDS <= 200){
+                    speedCartDs = {0,-0.05,-0.05};
+                }else
+                {
+                    speedCartDs = {0,0.05,0.05};
+                }
+                if(loopDS>=400){
+                    loopDS = 0;
+                }
+
             } else {
                 ROS_WARN("Received joint positions are empty.");
             }
@@ -92,8 +98,12 @@ class DsStateHandler {
 
 int main(int argc, char **argv)
 {
+
+    string whichSimu = "Coppelasim";
+    //string whichSimu = "Ur";
+    double pi = 3.14;
     //choose the time step for ros
-    double delta_t = 0.05;
+    double delta_t = 0.01;
     //choose the tintegration time for the next pos 
     double integrationTime = 0.05;
     // choose the tolerance to the new joints
@@ -101,7 +111,7 @@ int main(int argc, char **argv)
     //choose the tolerance and time for the inverse kinematic
     float err_ik = 0.001;
     float t_ik   = 0.05;
-
+    double freq_DS = 1/1000; //DS freq is 1000 hz
 
     //choose intial pose
     vector<double> intialPos={0.3,0,0.8};
@@ -111,13 +121,15 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "speed_controler");
     ros::NodeHandle Nh_;
 
-    ros::Publisher chatter_pub = Nh_.advertise<std_msgs::Float64MultiArray>("/joint_group_vel_controller/command", 1000);
+    ros::Publisher chatter_pub_speed = Nh_.advertise<std_msgs::Float64MultiArray>("/joint_group_vel_controller/command", 1000);
+    ros::Publisher chatter_pub_pos = Nh_.advertise<std_msgs::Float64MultiArray>("/joint_group_pos_controller/command", 1000);
+
     // ros::Publisher pub_pos     = Nh_.advertise<geometry_msgs::Pose>("/ur5/ee_info/Pose", 1000);
     // ros::Publisher pub_speed   = Nh_.advertise<geometry_msgs::Twist>("/ur5/ee_info/Vel", 1000);
-    ros::Publisher pub_pos     = Nh_.advertise<geometry_msgs::Pose>("/iiwa/ee_info/Pose", 1000);
-    ros::Publisher pub_speed   = Nh_.advertise<geometry_msgs::Twist>("/iwwa/ee_info/Vel", 1000);
 
-   
+    ros::Publisher pub_pos     = Nh_.advertise<geometry_msgs::Pose>("/iiwa/ee_info/Pose", 1000);
+    ros::Publisher pub_speed   = Nh_.advertise<geometry_msgs::Twist>("/iiwa/ee_info/Vel", 1000);
+
     ros::Rate loop_rate(1/delta_t);
 
     RobotParameter RobotUr5;
@@ -135,7 +147,7 @@ int main(int argc, char **argv)
         ros::spinOnce(); 
         loop_rate.sleep();  
         i++;
-        if(i >= 100){
+        if(i >= 1000){
             ROS_ERROR("Cannot contact with the DS or the Robot, exiting...");
             return 0;
         }
@@ -145,15 +157,51 @@ int main(int argc, char **argv)
 
     //-------------------------------------code for first position----------------------------------
 
+    //select goal
+    // vector<double> initialJointPos= {-1.75,-1.0,-1.3,-0.8,0.15,0}; //
+    vector<double> initialJointPos= {0,-1.83,1.57,-0.0,1.57,0.0}; //
+    // connect to rosservice position control
 
-    //ADD HERE
-    // 1) connect to rosservice position control
-    // 2) Ik from desired pose
-    // 3) make a spline to go there
-    // 4) populate messages
-    // 5)send message and wait until position achieved
+    // if(whichSimu == "Coppelasim"){
+      
+    // }
+    // else{
 
+    // }
+
+    
+    // make a spline to goal
+    int interpSize= 100;
+    vector<vector<double>> path = interpolatePath(JsHandler.jointPosition, initialJointPos,interpSize);
+
+    //populate messages
+    std_msgs::Float64MultiArray nextPosJointMsg;
+    // send message and wait until position achieved
+    for (int i = 0; i <= interpSize ;++i) {
+        nextPosJointMsg.data = path[i];
+        // publish to the ur5 speed controller
+        chatter_pub_pos.publish(nextPosJointMsg);
+        update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);
+        ros::spinOnce();        
+        loop_rate.sleep();  
+    }
     string UserInput = "stop";
+
+    update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);
+    ros::Duration(1.5*freq_DS).sleep();
+    ros::spinOnce(); //wait to get the new speed
+    vector<double> poseCartActual  = RobotUr5.getFK(JsHandler.jointPosition);
+
+    //use the speed from topic and convert the quat from topic to angular velocity
+    VectorXd twistDesiredEigen = speed_func(poseCartActual, DsHandler.quatDs,DsHandler.speedCartDs);
+
+    vector<double> nextSpeedJoint = RobotUr5.getIDynamics(JsHandler.jointPosition,twistDesiredEigen);
+
+    ROS_WARN("actualquat : x = %f, y = %f, z = %f,w = %f",poseCartActual[0],poseCartActual[1],poseCartActual[2],poseCartActual[3]);
+    ROS_WARN("desired linear speed: x = %f, y = %f, z = %f",twistDesiredEigen(3), twistDesiredEigen(4), twistDesiredEigen(5));
+    ROS_WARN("desired angular speed: x = %f, y = %f, z = %f",twistDesiredEigen(0), twistDesiredEigen(1), twistDesiredEigen(2));
+    ROS_WARN("The robot wants to go with join speed: j1 = %f, j2 = %f, j3 = %f, j4 = %f, j5 = %f, j6 = %f", nextSpeedJoint[0],nextSpeedJoint[1],nextSpeedJoint[2],nextSpeedJoint[3],nextSpeedJoint[4],nextSpeedJoint[5]);
+
 
     ROS_INFO("first position reached, please Press GO when ready to shotcreet");
     while( UserInput != "GO"){
@@ -165,69 +213,64 @@ int main(int argc, char **argv)
     //----------------------------------------------------------------------------------------
     //-------------------------------------code for speed control----------------------------------
 
-    // 1) call service switch controller to have speed_controller
+    //call service switch controller to have speed_controller
+    // if(whichSimu == "Coppelasim"){
 
+    // }
+    // else{
 
- 
+    // }
 
-    // // publish to the ur5 speed controller
-    // std_msgs::Float64MultiArray nextSpeedJointMsg;
-    // nextSpeedJointMsg.data = nextSpeedJoint;
-    // chatter_pub.publish(nextSpeedJointMsg);
-
-    // integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
-    // vector<double> NextQuatPosCart = Integral_func(posCartActual, speed_eigen, integrationTime, DsHandler.quatDs);
-
-    
-    // //compute inverse kinematic
-    // pair<int, vector<double>> IkResultsPair = Ik.getIK(JsHandler.jointPosition,NextQuatPosCart);
-    // vector<double> nextJointPos = IkResultsPair.second;
-
-    // // publish to the iiwa position controller
-    // std_msgs::Float64MultiArray nextPosJointMsg;
-    // nextPosJointMsg.data = nextJointPos;
-    // chatter_pub.publish(nextPosJointMsg);
-
-    // nextPosJointTemp= nextState.posJointNext;
-    // nextPosCartTemp = actualState.getFK(nextPosJointTemp);
-
-    // // publish the next cart position for the DS
-    // pub_pos.publish(actualState.actualCart); // the name is not clear but it's send a msg with the values of nextPosCartTemp
-
-    // we should update the twist as well
-
-    ros::spinOnce();        
-    loop_rate.sleep();  
-
+    std_msgs::Float64MultiArray nextSpeedJointMsg;
     while (ros::ok()){
-       
+
+        update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);
+        ros::Duration(1.5*freq_DS).sleep();
+        ros::spinOnce(); //wait to get the new speed
+
+
 
         vector<double> poseCartActual  = RobotUr5.getFK(JsHandler.jointPosition);
+        // cout <<"posCartActual";
+        // for (int i = 0; i < 7 ;++i) {
+        //     cout <<poseCartActual[i];
+        // }
+        // cout <<" /n"<<endl;
 
         //use the speed from topic and convert the quat from topic to angular velocity
         VectorXd twistDesiredEigen = speed_func(poseCartActual, DsHandler.quatDs,DsHandler.speedCartDs);
 
+   
         vector<double> nextSpeedJoint = RobotUr5.getIDynamics(JsHandler.jointPosition,twistDesiredEigen);
+        ROS_WARN("actual quat : x = %f, y = %f, z = %f,w = %f",poseCartActual[0],poseCartActual[1],poseCartActual[2],poseCartActual[3]);
+        ROS_WARN("actual pos : x = %f, y = %f, z = %f",poseCartActual[4],poseCartActual[5],poseCartActual[6]);
 
-        // publish to the ur5 speed controller
-        std_msgs::Float64MultiArray nextSpeedJointMsg;
-        nextSpeedJointMsg.data = nextSpeedJoint;
-        chatter_pub.publish(nextSpeedJointMsg);
-
-
-        cout <<"posCartActual";
-        for (int i = 0; i < 7 ;++i) {
-            cout <<posCartActual[i];
-        }
-        cout <<" /n"<<endl;
-
-        // cout <<"JsHandler.jointPosition";
+        ROS_WARN("desired linear speed: x = %f, y = %f, z = %f",twistDesiredEigen(3), twistDesiredEigen(4), twistDesiredEigen(5));
+        ROS_WARN("desired angular speed: x = %f, y = %f, z = %f",twistDesiredEigen(0), twistDesiredEigen(1), twistDesiredEigen(2));
+        // cout <<"nextSpeedJoint"<<endl;
         // for (int i = 0; i < 6 ;++i) {
-        //     cout <<JsHandler.jointPosition[i];
+        //     cout <<nextSpeedJoint[i];
         // }
-        // cout <<"/n"<<endl;
+        // cout <<" /n"<<endl;
 
-        update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);
+        double tol_speed= 0.01;
+
+        if(twistDesiredEigen.norm() > tol_speed){
+            // publish to the ur5 speed controller
+            nextSpeedJointMsg.data = nextSpeedJoint;
+            chatter_pub_speed.publish(nextSpeedJointMsg);
+        }
+        else{
+;
+            nextPosJointMsg.data = JsHandler.jointPosition;
+            // publish to the ur5 speed controller
+            chatter_pub_pos.publish(nextPosJointMsg);
+
+            return 0;
+        }
+   
+
+
 
         ros::spinOnce(); // Allow the message to be published
         loop_rate.sleep();  
@@ -237,7 +280,10 @@ int main(int argc, char **argv)
 
 }
 
-// ------......--------   
+
+
+
+    // ------......--------   
 
 
 
