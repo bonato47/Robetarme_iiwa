@@ -9,6 +9,7 @@
 #include "control_msgs/FollowJointTrajectoryActionGoal.h"
 #include "trajectory_msgs/JointTrajectory.h"
 #include "trajectory_msgs/JointTrajectoryPoint.h"
+#include "controller_manager_msgs/SwitchController.h"
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -123,12 +124,16 @@ int main(int argc, char **argv)
 
     ros::Publisher chatter_pub_speed = Nh_.advertise<std_msgs::Float64MultiArray>("/joint_group_vel_controller/command", 1000);
     ros::Publisher chatter_pub_pos = Nh_.advertise<std_msgs::Float64MultiArray>("/joint_group_pos_controller/command", 1000);
+    ros::Publisher joint_trajectory_pub = Nh_.advertise<trajectory_msgs::JointTrajectory>("/pos_joint_traj_controller/command", 1000);
 
     // ros::Publisher pub_pos     = Nh_.advertise<geometry_msgs::Pose>("/ur5/ee_info/Pose", 1000);
     // ros::Publisher pub_speed   = Nh_.advertise<geometry_msgs::Twist>("/ur5/ee_info/Vel", 1000);
 
     ros::Publisher pub_pos     = Nh_.advertise<geometry_msgs::Pose>("/iiwa/ee_info/Pose", 1000);
     ros::Publisher pub_speed   = Nh_.advertise<geometry_msgs::Twist>("/iiwa/ee_info/Vel", 1000);
+
+    ros::ServiceClient client = Nh_.serviceClient<controller_manager_msgs::SwitchController>("/controller_manager/switch_controller");
+
 
     ros::Rate loop_rate(1/delta_t);
 
@@ -161,19 +166,38 @@ int main(int argc, char **argv)
     // vector<double> initialJointPos= {-1.75,-1.0,-1.3,-0.8,0.15,0}; //
     vector<double> initialJointPos= {0,-1.83,1.57,-0.0,1.57,0.0}; //
     // connect to rosservice position control
-
-    // if(whichSimu == "Coppelasim"){
-      
-    // }
-    // else{
-
-    // }
-
+    // Create a service request
+    controller_manager_msgs::SwitchController srv;
+    srv.request.start_controllers = { "pos_joint_traj_controller" };
+    srv.request.stop_controllers = { "speed_scaling_state_controller" };
+    srv.request.strictness = 2;
+    srv.request.start_asap = false;
+    srv.request.timeout = 0;  // Timeout set to 0.0 seconds
     
     // make a spline to goal
     int interpSize= 100;
-    vector<vector<double>> path = interpolatePath(JsHandler.jointPosition, initialJointPos,interpSize);
+    vector<vector<double>> joint_positions = interpolatePath(JsHandler.jointPosition, initialJointPos,interpSize);
 
+
+    // // Create a JointTrajectory message
+    // trajectory_msgs::JointTrajectory joint_traj;
+    // joint_traj.header.stamp = ros::Time::now();
+    // joint_traj.joint_names = {"shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint","wrist_1_joint", "wrist_2_joint", "wrist_3_joint"}; // Replace with your joint names
+
+    // // Populate the trajectory with joint positions
+    // for (const auto &pos : joint_positions) {
+    //     trajectory_msgs::JointTrajectoryPoint point;
+    //     point.positions = pos;
+    //     point.time_from_start = ros::Duration(0.1); // Set appropriate duration for each point
+    //     joint_traj.points.push_back(point);
+    // }
+    // //&& bool mseValue_cart(vector<double> v1, vector<double> v2,float tol)
+    // // Publish the joint trajectory
+    // while (ros::ok() ) {
+    //     joint_trajectory_pub.publish(joint_traj);
+    //     ros::Duration(0.1).sleep(); // Publish at 1 Hz
+
+    // }
     //populate messages
     std_msgs::Float64MultiArray nextPosJointMsg;
     // send message and wait until position achieved
@@ -260,14 +284,14 @@ int main(int argc, char **argv)
             nextSpeedJointMsg.data = nextSpeedJoint;
             chatter_pub_speed.publish(nextSpeedJointMsg);
         }
-        else{
-;
-            nextPosJointMsg.data = JsHandler.jointPosition;
-            // publish to the ur5 speed controller
-            chatter_pub_pos.publish(nextPosJointMsg);
+//         else{
+// ;
+//             nextSpeedJointMsg.data = JsHandler.jointPosition;
+//             // publish to the ur5 speed controller
+//             chatter_pub_pos.publish(nextSpeedJoint);
 
-            return 0;
-        }
+//             return 0;
+//         }
    
 
 
