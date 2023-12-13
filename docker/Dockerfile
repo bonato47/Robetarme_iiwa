@@ -198,10 +198,11 @@ FROM  iiwa-developpement as iiwa-simulation
 ### apt update and clean
 RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
 
+ARG coppeliasim_version="CoppeliaSim_Edu_V4_6_0_rev10_Ubuntu20_04.tar.xz"
 WORKDIR /home/${USER}
-RUN wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V4_6_0_rev6_Ubuntu20_04.tar.xz
-RUN tar -xf CoppeliaSim_Edu_V4_6_0_rev6_Ubuntu20_04.tar.xz
-RUN rm CoppeliaSim_Edu_V4_6_0_rev6_Ubuntu20_04.tar.xz
+RUN wget https://www.coppeliarobotics.com/files/${coppeliasim_version}
+RUN tar -xf ${coppeliasim_version}
+RUN rm ${coppeliasim_version}
 
 # Add zmq remote controle api plugin
 RUN python3 -m pip install coppeliasim-zmqremoteapi-client
@@ -210,9 +211,10 @@ RUN pip install cbor pyzmq
 # Add coppeliasim to bashrc but has to be sourced first to fill PYTHONPATH
 # Use of && since a new terminal is instanciated for each RUN command
 USER root
-RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/CoppeliaSim_Edu_V4_6_0_rev6_Ubuntu20_04/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
+RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/${coppeliasim_version}/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
 USER ${USER}
 
+RUN sudo apt update -y --fix-missing
 RUN sudo apt install -y \
     python3-vcstool \
     ros-noetic-rqt-joint-trajectory-controller \
