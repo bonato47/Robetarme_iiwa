@@ -8,6 +8,10 @@
 #include <trac_ik/trac_ik.hpp>
 #include "OsqpEigen/OsqpEigen.h" 
 #include "robot_model/Model.hpp"
+#include "visualization_msgs/Marker.h"
+#include <tf2/LinearMath/Quaternion.h>
+#include <geometry_msgs/Quaternion.h>
+
 
 using namespace std;
 using namespace Eigen;
@@ -20,7 +24,6 @@ class RobotParameter {
     string robot_name = "";
     string tipLink = ""  ;
     string tipJoint = ""  ;
-    string reference_frame = "";
     string path_urdf = "";
     vector<string> joint_names = {};
 
@@ -38,6 +41,8 @@ class RobotParameter {
 
   public:     
     int nJoint    = 0;
+    string reference_frame = "";
+
     RobotParameter();
     vector<double> getFK(vector<double> );
     geometry_msgs::Twist getTwist(vector<double> , vector<double> );
@@ -71,8 +76,8 @@ VectorXd speed_func(vector<double> Pos, vector<double> quat2,vector<double> spee
 vector<double> Integral_func(vector<double> Pos_actual, VectorXd speed_actual, double dt, vector<double> quatPos);
 bool mseValue_cart(vector<double> v1, vector<double> v2,float tol);
 vector<vector<double>> interpolatePath(const vector<double>& start, const vector<double>& end, int steps);
-
-
+visualization_msgs::Marker printMarker(vector<double> Pos,vector<double> EulerAngle, string base);
+void twistMarker(VectorXd twistDesiredEigen,vector<double> pos, ros::Publisher& marker_pub);
 // void InverseKinematics::poseCallback(const geometry_msgs::Pose::ConstPtr& msg) {
 //     // Process the received Pose message here
 //     // For example, you can access the position and orientation as follows:

@@ -20,8 +20,11 @@ RobotParameter::RobotParameter(){
     robot_name = "ur5_robot";
     tipLink  = "tool0";
     tipJoint = "wrist_3_joint";
-    joint_names = {"shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"};
-    reference_frame = "world";
+    joint_names = {"shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint", "wrist_1_joint", "wrist_2_joint", "wrist_3_joint"};
+    //joint_names = {"shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"};
+
+    //joint_names = {"elbow_joint", "shoulder_lift_joint", "shoulder_pan_joint", "wrist_1_joint", "wrist_2_joint", "wrist_3_joint"};
+    reference_frame = "base_link";
     path_urdf = "/home/ros/ros_ws/src/controller_ur5/urdf/ur5.urdf";
     nJoint    = 6;
 
@@ -101,7 +104,7 @@ vector<double> RobotParameter::getIDynamics(vector<double> vectJoint, VectorXd s
     state_representation::JointPositions actualJoinState = state_representation::JointPositions(robot_name,joint_names,posJoint_eigen);       
     state_representation::CartesianTwist nextPostwist = state_representation::CartesianTwist(robot_name, linear_velocity, angular_velocity, reference_frame); 	
     state_representation::JointVelocities nextJoinStateSpeed = model->inverse_velocity(nextPostwist,actualJoinState,tipJoint);
-     //state_representation::JointVelocities nextJoinStateSpeed = model->inverse_velocity(nextPostwist,actualJoinState,paramsVel,tipJoint);
+    // state_representation::JointVelocities nextJoinStateSpeed = model->inverse_velocity(nextPostwist,actualJoinState,paramsVel,tipJoint);
     VectorXd speedJointNext_eigen = nextJoinStateSpeed.data() ;
     for (int i = 0; i < nJoint; ++i) {
         speedJointNext[i] = speedJointNext_eigen(i);
@@ -285,23 +288,110 @@ bool mseValue_cart(vector<double> v1, vector<double> v2,float tol)
     return Reached;
 }
 
-    // Function to create a path between two joint configurations using linear interpolation
-    vector<vector<double>> interpolatePath(const vector<double>& start, const vector<double>& end, int steps) {
-        vector<vector<double>> path;
-        if (start.size() != end.size()) {
-            cerr << "Mismatch in joint dimensions." << endl;
-            return path;
-        }
-
-        // Perform linear interpolation for each joint
-        for (int i = 0; i <= steps; ++i) {
-            vector<double> intermediate;
-            for (size_t j = 0; j < start.size(); ++j) {
-                double interpolated_joint = start[j] + (end[j] - start[j]) * (static_cast<double>(i) / steps);
-                intermediate.push_back(interpolated_joint);
-            }
-            path.push_back(intermediate);
-        }
-
+// Function to create a path between two joint configurations using linear interpolation
+vector<vector<double>> interpolatePath(const vector<double>& start, const vector<double>& end, int steps) {
+    vector<vector<double>> path;
+    if (start.size() != end.size()) {
+        cerr << "Mismatch in joint dimensions." << endl;
         return path;
     }
+
+    // Perform linear interpolation for each joint
+    for (int i = 0; i <= steps; ++i) {
+        vector<double> intermediate;
+        for (size_t j = 0; j < start.size(); ++j) {
+            double interpolated_joint = start[j] + (end[j] - start[j]) * (static_cast<double>(i) / steps);
+            intermediate.push_back(interpolated_joint);
+        }
+        path.push_back(intermediate);
+    }
+
+    return path;
+}
+
+visualization_msgs::Marker printMarker(vector<double> Pos,vector<double> EulerAngle, string base){
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = base;
+    marker.header.stamp = ros::Time::now();
+    marker.type = visualization_msgs::Marker::ARROW;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.ns= "ns";
+    marker.id = 0;
+    marker.pose.position.x = Pos[0];
+    marker.pose.position.y = Pos[1];
+    marker.pose.position.z = Pos[2];
+
+    // Set Euler angles
+    tf2::Quaternion quat;
+    quat.setRPY(EulerAngle[0],EulerAngle[1],EulerAngle[2]); // Set your desired Euler angles in radians
+
+    // Convert Quaternion to a geometry_msgs::Quaternion
+    marker.pose.orientation.x =  quat.x();
+    marker.pose.orientation.y =  quat.y();
+    marker.pose.orientation.z =  quat.z();
+    marker.pose.orientation.w =  quat.w();
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.01;
+    marker.scale.z = 0.01;
+    marker.color.a = 1.0; // Don't forget to set the alpha!
+    marker.color.r = 1.0;
+    marker.color.g = 1.0;
+    marker.color.b = 0.0;
+    ros::Duration one_seconds(0.1, 0);
+    marker.lifetime = one_seconds; 
+    return marker;
+}
+
+
+void twistMarker(VectorXd twistDesiredEigen,vector<double> pos, ros::Publisher& marker_pub) {
+    visualization_msgs::Marker linear_marker, angular_marker;
+
+
+    // Linear twist arrow marker
+    linear_marker.header.frame_id = "base_link"; // Set your desired frame ID
+    linear_marker.header.stamp = ros::Time();
+    linear_marker.ns = "twist";
+    linear_marker.id = 0;
+    linear_marker.type = visualization_msgs::Marker::ARROW;
+    linear_marker.action = visualization_msgs::Marker::ADD;
+    linear_marker.color.r = 0.0;
+    linear_marker.color.g = 1.0;
+    linear_marker.color.b = 0.0;
+    linear_marker.color.a = 1.0; // Don't forget to set the alpha!
+
+    linear_marker.scale.x = 0.01; // Arrow width
+    linear_marker.scale.y = 0.01; // Arrow head width
+    linear_marker.scale.z = 0.5; // Arrow head length
+
+
+
+    linear_marker.pose.orientation.w = 1.0;
+    linear_marker.pose.position.x = pos[0];
+    linear_marker.pose.position.y = pos[1];
+    linear_marker.pose.position.z = pos[2];
+
+    linear_marker.points.push_back(geometry_msgs::Point());
+    geometry_msgs::Point point;
+    point.x = twistDesiredEigen(3);
+    point.y = twistDesiredEigen(4);
+    point.z =  twistDesiredEigen(5);
+    linear_marker.points.push_back(point);
+
+    // Angular twist arrow marker
+    angular_marker = linear_marker; // Copy settings from linear_marker
+    angular_marker.id = 1;
+    angular_marker.color.r = 1.0;
+    angular_marker.color.g = 0.0;
+    angular_marker.color.b = 0.0;
+
+    // Angular twist direction
+    angular_marker.points.push_back(geometry_msgs::Point());
+    point.x = twistDesiredEigen(0);
+    point.y = twistDesiredEigen(1);
+    point.z =  twistDesiredEigen(2);
+    angular_marker.points.push_back(point);
+
+    // Publish markers
+    marker_pub.publish(linear_marker);
+    //marker_pub.publish(angular_marker);
+}

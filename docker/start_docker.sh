@@ -163,15 +163,6 @@ if [ "${MODE}" != "connect" ]; then
 
     FWD_ARGS+=(--volume="controller_ur5:/home/ros/ros_ws/src/controller_ur5:rw")
     
-    # Add volume drier universal robot/
-    docker volume rm ur_robot_driver
-    docker volume create --driver local \
-    --opt type="none" \
-    --opt device="${PWD}/../src/ur_robot_driver" \
-    --opt o="bind" \
-    "ur_robot_driver"
-
-    FWD_ARGS+=(--volume="ur_robot_driver:/home/ros/ros_ws/src/ur_robot_driver:rw")
 
 
     # Setup git config
