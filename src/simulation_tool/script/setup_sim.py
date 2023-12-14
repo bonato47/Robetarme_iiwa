@@ -7,13 +7,12 @@ import signal
 import argparse
 import asyncio
 
-from asyncio.coroutines import coroutine
-from typing import Dict, Any
+from typing import Dict
 from math import radians
 
 from dataclasses import dataclass, field, asdict
 from typing import List, Tuple
-from coppeliasim_zmqremoteapi_client import *
+from coppeliasim_zmqremoteapi_client import RemoteAPIClient
 
 VERBOSE = False
 SHUTDOWN_KEY = False
@@ -25,7 +24,7 @@ class Robot():
     """ Robot dataclass. """
     name: str = ""
     nb_dofs: int = 0
-    max_limits: Tuple[int, int] = (radians(-180), radians(180))  # [rad]
+    max_limits: Tuple[float, float] = (radians(-180), radians(180))  # [rad]
     max_vel: float = radians(90)  # [rad/s]
     max_acc: float = 5.0  # [rad/s^2]
     max_jerk: float = 0.5  # [rad/s^3]
@@ -67,11 +66,11 @@ class Robot():
             print(f"\t{key}: {value}")
 
 
-def main():
+async def main():
     """ Main function. """
-    listener = None
-    processes = []
-    parents_roslaunch = []
+    global SHUTDOWN_KEY
+    lst_processes = []
+    lst_parents_roslaunch = []
 
     # Bind ctrl + c command to shutdown function
     signal.signal(signal.SIGINT, on_ctrl_c_pressed)
@@ -85,31 +84,37 @@ def main():
     if VERBOSE:
         robot.print()
 
-    processes.append(asyncio.run(send_command_bash(["roscore"])))
-    time.sleep(1)
-    processes.append(asyncio.run(send_command_bash(
-        ["bash", "~/CoppeliaSim_Edu_V4_6_0_rev10_Ubuntu20_04/coppeliaSim.sh"])
-    ))
+    lst_processes.append(await send_command_bash(["roscore"]))
+    await asyncio.sleep(1)
 
-    client = RemoteAPIClient()
-    sim = client.getObject("sim")
-    client.call(
-        ("simURDF.import"),
-        (current_dir + yaml_config["filepath"]["urdf"])
-    )
-    # setup_simulation(sim, robot, yaml_config)
+    try:
+        script_path = os.path.expanduser(yaml_config["filepath"]["coppeliasim"])
+        lst_processes.append(await send_command_bash([script_path]))
+    except:
+        print("CoppeliaSim not found. Please check the path.")
+        await shutdown(
+            lst_processes=lst_processes,
+            lst_parents_roslaunch=lst_parents_roslaunch
+        )
 
-    print("Simulation ready to start")
-    while not SHUTDOWN_KEY:
-        time.sleep(1)  # to not overload process
-        pass
+    async with RemoteAPIClient() as client:
+        sim = await client.require('sim')
+        await client.call(
+            ("simURDF.import"),
+            (current_dir + yaml_config["filepath"]["urdf"])
+        )
 
-    shutdown(
-        processes=processes,
-        parents_roslaunch=parents_roslaunch
-    )
+        # setup_simulation(sim, robot, yaml_config)
 
-    sim.stopSimulation()
+        print("Simulation ready to start")
+        while not SHUTDOWN_KEY:
+            await asyncio.sleep(1)  # to not overload process
+            pass
+
+        await shutdown(
+            lst_processes=lst_processes,
+            lst_parents_roslaunch=lst_parents_roslaunch
+        )
 
 
 def parse_input_arguments() -> str:
@@ -135,7 +140,7 @@ def parse_input_arguments() -> str:
 
 
 def read_yaml_file(filename: str) -> Dict[str, str]:
-    """Read the right yaml file and return the related dictionnary.
+    """ Read the right yaml file and return the related dictionnary.
 
     args:
         filename (str): YAML filename where to take input parameters.
@@ -180,27 +185,28 @@ def read_urdf(str_urdf: str) -> Robot:
             new_robot.lst_joints_name.append(joint.attrib["name"])
             new_robot.lst_joints_type.append(joint.attrib["type"])
 
-            new_robot.lst_limits.append(
-                (float(joint_limit.attrib["lower"]),
-                 float(joint_limit.attrib["upper"]))
-            )
+            new_robot.lst_limits.append((
+                float(joint_limit.attrib["lower"]),
+                float(joint_limit.attrib["upper"])
+            ))
             new_robot.lst_max_vel.append(float(joint_limit.attrib["velocity"]))
             new_robot.lst_max_torque.append(
-                float(joint_limit.attrib["effort"]))
+                float(joint_limit.attrib["effort"])
+            )
 
     new_robot.nb_dofs = nb_dofs
 
     return new_robot
 
 
-async def send_command_bash(bash_command: List[str]) -> coroutine:
+async def send_command_bash(bash_command: List[str]) -> asyncio.subprocess.Process:
     """Send specific bash command.
 
-    :param bash_command: Bash command to be launched using asyncio subprocess.
-    :type bash_command: list[str]
+    args:
+        bash_command (List[str]): Bash command to be launched using asyncio subprocess.
 
-    :return: Process currently running after calling this function.
-    :rtype: coroutine
+    return:
+        (asyncio.subprocess.Process): Process currently running after calling this function.
     """
     return await asyncio.create_subprocess_exec(*bash_command)
 
@@ -249,36 +255,31 @@ def init_robot_pos(sim: any, robot: Robot, init_pos: List[float]):
         sim.setJointTargetPosition(robot.lst_joints[i], init_pos[i])
 
 
-def handler(signum, frame):
-    """ Handler function to stop the simulation. """
-    exit(1)
-
-
-def shutdown(**kwargs):
+async def shutdown(**kwargs):
     """Shutdown the current script and all the related ros process.
 
     args:
         **kwargs (dict[str, str]): Dictionnary of different processes that have to
                                    be shutdown to well quit this script.
     """
-    if kwargs["processes"]:
-        for proc in kwargs["processes"]:
+    if kwargs["lst_processes"]:
+        for proc in reversed(kwargs["lst_processes"]):
             if proc.returncode is None:
+                print(f"Terminating process {proc.pid}...")
                 proc.terminate()
+                await proc.wait()
 
-    if kwargs["parents_roslaunch"]:
-        for par_roslaunch in kwargs["parents_roslaunch"]:
+    if kwargs["lst_parents_roslaunch"]:
+        for par_roslaunch in kwargs["lst_parents_roslaunch"]:
             par_roslaunch.shutdown()
 
-    sys.exit(1)
 
-
-def on_ctrl_c_pressed(_signum: int, _frame: Any):
-    """Keyboard Listener to bypass normal ctrl-c behavior to well shutdown process.
+def on_ctrl_c_pressed(_signum: int, _frame: any):
+    """ Keyboard Listener to bypass normal ctrl-c behavior to well shutdown process.
     """
+    global SHUTDOWN_KEY
     SHUTDOWN_KEY = True
 
 
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, handler)
-    main()
+    asyncio.run(main())
