@@ -144,14 +144,14 @@ if [ "${MODE}" != "connect" ]; then
     # FWD_ARGS+=(--volume="ros_ik_services:/home/ros/ros_ws/src/ros_ik_services:rw")
 
     # Add volume simulation_utils/
-    docker volume rm simulation_utils
-    docker volume create --driver local \
-    --opt type="none" \
-    --opt device="${PWD}/../../simulations" \
-    --opt o="bind" \
-    "simulation_utils"
+    #docker volume rm simulation_utils
+    #docker volume create --driver local \
+    #--opt type="none" \
+    #--opt device="${PWD}/../../simulations" \
+    #--opt o="bind" \
+    #"simulation_utils"
 
-    FWD_ARGS+=(--volume="simulation_utils:/home/ros/simulation_utils:rw")
+    #FWD_ARGS+=(--volume="simulation_utils:/home/ros/simulation_utils:rw")
 
 
     # Setup git config

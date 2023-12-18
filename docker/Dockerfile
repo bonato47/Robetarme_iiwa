@@ -8,7 +8,7 @@ ARG HOST_GID=1000
 ARG GIT_NAME=""
 ARG GIT_EMAIL=""
 ARG USE_SIMD=OFF
-
+ARG NB_CPU_RESIZED=6
 # Tell docker we want to use bash instead of sh in general
 SHELL ["/bin/bash", "-c"]
 
@@ -20,8 +20,8 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cm
 RUN tar -zxvf cmake-${CMAKE_VERSION}.tar.gz
 WORKDIR /home/${USER}/cmake-${CMAKE_VERSION}
 RUN ./bootstrap
-RUN make -j .
-RUN sudo make -j . install
+RUN make -j ${NB_CPU_RESIZED} .
+RUN sudo make -j ${NB_CPU_RESIZED} . install
 
 ### Add the user to the current GID of the host to avoid permisson issues in volumes
 # AICA uses the same name for user and user group
@@ -58,7 +58,7 @@ FROM ros-ws as inverse-kinematics
 # Install qpPOASES
 RUN git clone https://github.com/coin-or/qpOASES.git
 RUN  cd qpOASES&& mkdir build && cd build \
-    && cmake .. && make -j && sudo make install
+    && cmake .. && make -j ${NB_CPU_RESIZED} && sudo make install
 RUN rm qpOASES -r
 
 # Install pinochio and control libraire from epfl-lasa#
@@ -153,29 +153,29 @@ RUN cd kuka_fri && ./waf configure && ./waf && sudo ./waf install
 RUN git clone --recursive https://github.com/costashatz/SpaceVecAlg.git
 RUN cd SpaceVecAlg && mkdir build && cd build \
     && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
-    && make -j && sudo make install
+    && make -j ${NB_CPU_RESIZED} && sudo make install
 
 # Install RBDyn
 RUN git clone --recursive https://github.com/costashatz/RBDyn.git
 RUN cd RBDyn && mkdir build && cd build \
     && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
-    && make -j && sudo make install
+    && make -j ${NB_CPU_RESIZED} && sudo make install
 
 # Install mc_rbdyn_urdf
 RUN git clone --recursive https://github.com/costashatz/mc_rbdyn_urdf.git
 RUN cd mc_rbdyn_urdf && mkdir build && cd build \
     && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF .. \
-    && make -j && sudo make install
+    && make -j ${NB_CPU_RESIZED} && sudo make install
 
 # Install corrade
 RUN git clone https://github.com/mosra/corrade.git
 RUN cd corrade && git checkout 0d149ee9f26a6e35c30b1b44f281b272397842f5 \
-    && mkdir build && cd build && cmake .. && make -j && sudo make install
+    && mkdir build && cd build && cmake .. && make -j ${NB_CPU_RESIZED} && sudo make install
 
 # Install robot_controller
 RUN git clone https://github.com/epfl-lasa/robot_controllers.git
 RUN cd robot_controllers && mkdir build && cd build \
-    && cmake .. && make -j && sudo make install
+    && cmake .. && make -j ${NB_CPU_RESIZED} && sudo make install
 
 # Remove temp files
 RUN sudo ldconfig
