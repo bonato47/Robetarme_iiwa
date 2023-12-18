@@ -1,5 +1,5 @@
 filepath:
-  coppeliasim: ~/CoppeliaSim_Edu_V4_6_0_rev10_Ubuntu20_04/coppeliaSim
+  coppeliasim: ~/CoppeliaSim_Edu_V4_6_0_rev14_Ubuntu20_04/coppeliaSim
   scene: ../testspace/test_first_setup.ttt
   urdf: ../urdf/iiwa7.urdf
 robot:

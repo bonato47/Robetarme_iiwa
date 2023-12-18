@@ -12,7 +12,7 @@ from math import radians
 
 from dataclasses import dataclass, field, asdict
 from typing import List, Tuple
-from coppeliasim_zmqremoteapi_client import RemoteAPIClient
+from coppeliasim_zmqremoteapi_client.asyncio import RemoteAPIClient
 
 VERBOSE = False
 SHUTDOWN_KEY = False
@@ -99,9 +99,13 @@ async def main():
 
     async with RemoteAPIClient() as client:
         sim = await client.require('sim')
+        simURDF = await client.require('simURDF')
         await client.call(
             ("simURDF.import"),
-            (current_dir + yaml_config["filepath"]["urdf"])
+            (
+                current_dir + yaml_config["filepath"]["urdf"],
+                2+9 # bitwise operation to convert non convex shapes
+            )
         )
 
         # setup_simulation(sim, robot, yaml_config)
