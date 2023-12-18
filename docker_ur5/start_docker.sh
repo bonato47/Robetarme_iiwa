@@ -91,47 +91,7 @@ if [ "${MODE}" != "connect" ]; then
     # Other
     FWD_ARGS+=("--privileged")
 
-    # Add volume controller_iiwa
-    docker volume rm controller_iiwa
-    docker volume create --driver local \
-    --opt type="none" \
-    --opt device="${PWD}/../src/controller_iiwa" \
-    --opt o="bind" \
-    "controller_iiwa"
 
-    FWD_ARGS+=(--volume="controller_iiwa:/home/ros/ros_ws/src/controller_iiwa:rw")
-
-
-    # Add volume cobod_arm_study
-    docker volume rm cobod_arm_study
-    docker volume create --driver local \
-    --opt type="none" \
-    --opt device="${PWD}/../src/cobod_arm_study" \
-    --opt o="bind" \
-    "cobod_arm_study"
-
-    FWD_ARGS+=(--volume="cobod_arm_study:/home/ros/ros_ws/src/cobod_arm_study:rw")
-
-
-    # Add volume path_planning
-    docker volume rm path_planning
-    docker volume create --driver local \
-    --opt type="none" \
-    --opt device="${PWD}/../src/path_planning" \
-    --opt o="bind" \
-    "path_planning"
-
-    FWD_ARGS+=(--volume="path_planning:/home/ros/ros_ws/src/path_planning:rw")
-
-
-    docker volume rm simulation_tool
-    docker volume create --driver local \
-    --opt type="none" \
-    --opt device="${PWD}/../src/simulation_tool" \
-    --opt o="bind" \
-    "simulation_tool"
-
-    FWD_ARGS+=(--volume="simulation_tool:/home/ros/ros_ws/src/simulation_tool:rw")
 
     # Add volume ros_ik_services/
     # docker volume rm ros_ik_services

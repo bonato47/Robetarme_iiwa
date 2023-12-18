@@ -121,7 +121,7 @@ vector<double> RobotParameter::getIDynamics(vector<double> vectJoint, VectorXd s
 InverseKinematics::InverseKinematics() {  // Method/function defined inside the class
     baseLink   = "base_link";
     tipLink    = "tool0";
-    URDF_param = "/robot_description";
+    URDF_param = "/ur5/robot_description";
     nJoint    = 6;
     vector<double> vector_0(nJoint, 0.0);
     posJointNext = vector_0;

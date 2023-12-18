@@ -10,6 +10,7 @@
 #include "trajectory_msgs/JointTrajectory.h"
 #include "trajectory_msgs/JointTrajectoryPoint.h"
 #include "controller_manager_msgs/SwitchController.h"
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -35,7 +36,7 @@ class JointStateHandler {
             jointSpeed    = {0,0,0,0,0,0};
             init_joint = true;
         
-            sub_ = nh_.subscribe("/joint_states", 10, &JointStateHandler::jointStateCallback, this);
+            sub_ = nh_.subscribe("/ur5/joint_states", 10, &JointStateHandler::jointStateCallback, this);
         }
 
     void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg) {
@@ -80,13 +81,13 @@ class DsStateHandler {
 
                 loopDS++;
                 if (loopDS >= 0){
-                    speedCartDs = {0.0,0.05,0.05};
+                    speedCartDs = {0.05,0.05,0.05};
                 }if (loopDS >=100){
-                    speedCartDs = {0.0,0.05,-0.05};
+                    speedCartDs = {0.05,0.05,-0.05};
                 }if (loopDS >=200){
-                    speedCartDs = {0.0,-0.05,-0.05};
+                    speedCartDs = {-0.05,-0.05,-0.05};
                 }if (loopDS >=300){
-                    speedCartDs = {0.0,-0.05,0.05};
+                    speedCartDs = {-0.05,-0.05,0.05};
                 }
                 if(loopDS>=400){
                     loopDS = 0;
@@ -127,9 +128,9 @@ int main(int argc, char **argv)
     ros::NodeHandle Nh_;
 
     //ros::Publisher chatter_pub_speed = Nh_.advertise<std_msgs::Float64MultiArray>("/joint_group_vel_controller/command", 1000);
-    ros::Publisher chatter_pub_twist = Nh_.advertise<geometry_msgs::Twist>("/twist_controller/command", 1000);
+    ros::Publisher chatter_pub_twist = Nh_.advertise<geometry_msgs::Twist>("/ur5/twist_controller/command", 1000);
 
-    ros::Publisher chatter_pub_pos = Nh_.advertise<std_msgs::Float64MultiArray>("/joint_group_pos_controller/command", 1000);
+    ros::Publisher chatter_pub_pos = Nh_.advertise<std_msgs::Float64MultiArray>("/ur5/joint_group_pos_controller/command", 1000);
     //ros::Publisher joint_trajectory_pub = Nh_.advertise<trajectory_msgs::JointTrajectory>("/pos_joint_traj_controller/command", 1000);
 
     // ros::Publisher pub_pos     = Nh_.advertise<geometry_msgs::Pose>("/ur5/ee_info/Pose", 1000);
@@ -138,7 +139,7 @@ int main(int argc, char **argv)
     ros::Publisher pub_pos     = Nh_.advertise<geometry_msgs::Pose>("/iiwa/ee_info/Pose", 1000);
     ros::Publisher pub_speed   = Nh_.advertise<geometry_msgs::Twist>("/iiwa/ee_info/Vel", 1000);
 
-    ros::ServiceClient client = Nh_.serviceClient<controller_manager_msgs::SwitchController>("/controller_manager/switch_controller");
+    ros::ServiceClient client = Nh_.serviceClient<controller_manager_msgs::SwitchController>("/ur5/controller_manager/switch_controller");
 
     ros::Publisher visPub = Nh_.advertise<visualization_msgs::Marker>("visualization_marker", 100 );
 
@@ -289,6 +290,19 @@ int main(int argc, char **argv)
         VectorXd twistDesiredEigen = speed_func(poseCartActual, DsHandler.quatDs,DsHandler.speedCartDs);
         twistMarker(twistDesiredEigen,{poseCartActual[4],poseCartActual[5],poseCartActual[6]} ,visPub) ;
 
+
+
+
+        // state_representation::CartesianState wSa("base"); // reference frame is world by default
+        // wSa.set_twist(twistDesiredEigen);
+        // state_representation::CartesianState aSb("base_link", "base");
+        
+        // // for this operation to be valid aSb should be expressed in a (wSa)
+        // // the result is b expressed in world
+        // state_representation::CartesianState wSb = wSa * aSb;
+        
+        // VectorXd twistDesiredEigen_transform = wSb.get_twist();
+
         geometry_msgs::Twist twist_msg;
 
         // Set angular velocity (from quaternion data in the vector)
@@ -297,17 +311,15 @@ int main(int argc, char **argv)
         twist_msg.angular.z = twistDesiredEigen[2];
 
         // // Set linear velocity (from position data in the vector)
-        twist_msg.linear.x = twistDesiredEigen[3];
-        twist_msg.linear.y = twistDesiredEigen[4];
+        twist_msg.linear.x = -twistDesiredEigen[3];
+        twist_msg.linear.y = -twistDesiredEigen[4];
         twist_msg.linear.z = twistDesiredEigen[5];
-
-
 
         // Publish the Twist message
         chatter_pub_twist.publish(twist_msg);
    
         ROS_WARN("desired linear speed: x = %f, y = %f, z = %f",twistDesiredEigen(3), twistDesiredEigen(4), twistDesiredEigen(5));
-        ROS_WARN("desired angular speed: x = %f, y = %f, z = %f",twistDesiredEigen(0), twistDesiredEigen(1), twistDesiredEigen(2));
+        // ROS_WARN("desired angular speed: x = %f, y = %f, z = %f",twistDesiredEigen(0), twistDesiredEigen(1), twistDesiredEigen(2));
 
         // double tol_speed= 0.01;
 
