@@ -67,39 +67,6 @@ RUN git clone https://github.com/epfl-lasa/control-libraries.git --branch v6.3.1
 WORKDIR /home/${USER}/control-libraries/source
 RUN sudo bash install.sh -y
 
-# Install relaxed ik
-RUN curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-RUN sudo apt install -y ros-${ROS_DISTRO}-kdl-parser ros-${ROS_DISTRO}-kdl-parser-py
-RUN python get-pip.py
-RUN rm get-pip.py
-RUN pip install readchar python-fcl scipy PyYaml matplotlib scipy tf
-RUN pip install --upgrade numpy
-
-# Need to be root to use ssh inside docker build
-USER root
-WORKDIR /home/${USER}/ros_ws/src
-RUN --mount=type=ssh git clone git@github.com:lmunier/relaxed_ik_ros1.git
-WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1
-RUN git submodule init
-RUN --mount=type=ssh git submodule update
-
-# Transfer repo back to original user after root clone
-WORKDIR /home/${USER}/ros_ws/src
-RUN chown -R ${USER}:${HOST_GID} relaxed_ik_ros1
-USER ${USER}
-
-# Install rust dependency
-RUN sudo apt install -y build-essential cmake
-RUN sudo chmod 777 ~/.bashrc
-RUN curl --proto '=https' --tlsv1.3 https://sh.rustup.rs -sSf | sh -s -- -y
-RUN sudo chmod 644 ~/.bashrc
-ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
-
-WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1/relaxed_ik_core
-
-# Build relaxed ik
-RUN cargo build
-RUN cargo fix --lib -p relaxed_ik_core --allow-dirty
 
 
 
