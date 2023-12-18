@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Name and base and options
-IMAGE_NAME=epfl-lasa/iiwa_robetarme                           # Chose any name for your image (but make sure to report it in start_docker)
+IMAGE_NAME=epfl-lasa/ur5_robetarme                           # Chose any name for your image (but make sure to report it in start_docker)
 ROS_DISTRO=noetic                                         # Possible: noetic, melodic
 USE_SIMD=OFF                                              # Possible: ON, OFF
 BASE_IMAGE=ghcr.io/aica-technology/ros-ws:${ROS_DISTRO}   # Do not modify
@@ -65,6 +65,7 @@ if [[ "$(docker images -q ${BASE_IMAGE} 2> /dev/null)" != "" ]]; \
 fi
 
 # Setup build flags
+BUILD_FLAGS+=(--build-arg NB_CPU_RESIZED=$(($(nproc) - 2)))
 BUILD_FLAGS+=(--build-arg ROS_DISTRO="${ROS_DISTRO}")
 BUILD_FLAGS+=(--build-arg USE_SIMD=${USE_SIMD})
 BUILD_FLAGS+=(-t "${IMAGE_NAME}")

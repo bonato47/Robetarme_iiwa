@@ -1,5 +1,5 @@
 #!/bin/bash
-IMAGE_NAME="epfl-lasa/iiwa_robetarme"
+IMAGE_NAME="epfl-lasa/ur5_robetarme"
 CONTAINER_NAME="${IMAGE_NAME//[\/.]/-}"
 USERNAME="ros"
 MODE=()

@@ -8,7 +8,7 @@ ARG HOST_GID=1000
 ARG GIT_NAME=""
 ARG GIT_EMAIL=""
 ARG USE_SIMD=OFF
-
+ARG NB_CPU_RESIZED=6
 # Tell docker we want to use bash instead of sh in general
 SHELL ["/bin/bash", "-c"]
 
@@ -20,8 +20,8 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cm
 RUN tar -zxvf cmake-${CMAKE_VERSION}.tar.gz
 WORKDIR /home/${USER}/cmake-${CMAKE_VERSION}
 RUN ./bootstrap
-RUN make -j .
-RUN sudo make -j . install
+RUN make -j  ${NB_CPU_RESIZED} .
+RUN sudo make -j  ${NB_CPU_RESIZED} . install
 
 ### Add the user to the current GID of the host to avoid permisson issues in volumes
 # AICA uses the same name for user and user group
@@ -58,7 +58,7 @@ FROM ros-ws as inverse-kinematics
 # Install qpPOASES
 RUN git clone https://github.com/coin-or/qpOASES.git
 RUN  cd qpOASES&& mkdir build && cd build \
-    && cmake .. && make -j && sudo make install
+    && cmake .. && make -j  ${NB_CPU_RESIZED}&& sudo make install
 RUN rm qpOASES -r
 
 # Install pinochio and control libraire from epfl-lasa#
@@ -101,14 +101,7 @@ WORKDIR /home/${USER}/ros_ws/src/relaxed_ik_ros1/relaxed_ik_core
 RUN cargo build
 RUN cargo fix --lib -p relaxed_ik_core --allow-dirty
 
-# Install gazebo (9 or 11 depending on distro)
-WORKDIR /home/${USER}
-RUN sudo apt update
-RUN if [ "$ROS_DISTRO" = "noetic" ] ; then sudo apt install -y gazebo11 ; fi
-RUN if [ "$ROS_DISTRO" = "melodic" ] ; then sudo apt install -y gazebo9 ; fi
 
-# Install gazebo ros packages
-RUN sudo apt install -y ros-${ROS_DISTRO}-gazebo-ros-pkgs ros-${ROS_DISTRO}-gazebo-ros-control
 
 # Add f/t package for optitrack
 RUN git clone https://github.com/epfl-lasa/net-ft-ros.git
@@ -122,8 +115,20 @@ RUN source /home/${USER}/.bashrc && rosdep update &&  rosdep install -y trac_ik_
 
 # Handle SIMD option
 RUN if [ "${USE_SIMD}" = "ON" ] ; \
- 
+    then export CMAKE_CXX_FLAGS="-march=native -faligned-new" ; fi
+
+
+# Remove temp files
+RUN sudo ldconfig
 RUN rm -rf /tmp/*
+
+
+FROM  iiwa-dependencies as iiwa-simulation
+
+### apt update and clean
+RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
+
+
 
 RUN sudo apt install -y \
     python3-vcstool \
@@ -132,8 +137,7 @@ RUN sudo apt install -y \
     ros-noetic-teleop-twist-keyboard
 
 
-
-FROM  iiwa-dependencies as finalisation
+FROM  iiwa-simulation as finalisation
 
 # Give bashrc back to user
 WORKDIR /home/${USER}
@@ -155,4 +159,5 @@ RUN source /home/${USER}/.bashrc && catkin_make;
 ### Final apt clean
 RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
 
-
+RUN echo export ROS_MASTER_URI=http://localhost:11311 >> ~/.bashrc
+RUN echo export ROS_IP=localhost >> ~/.bashrc
