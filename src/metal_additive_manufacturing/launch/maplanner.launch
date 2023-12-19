@@ -1,4 +1,4 @@
 <?xml version="1.0"?>
 <launch>
-    <node pkg="metal_additive_manufacturing" name="metal_additive_manufacturing" type="metal_additive_manufacturing" output="screen"/>
+    <node pkg="metal_additive_manufacturing" name="maplanner" type="maplanner" output="screen"/>
 </launch>

@@ -42,15 +42,26 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   include
+  libs
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME}
+set(PLANNER "maplanner")
+add_executable(${PLANNER}
   src/maplanner.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PLANNER}
+  ${catkin_LIBRARIES} ${Boost_LIBRARIES}
+)
+
+set(WP_EXTRACTION "wp_extraction")
+add_executable(${WP_EXTRACTION}
+  src/waypoints_extraction.cpp
+)
+
+target_link_libraries(${WP_EXTRACTION}
   ${catkin_LIBRARIES} ${Boost_LIBRARIES}
 )
 

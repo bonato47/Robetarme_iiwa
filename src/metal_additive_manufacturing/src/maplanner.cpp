@@ -13,9 +13,9 @@ int main() {
 void test(msm::back::state_machine<Planner> &p) {
   p.start();
   p.process_event(Start());
-  p.process_event(CadReceived());
-  p.process_event(CadLoaded());
-  p.process_event(WaypointsExtracted());
-  p.process_event(WaypointsSent());
-  p.process_event(Start());
+  p.process_event(WPReceived());
+  p.process_event(WPInterpolated());
+  p.process_event(BadFeasibility());
+  p.process_event(TrajPlanned());
+  p.process_event(TrajSent());
 }
