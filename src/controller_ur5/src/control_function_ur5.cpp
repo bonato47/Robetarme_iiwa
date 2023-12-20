@@ -24,7 +24,7 @@ RobotParameter::RobotParameter(){
     //joint_names = {"shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"};
 
     //joint_names = {"elbow_joint", "shoulder_lift_joint", "shoulder_pan_joint", "wrist_1_joint", "wrist_2_joint", "wrist_3_joint"};
-    reference_frame = "base_link";
+    reference_frame = "base";
     path_urdf = "/home/ros/ros_ws/src/controller_ur5/urdf/ur5.urdf";
     nJoint    = 6;
 

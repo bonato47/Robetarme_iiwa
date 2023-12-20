@@ -78,20 +78,38 @@ class DsStateHandler {
                 quatDs = {msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w};
                 //speedCartDs={msg->position.x,msg->position.y,msg->position.z};
                 init_Ds = false;
-
+                double speed = 0.1;
+                double step =200;
+                double rad = 3.14 * loopDS/step ;
                 loopDS++;
+
                 if (loopDS >= 0){
-                    speedCartDs = {0.05,0.05,0.05};
-                }if (loopDS >=100){
-                    speedCartDs = {0.05,0.05,-0.05};
-                }if (loopDS >=200){
-                    speedCartDs = {-0.05,-0.05,-0.05};
-                }if (loopDS >=300){
-                    speedCartDs = {-0.05,-0.05,0.05};
+                    speedCartDs = {speed,0,0.0};
+                    
+                }if (loopDS >=step){
+                    speedCartDs = {0.0,0.0,-speed};
+                }if (loopDS >=2*step){
+                    speedCartDs = {-speed,-0.0,-0.0};
+                }if (loopDS >=3*step){
+                    speedCartDs = {-0.00,-0.0,-speed};
+                }                
+                if (loopDS >=4*step){
+                    speedCartDs = {speed,-0.0,-0.0};
                 }
-                if(loopDS>=400){
-                    loopDS = 0;
+                if(loopDS>=5*step){
+                    speedCartDs = {0.0,0.0,0.0};
                 }
+
+                if (loopDS >= 0){
+                    speedCartDs = {cos(rad)*speed,0,sin(rad)*speed};
+                }
+                if(loopDS>=1000){
+                    speedCartDs = {0.0,0.0,0.0};
+                }
+
+
+
+
 
             } else {
                 ROS_WARN("Received joint positions are empty.");
@@ -109,7 +127,7 @@ int main(int argc, char **argv)
     //string whichSimu = "Ur";
     double pi = 3.14;
     //choose the time step for ros
-    double delta_t = 0.1;
+    double delta_t = 0.01;
     //choose the tintegration time for the next pos 
     double integrationTime = 0.05;
     // choose the tolerance to the new joints
@@ -129,7 +147,6 @@ int main(int argc, char **argv)
 
     //ros::Publisher chatter_pub_speed = Nh_.advertise<std_msgs::Float64MultiArray>("/joint_group_vel_controller/command", 1000);
     ros::Publisher chatter_pub_twist = Nh_.advertise<geometry_msgs::Twist>("/ur5/twist_controller/command", 1000);
-
     ros::Publisher chatter_pub_pos = Nh_.advertise<std_msgs::Float64MultiArray>("/ur5/joint_group_pos_controller/command", 1000);
     //ros::Publisher joint_trajectory_pub = Nh_.advertise<trajectory_msgs::JointTrajectory>("/pos_joint_traj_controller/command", 1000);
 
@@ -173,7 +190,7 @@ int main(int argc, char **argv)
 
     //select goal
     //vector<double> initialJointPos= {-1.75,-1.0,-1.3,-0.8,0.15,0}; //
-    vector<double> initialJointPos= {3.14,-1.83,1.57,-0.0,1.57,0.0}; //
+    vector<double> initialJointPos= {1.57,-1.83,1.57,-0.0,1.57,0.0}; //
     // connect to rosservice position control
     // Create a service request
     controller_manager_msgs::SwitchController srv;
@@ -194,7 +211,7 @@ int main(int argc, char **argv)
     }
         
     // make a spline to goal
-    int interpSize= 20;
+    int interpSize= 200;
     vector<vector<double>> joint_positions = interpolatePath(JsHandler.jointPosition, initialJointPos,interpSize);
 
 
@@ -273,6 +290,7 @@ int main(int argc, char **argv)
         loop_rate.sleep(); 
         cin >> UserInput;
     }
+    DsHandler.loopDS=0;
 
     std_msgs::Float64MultiArray nextSpeedJointMsg;
     while (ros::ok()){
@@ -306,9 +324,9 @@ int main(int argc, char **argv)
         geometry_msgs::Twist twist_msg;
 
         // Set angular velocity (from quaternion data in the vector)
-        twist_msg.angular.x = twistDesiredEigen[0];
-        twist_msg.angular.y = twistDesiredEigen[1];
-        twist_msg.angular.z = twistDesiredEigen[2];
+        twist_msg.angular.x = 0;//twistDesiredEigen[0];
+        twist_msg.angular.y = 0;//twistDesiredEigen[1];
+        twist_msg.angular.z = 0;//twistDesiredEigen[2];
 
         // // Set linear velocity (from position data in the vector)
         twist_msg.linear.x = -twistDesiredEigen[3];
