@@ -198,20 +198,21 @@ FROM  iiwa-developpement as iiwa-simulation
 ### apt update and clean
 RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
 
-ARG coppeliasim_version="CoppeliaSim_Edu_V4_6_0_rev10_Ubuntu20_04.tar.xz"
+ARG coppeliasim_version="V4_6_0_rev14"
+ARG coppeliasim_file="CoppeliaSim_Edu_${coppeliasim_version}_Ubuntu20_04.tar.xz"
 WORKDIR /home/${USER}
-RUN wget https://www.coppeliarobotics.com/files/${coppeliasim_version}
-RUN tar -xf ${coppeliasim_version}
-RUN rm ${coppeliasim_version}
+RUN wget https://www.coppeliarobotics.com/files/${coppeliasim_version}/${coppeliasim_file}
+RUN tar -xf ${coppeliasim_file}
+RUN rm ${coppeliasim_file}
 
 # Add zmq remote controle api plugin
-RUN python3 -m pip install coppeliasim-zmqremoteapi-client
-RUN pip install cbor pyzmq
+RUN python3 -m pip install -U coppeliasim-zmqremoteapi-client
+RUN python3 -m pip install -U cbor pyzmq
 
 # Add coppeliasim to bashrc but has to be sourced first to fill PYTHONPATH
 # Use of && since a new terminal is instanciated for each RUN command
 USER root
-RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/${coppeliasim_version}/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
+RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/${coppeliasim_file}/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
 USER ${USER}
 
 RUN sudo apt update -y --fix-missing

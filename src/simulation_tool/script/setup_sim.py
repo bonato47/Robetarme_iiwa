@@ -100,13 +100,15 @@ async def main():
     async with RemoteAPIClient() as client:
         sim = await client.require('sim')
         simURDF = await client.require('simURDF')
+
         await client.call(
             ("simURDF.import"),
             (
                 current_dir + yaml_config["filepath"]["urdf"],
-                2+9 # bitwise operation to convert non convex shapes
+                int(0b01000001100) # bitwise operation
             )
         )
+        await attach_script_to_object(sim, None, yaml_config["filepath"]["lua_control"])
 
         # setup_simulation(sim, robot, yaml_config)
 
@@ -213,6 +215,29 @@ async def send_command_bash(bash_command: List[str]) -> asyncio.subprocess.Proce
         (asyncio.subprocess.Process): Process currently running after calling this function.
     """
     return await asyncio.create_subprocess_exec(*bash_command)
+
+
+async def attach_script_to_object(sim, objectHandle, scriptPath):
+    """ Read the script content from the file and attach it to the object.
+
+    args:
+        sim (any): CoppeliaSim simulated client.
+        objectHandle (int): Handle of the object to attach the script to.
+        scriptPath (str): Path to the script file.
+    """
+    lua_file_content = ""
+    dummyHandle = await sim.createDummy(0.1)
+    child_script_handle = await sim.addScript(sim.scripttype_childscript)
+    await sim.associateScriptWithObject(child_script_handle, dummyHandle)
+
+    with open(scriptPath, "r") as lua_control:
+        lua_file_content = lua_control.read()
+
+    await sim.setScriptStringParam(
+        child_script_handle,
+        sim.scriptstringparam_text,
+        lua_file_content
+    )
 
 
 def link_joints(robot: Robot, sim: any):

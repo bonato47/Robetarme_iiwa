@@ -2,5 +2,6 @@ filepath:
   coppeliasim: ~/CoppeliaSim_Edu_V4_6_0_rev14_Ubuntu20_04/coppeliaSim
   scene: ../testspace/test_first_setup.ttt
   urdf: ../urdf/iiwa7.urdf
+  lua_control: ../lua/kuka_control.lua
 robot:
   init_pos: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
