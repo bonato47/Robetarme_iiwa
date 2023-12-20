@@ -10,7 +10,7 @@ from dataclasses import dataclass, field, asdict
 from coppeliasim_zmqremoteapi_client.asyncio import RemoteAPIClient
 
 
-VERBOSE = False
+VERBOSE = True
 SHUTDOWN_KEY = False
 current_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
 
@@ -18,11 +18,15 @@ current_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
 @dataclass()
 class Robot():
     """ Robot dataclass. """
+    name = ""
     handle: int = 0
     world_link: str = ""
     nb_dofs: int = 0
+
     lst_joints: List[int] = field(default_factory=list)
     lst_joints_name: List[str] = field(default_factory=list)
+    lst_links: List[int] = field(default_factory=list)
+    lst_links_name: List[str] = field(default_factory=list)
 
     def print(self):
         """ Print the robot informations. """
@@ -43,6 +47,9 @@ async def main():
     # Read YAML and URDF files
     yaml_config = read_yaml_file(parse_input_arguments())
     robot = read_urdf(current_dir + yaml_config["filepath"]["urdf"])
+
+    if VERBOSE:
+        robot.print()
 
     # Launch roscore and coppeliasim
     lst_processes.append(await send_command_bash(["roscore"]))
@@ -65,21 +72,7 @@ async def main():
         simURDF = await client.require('simURDF')
 
         await sim.loadScene(current_dir + yaml_config["filepath"]["scene"])
-        await client.call(
-            ("simURDF.import"),
-            (
-                current_dir + yaml_config["filepath"]["urdf"],
-                int(0b01000001100),  # bitwise operation
-            )
-        )
-
-        robot.handle = await sim.getObject(robot.world_link)
-        await attach_script_to_object(
-            sim,
-            robot.handle,
-            yaml_config["filepath"]["lua_control"]
-        )
-        await setup_simulation(sim, robot, yaml_config["robot"]["init_pos"])
+        await setup_robot(client, sim, robot, yaml_config)
 
         print("Simulation ready to start")
         while not SHUTDOWN_KEY:
@@ -145,7 +138,8 @@ def read_urdf(str_urdf: str) -> Robot:
     urdf_tree = ET.parse(str_urdf)
 
     # Fill the robot world link name
-    new_robot.world_link = "/" + urdf_tree.find("link").attrib["name"] + "_visual"
+    new_robot.world_link = "/" + \
+        urdf_tree.find("link").attrib["name"] + "_visual"
 
     # Fill the robot joints name
     nb_dofs = 0
@@ -162,6 +156,12 @@ def read_urdf(str_urdf: str) -> Robot:
 
     new_robot.nb_dofs = nb_dofs
 
+    # Fill the robot links name
+    for link in urdf_tree.findall(".//link"):
+        link_resp = link.find("collision")
+        if link_resp is not None:
+            new_robot.lst_links_name.append(link.attrib["name"] + "_respondable")
+
     return new_robot
 
 
@@ -177,20 +177,54 @@ async def send_command_bash(bash_command: List[str]) -> asyncio.subprocess.Proce
     return await asyncio.create_subprocess_exec(*bash_command)
 
 
-async def attach_script_to_object(sim, object_handle, script_path):
+async def attach_script_to_object(sim, robot: Robot, control_type: str):
     """ Read the script content from the file and attach it to the object.
 
     args:
         sim (any): CoppeliaSim simulated client.
-        object_handle (int): Handle of the object to attach the script to.
-        script_path (str): Path to the script file.
+        robot (Robot): Robot dataclass.
+        control_type (str): Control type to be used for the robot.
     """
     lua_file_content = ""
     child_script_handle = await sim.addScript(sim.scripttype_childscript)
-    await sim.associateScriptWithObject(child_script_handle, object_handle)
+    await sim.associateScriptWithObject(child_script_handle, robot.handle)
 
-    with open(script_path, "r") as lua_control:
-        lua_file_content = lua_control.read()
+    # Fill the lua file content with the different scriptable parts
+    with open("../lua/common_part.lua", "r") as lua_common:
+        lua_file_content += lua_common.read().replace("CONTROLLER_TYPE", control_type.lower())
+
+    str_joints_name = "jointNames = {"
+    str_joints_name += ", ".join([f"'{j}'" for j in robot.lst_joints_name]) + "}"
+
+    str_joints_handle = "jointHandles = {"
+    str_joints_handle += ", ".join([f"'{j}'" for j in robot.lst_joints]) + "}"
+
+    str_links_handle = "linkHandles = {"
+    str_links_handle += ", ".join([f"'{j}'" for j in robot.lst_links]) + "}"
+
+    with open("../lua/get_handles.lua", "r") as lua_handles:
+        str_get_handles = lua_handles.read()
+
+    str_get_handles = str_get_handles.replace("JOINT_NAMES", str_joints_name)
+    str_get_handles = str_get_handles.replace(
+        "JOINT_HANDLES", str_joints_handle
+    )
+    str_get_handles = str_get_handles.replace(
+        "LINK_HANDLES", str_links_handle
+    )
+    str_get_handles = str_get_handles.replace(
+        "BASE_HANDLE_NAME",
+        "'" + robot.world_link + "/" + robot.lst_links_name[0] + "'"
+    )
+    str_get_handles = str_get_handles.replace(
+        "EE_HANDLE_NAME",
+        "'" + robot.world_link + "/" + robot.lst_links_name[0] + "'"
+    )
+
+    lua_file_content += str_get_handles
+
+    with open("../lua/set_cmd.lua", "r") as lua_cmd:
+        lua_file_content += lua_cmd.read().replace("CMD", control_type)
 
     await sim.setScriptStringParam(
         child_script_handle,
@@ -199,35 +233,55 @@ async def attach_script_to_object(sim, object_handle, script_path):
     )
 
 
-async def link_joints(sim: any, robot: Robot):
-    """ Link the joint to the robot.
-
-    args:
-        sim (any): CoppeliaSim simulated client.
-        robot (Robot): Robot dataclass.
-    """
-    for j in robot.lst_joints_name:
-        robot.lst_joints.append(await sim.getObject(robot.world_link + "/" + j))
-
-
-async def setup_simulation(sim: any, robot: Robot, init_pos: List[float]):
+async def setup_robot(client: any, sim: any, robot: Robot, config: Dict[str, str]):
     """ Setup the simulation using the parameters passed in input.
 
     args:
+        client (any): CoppeliaSim python zero mq client.
         sim (any): CoppeliaSim simulated client.
         robot (Robot): Robot dataclass.
-        init_pos (List[float]): Initial position of the robot.
+        config (dict[str, str]): YAML configuration as a python dictionnary.
     """
-    await link_joints(sim, robot)
+    robot.name = await client.call(
+        ("simURDF.import"),
+        (
+            current_dir + config["filepath"]["urdf"],
+            int(0b01000001100),  # bitwise operation
+        )
+    )
+
+    for j in robot.lst_joints_name:
+        robot.lst_joints.append(await sim.getObject(robot.world_link + "/" + j))
+
+    for l in robot.lst_links_name:
+        robot.lst_links.append(await sim.getObject(robot.world_link + "/" + l))
 
     for i, j in enumerate(robot.lst_joints):
         await sim.setJointMode(j, sim.jointmode_dynamic, 0)
-        await sim.setObjectInt32Param(
-            j, sim.jointintparam_dynctrlmode, sim.jointdynctrl_position
-        )
+        await sim.setJointPosition(j, config["robot"]["init_pos"][i])
 
-        await sim.setJointPosition(j, init_pos[i])
-        await sim.setJointTargetPosition(j, init_pos[i])
+        if config["robot"]["control_type"] == "Position":
+            await sim.setObjectInt32Param(
+                j, sim.jointintparam_dynctrlmode, sim.jointdynctrl_position
+            )
+            await sim.setJointTargetPosition(j, config["robot"]["init_cmd"][i])
+        elif config["robot"]["control_type"] == "Velocity":
+            await sim.setObjectInt32Param(
+                j, sim.jointintparam_dynctrlmode, sim.jointdynctrl_velocity
+            )
+            await sim.setJointTargetVelocity(j, config["robot"]["init_cmd"][i])
+        elif config["robot"]["control_type"] == "Force":
+            await sim.setObjectInt32Param(
+                j, sim.jointintparam_dynctrlmode, sim.jointdynctrl_force
+            )
+            await sim.setJointForce(j, config["robot"]["init_cmd"][i])
+
+    robot.handle = await sim.getObject(robot.world_link)
+    await attach_script_to_object(
+        sim,
+        robot,
+        config["robot"]["control_type"]
+    )
 
 
 async def shutdown(**kwargs):
