@@ -4,4 +4,4 @@ filepath:
   urdf: ../urdf/iiwa7.urdf
   lua_control: ../lua/kuka_control.lua
 robot:
-  init_pos: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  init_pos: [10.0, 40.0, 4.0, 0.0, 0.0, 0.0, 0.0]

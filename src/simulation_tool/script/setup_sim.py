@@ -1,18 +1,14 @@
 import os
-import sys
 import yaml
 import xml.etree.ElementTree as ET
-import time
 import signal
 import argparse
 import asyncio
 
-from typing import Dict
-from math import radians
-
+from typing import Dict, List
 from dataclasses import dataclass, field, asdict
-from typing import List, Tuple
 from coppeliasim_zmqremoteapi_client.asyncio import RemoteAPIClient
+
 
 VERBOSE = False
 SHUTDOWN_KEY = False
@@ -22,42 +18,11 @@ current_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
 @dataclass()
 class Robot():
     """ Robot dataclass. """
-    name: str = ""
+    handle: int = 0
+    world_link: str = ""
     nb_dofs: int = 0
-    max_limits: Tuple[float, float] = (radians(-180), radians(180))  # [rad]
-    max_vel: float = radians(90)  # [rad/s]
-    max_acc: float = 5.0  # [rad/s^2]
-    max_jerk: float = 0.5  # [rad/s^3]
-    max_torque: float = 80.0  # [Nm]
-
     lst_joints: List[int] = field(default_factory=list)
     lst_joints_name: List[str] = field(default_factory=list)
-    lst_joints_type: List[str] = field(default_factory=list)
-
-    lst_limits: List[Tuple[float, float]] = field(
-        default_factory=list
-    )  # [rad]
-    lst_max_vel: List[float] = field(default_factory=list)  # [rad/s]
-    lst_max_acc: List[float] = field(default_factory=list)  # [rad/s^2]
-    lst_max_jerk: List[float] = field(default_factory=list)  # [rad/s^3]
-    lst_max_torque: List[float] = field(default_factory=list)  # [Nm]
-
-    def init_default(self):
-        """ Init list with default values if they are empty. """
-        if not self.lst_limits:
-            self.lst_limits = [self.max_limits] * self.nb_dofs
-
-        if not self.lst_max_vel:
-            self.lst_max_vel = [self.max_vel] * self.nb_dofs
-
-        if not self.lst_max_acc:
-            self.lst_max_acc = [self.max_acc] * self.nb_dofs
-
-        if not self.lst_max_jerk:
-            self.lst_max_jerk = [self.max_jerk] * self.nb_dofs
-
-        if not self.lst_max_torque:
-            self.lst_max_torque = [self.max_torque] * self.nb_dofs
 
     def print(self):
         """ Print the robot informations. """
@@ -75,20 +40,17 @@ async def main():
     # Bind ctrl + c command to shutdown function
     signal.signal(signal.SIGINT, on_ctrl_c_pressed)
 
-    # Read YAML file
+    # Read YAML and URDF files
     yaml_config = read_yaml_file(parse_input_arguments())
-
     robot = read_urdf(current_dir + yaml_config["filepath"]["urdf"])
-    robot.init_default()
 
-    if VERBOSE:
-        robot.print()
-
+    # Launch roscore and coppeliasim
     lst_processes.append(await send_command_bash(["roscore"]))
     await asyncio.sleep(1)
 
     try:
-        script_path = os.path.expanduser(yaml_config["filepath"]["coppeliasim"])
+        script_path = os.path.expanduser(
+            yaml_config["filepath"]["coppeliasim"])
         lst_processes.append(await send_command_bash([script_path]))
     except:
         print("CoppeliaSim not found. Please check the path.")
@@ -97,20 +59,27 @@ async def main():
             lst_parents_roslaunch=lst_parents_roslaunch
         )
 
+    # Set up the simulation environment with the right robot
     async with RemoteAPIClient() as client:
         sim = await client.require('sim')
         simURDF = await client.require('simURDF')
 
+        await sim.loadScene(current_dir + yaml_config["filepath"]["scene"])
         await client.call(
             ("simURDF.import"),
             (
                 current_dir + yaml_config["filepath"]["urdf"],
-                int(0b01000001100) # bitwise operation
+                int(0b01000001100),  # bitwise operation
             )
         )
-        await attach_script_to_object(sim, None, yaml_config["filepath"]["lua_control"])
 
-        # setup_simulation(sim, robot, yaml_config)
+        robot.handle = await sim.getObject(robot.world_link)
+        await attach_script_to_object(
+            sim,
+            robot.handle,
+            yaml_config["filepath"]["lua_control"]
+        )
+        await setup_simulation(sim, robot, yaml_config["robot"]["init_pos"])
 
         print("Simulation ready to start")
         while not SHUTDOWN_KEY:
@@ -170,16 +139,17 @@ def read_urdf(str_urdf: str) -> Robot:
         str_urdf (str): Path to the URDF file.
 
     returns:
-        Robot: Robot dataclass containing all the informations from URDF file.
+        Robot: Robot dataclass containing information from URDF file.
     """
     new_robot = Robot()
-    robot = ET.parse(str_urdf).getroot()
+    urdf_tree = ET.parse(str_urdf)
 
-    # Extract information from the URDF
-    new_robot.name = robot.attrib["name"]
+    # Fill the robot world link name
+    new_robot.world_link = "/" + urdf_tree.find("link").attrib["name"] + "_visual"
 
+    # Fill the robot joints name
     nb_dofs = 0
-    for joint in robot.findall(".//joint"):
+    for joint in urdf_tree.findall(".//joint"):
         try:
             joint.attrib["type"]
         except:
@@ -189,16 +159,6 @@ def read_urdf(str_urdf: str) -> Robot:
         if joint_limit is not None:
             nb_dofs += 1
             new_robot.lst_joints_name.append(joint.attrib["name"])
-            new_robot.lst_joints_type.append(joint.attrib["type"])
-
-            new_robot.lst_limits.append((
-                float(joint_limit.attrib["lower"]),
-                float(joint_limit.attrib["upper"])
-            ))
-            new_robot.lst_max_vel.append(float(joint_limit.attrib["velocity"]))
-            new_robot.lst_max_torque.append(
-                float(joint_limit.attrib["effort"])
-            )
 
     new_robot.nb_dofs = nb_dofs
 
@@ -217,20 +177,19 @@ async def send_command_bash(bash_command: List[str]) -> asyncio.subprocess.Proce
     return await asyncio.create_subprocess_exec(*bash_command)
 
 
-async def attach_script_to_object(sim, objectHandle, scriptPath):
+async def attach_script_to_object(sim, object_handle, script_path):
     """ Read the script content from the file and attach it to the object.
 
     args:
         sim (any): CoppeliaSim simulated client.
-        objectHandle (int): Handle of the object to attach the script to.
-        scriptPath (str): Path to the script file.
+        object_handle (int): Handle of the object to attach the script to.
+        script_path (str): Path to the script file.
     """
     lua_file_content = ""
-    dummyHandle = await sim.createDummy(0.1)
     child_script_handle = await sim.addScript(sim.scripttype_childscript)
-    await sim.associateScriptWithObject(child_script_handle, dummyHandle)
+    await sim.associateScriptWithObject(child_script_handle, object_handle)
 
-    with open(scriptPath, "r") as lua_control:
+    with open(script_path, "r") as lua_control:
         lua_file_content = lua_control.read()
 
     await sim.setScriptStringParam(
@@ -240,48 +199,35 @@ async def attach_script_to_object(sim, objectHandle, scriptPath):
     )
 
 
-def link_joints(robot: Robot, sim: any):
+async def link_joints(sim: any, robot: Robot):
     """ Link the joint to the robot.
 
     args:
-        robot (Robot): Robot dataclass.
         sim (any): CoppeliaSim simulated client.
+        robot (Robot): Robot dataclass.
     """
-    for i in range(robot.nb_dofs):
-        robot.lst_joints.append(sim.getObject("./joint", {'index': i}))
+    for j in robot.lst_joints_name:
+        robot.lst_joints.append(await sim.getObject(robot.world_link + "/" + j))
 
 
-def setup_simulation(sim: any, robot: Robot, config: Dict[str, str]):
+async def setup_simulation(sim: any, robot: Robot, init_pos: List[float]):
     """ Setup the simulation using the parameters passed in input.
 
     args:
         sim (any): CoppeliaSim simulated client.
         robot (Robot): Robot dataclass.
-        config (dict[str, str]): Simulation configuration dictionnary.
+        init_pos (List[float]): Initial position of the robot.
     """
-    sim.loadScene(current_dir + config["filepath"]["scene"])
-    link_joints(robot, sim)
+    await link_joints(sim, robot)
 
-    for i in range(robot.nb_dofs):
-        robot_joint = robot.lst_joints[i]
-
-        sim.setJointInterval(
-            robot_joint, False, [
-                robot.lst_limits[i][0], robot.lst_limits[i][1] -
-                robot.lst_limits[i][0]
-            ]
+    for i, j in enumerate(robot.lst_joints):
+        await sim.setJointMode(j, sim.jointmode_dynamic, 0)
+        await sim.setObjectInt32Param(
+            j, sim.jointintparam_dynctrlmode, sim.jointdynctrl_position
         )
 
-        sim.setJointMode(robot_joint, sim.jointmode_dynamic, 0)
-        sim.setObjectInt32Param(
-            robot_joint, sim.jointintparam_dynctrlmode, sim.jointdynctrl_position)
-
-
-def init_robot_pos(sim: any, robot: Robot, init_pos: List[float]):
-    """ Initialize the robot position. """
-    for i in range(robot.nb_dofs):
-        sim.setJointPosition(robot.lst_joints[i], init_pos[i])
-        sim.setJointTargetPosition(robot.lst_joints[i], init_pos[i])
+        await sim.setJointPosition(j, init_pos[i])
+        await sim.setJointTargetPosition(j, init_pos[i])
 
 
 async def shutdown(**kwargs):
