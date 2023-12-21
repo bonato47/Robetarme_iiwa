@@ -249,6 +249,9 @@ RUN if [ "${USE_SIMD}" = "ON" ] ; \
 
 FROM  finalisation as catkin-make
 
+### Install dependencies
+RUN sudo apt install -y libcgal-dev
+
 ### Build ros workspace
 WORKDIR /home/${USER}/ros_ws
 RUN source /home/${USER}/.bashrc && rosdep install --from-paths src --ignore-src -r -y
