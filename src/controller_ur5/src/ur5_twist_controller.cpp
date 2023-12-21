@@ -76,33 +76,33 @@ class DsStateHandler {
         if (msg){
 
                 quatDs = {msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w};
-                //speedCartDs={msg->position.x,msg->position.y,msg->position.z};
+                speedCartDs={msg->position.x,msg->position.y,msg->position.z};
                 init_Ds = false;
                 double speed = 0.1;
                 double step =200;
                 double rad = 3.14 * loopDS/step ;
                 loopDS++;
 
-                if (loopDS >= 0){
-                    speedCartDs = {speed,0,0.0};
+                // if (loopDS >= 0){
+                //     speedCartDs = {speed,0,0.0};
                     
-                }if (loopDS >=step){
-                    speedCartDs = {0.0,0.0,-speed};
+                // }if (loopDS >=step){
+                //     speedCartDs = {0.0,0.0,-speed};
                     
-                }if (loopDS >=step){
-                    speedCartDs = {0.0,0.0,-speed};
-                    speedCartDs = {0.0,0.0,-speed};
-                }if (loopDS >=2*step){
-                    speedCartDs = {-speed,-0.0,-0.0};
-                }if (loopDS >=3*step){
-                    speedCartDs = {-0.00,-0.0,-speed};
-                }                
-                if (loopDS >=4*step){
-                    speedCartDs = {speed,-0.0,-0.0};
-                }
-                if(loopDS>=5*step){
-                    speedCartDs = {0.0,0.0,0.0};
-                }
+                // }if (loopDS >=step){
+                //     speedCartDs = {0.0,0.0,-speed};
+                //     speedCartDs = {0.0,0.0,-speed};
+                // }if (loopDS >=2*step){
+                //     speedCartDs = {-speed,-0.0,-0.0};
+                // }if (loopDS >=3*step){
+                //     speedCartDs = {-0.00,-0.0,-speed};
+                // }                
+                // if (loopDS >=4*step){
+                //     speedCartDs = {speed,-0.0,-0.0};
+                // }
+                // if(loopDS>=5*step){
+                //     speedCartDs = {0.0,0.0,0.0};
+                // }
 
                 // if (loopDS >= 0){
                 //     speedCartDs = {cos(rad)*speed,0,sin(rad)*speed};
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
     //string whichSimu = "Ur";
     double pi = 3.14;
     //choose the time step for ros
-    double delta_t = 0.1;
+    double delta_t = 0.001;
     //choose the tintegration time for the next pos 
     double integrationTime = 0.05;
     // choose the tolerance to the new joints
@@ -215,7 +215,7 @@ int main(int argc, char **argv)
     }
         
     // make a spline to goal
-    int interpSize= 200;
+    int interpSize= 4000;
     vector<vector<double>> joint_positions = interpolatePath(JsHandler.jointPosition, initialJointPos,interpSize);
 
 
@@ -267,7 +267,7 @@ int main(int argc, char **argv)
 
     vector<double> nextSpeedJoint = RobotUr5.getIDynamics(JsHandler.jointPosition,twistDesiredEigen);
 
-    // ROS_WARN("actualquat : x = %f, y = %f, z = %f,w = %f",poseCartActual[0],poseCartActual[1],poseCartActual[2],poseCartActual[3]);
+    ROS_WARN("actualquat : x = %f, y = %f, z = %f,w = %f",poseCartActual[0],poseCartActual[1],poseCartActual[2],poseCartActual[3]);
     // ROS_WARN("desired linear speed: x = %f, y = %f, z = %f",twistDesiredEigen(3), twistDesiredEigen(4), twistDesiredEigen(5));
     // ROS_WARN("desired angular speed: x = %f, y = %f, z = %f",twistDesiredEigen(0), twistDesiredEigen(1), twistDesiredEigen(2));
     // ROS_WARN("The robot wants to go with join speed: j1 = %f, j2 = %f, j3 = %f, j4 = %f, j5 = %f, j6 = %f", nextSpeedJoint[0],nextSpeedJoint[1],nextSpeedJoint[2],nextSpeedJoint[3],nextSpeedJoint[4],nextSpeedJoint[5]);
@@ -331,9 +331,9 @@ int main(int argc, char **argv)
         geometry_msgs::Twist twist_msg;
 
         // Set angular velocity (from quaternion data in the vector)
-        twist_msg.angular.x = 0;//twistDesiredEigen[0];
-        twist_msg.angular.y = 0;//twistDesiredEigen[1];
-        twist_msg.angular.z = 0;//twistDesiredEigen[2];
+        twist_msg.angular.x = twistDesiredEigen[0];
+        twist_msg.angular.y = twistDesiredEigen[1];
+        twist_msg.angular.z = twistDesiredEigen[2];
 
         // // Set linear velocity (from position data in the vector)
         twist_msg.linear.x = twistDesiredEigen[3];
@@ -343,7 +343,8 @@ int main(int argc, char **argv)
 
         // Publish the Twist message
         chatter_pub_twist.publish(twist_msg);
-   
+        update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);
+
         ROS_WARN("desired linear speed: x = %f, y = %f, z = %f",twistDesiredEigen(3), twistDesiredEigen(4), twistDesiredEigen(5));
         // ROS_WARN("desired angular speed: x = %f, y = %f, z = %f",twistDesiredEigen(0), twistDesiredEigen(1), twistDesiredEigen(2));
 

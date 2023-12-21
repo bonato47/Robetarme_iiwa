@@ -65,7 +65,7 @@ geometry_msgs::Twist RobotParameter::getTwist(vector<double> posJoint, vector<do
     }
 
     VectorXd result = jacMatrix * speedJointEigen;
-    
+
 
     // Populate linear velocities
     twist.linear.x = result(0);
@@ -349,7 +349,7 @@ void twistMarker(VectorXd twistDesiredEigen,vector<double> pos, ros::Publisher& 
 
 
     // Linear twist arrow marker
-    linear_marker.header.frame_id = "base_link"; // Set your desired frame ID
+    linear_marker.header.frame_id = "base"; // Set your desired frame ID
     linear_marker.header.stamp = ros::Time();
     linear_marker.ns = "twist";
     linear_marker.id = 0;
