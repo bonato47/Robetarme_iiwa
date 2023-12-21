@@ -4,10 +4,13 @@ import xml.etree.ElementTree as ET
 import signal
 import argparse
 import asyncio
+import rospy
+import roslib; roslib.load_manifest('urdfdom_py')
 
 from typing import Dict, List
 from dataclasses import dataclass, field, asdict
 from coppeliasim_zmqremoteapi_client.asyncio import RemoteAPIClient
+from urdf_parser_py.urdf import URDF
 
 
 VERBOSE = True
@@ -282,6 +285,9 @@ async def setup_robot(client: any, sim: any, robot: Robot, config: Dict[str, str
         robot,
         config["robot"]["control_type"]
     )
+
+    await sim.setObjectPosition(robot.handle, config["robot"]["xyz"])
+    await sim.setObjectOrientation(robot.handle, config["robot"]["rpy"])
 
 
 async def shutdown(**kwargs):
