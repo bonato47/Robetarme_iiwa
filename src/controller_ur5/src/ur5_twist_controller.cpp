@@ -88,6 +88,10 @@ class DsStateHandler {
                     
                 }if (loopDS >=step){
                     speedCartDs = {0.0,0.0,-speed};
+                    
+                }if (loopDS >=step){
+                    speedCartDs = {0.0,0.0,-speed};
+                    speedCartDs = {0.0,0.0,-speed};
                 }if (loopDS >=2*step){
                     speedCartDs = {-speed,-0.0,-0.0};
                 }if (loopDS >=3*step){
@@ -100,12 +104,12 @@ class DsStateHandler {
                     speedCartDs = {0.0,0.0,0.0};
                 }
 
-                if (loopDS >= 0){
-                    speedCartDs = {cos(rad)*speed,0,sin(rad)*speed};
-                }
-                if(loopDS>=1000){
-                    speedCartDs = {0.0,0.0,0.0};
-                }
+                // if (loopDS >= 0){
+                //     speedCartDs = {cos(rad)*speed,0,sin(rad)*speed};
+                // }
+                // if(loopDS>=1000){
+                //     speedCartDs = {0.0,0.0,0.0};
+                // }
 
 
 
@@ -127,7 +131,7 @@ int main(int argc, char **argv)
     //string whichSimu = "Ur";
     double pi = 3.14;
     //choose the time step for ros
-    double delta_t = 0.01;
+    double delta_t = 0.1;
     //choose the tintegration time for the next pos 
     double integrationTime = 0.05;
     // choose the tolerance to the new joints
@@ -296,12 +300,13 @@ int main(int argc, char **argv)
     while (ros::ok()){
 
         update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);
-        ros::Duration(1.5*freq_DS).sleep();
-        ros::spinOnce(); //wait to get the new speed
+        // ros::Duration(1.5*freq_DS).sleep();
+        // ros::spinOnce(); //wait to get the new speed
 
 
 
         vector<double> poseCartActual  = RobotUr5.getFK(JsHandler.jointPosition);
+        ROS_WARN("actual pos: x = %f, y = %f, z = %f",poseCartActual[4], poseCartActual[5], poseCartActual[6]);
 
 
         //use the speed from topic and convert the quat from topic to angular velocity
@@ -321,6 +326,8 @@ int main(int argc, char **argv)
         
         // VectorXd twistDesiredEigen_transform = wSb.get_twist();
 
+
+
         geometry_msgs::Twist twist_msg;
 
         // Set angular velocity (from quaternion data in the vector)
@@ -329,9 +336,10 @@ int main(int argc, char **argv)
         twist_msg.angular.z = 0;//twistDesiredEigen[2];
 
         // // Set linear velocity (from position data in the vector)
-        twist_msg.linear.x = -twistDesiredEigen[3];
-        twist_msg.linear.y = -twistDesiredEigen[4];
+        twist_msg.linear.x = twistDesiredEigen[3];
+        twist_msg.linear.y = twistDesiredEigen[4];
         twist_msg.linear.z = twistDesiredEigen[5];
+
 
         // Publish the Twist message
         chatter_pub_twist.publish(twist_msg);

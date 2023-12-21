@@ -65,6 +65,7 @@ geometry_msgs::Twist RobotParameter::getTwist(vector<double> posJoint, vector<do
     }
 
     VectorXd result = jacMatrix * speedJointEigen;
+    
 
     // Populate linear velocities
     twist.linear.x = result(0);
@@ -119,7 +120,7 @@ vector<double> RobotParameter::getIDynamics(vector<double> vectJoint, VectorXd s
 //--------------------------------------IK-------------------------------------------------------------------------------
 
 InverseKinematics::InverseKinematics() {  // Method/function defined inside the class
-    baseLink   = "base_link";
+    baseLink   = "base";
     tipLink    = "tool0";
     URDF_param = "/ur5/robot_description";
     nJoint    = 6;
