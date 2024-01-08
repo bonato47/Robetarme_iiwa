@@ -198,7 +198,7 @@ FROM  iiwa-developpement as iiwa-simulation
 ### apt update and clean
 RUN sudo apt update && sudo apt upgrade -y && sudo apt clean
 
-ARG coppeliasim_version="V4_6_0_rev14"
+ARG coppeliasim_version="V4_6_0_rev16"
 ARG coppeliasim_file="CoppeliaSim_Edu_${coppeliasim_version}_Ubuntu20_04.tar.xz"
 WORKDIR /home/${USER}
 RUN wget https://www.coppeliarobotics.com/files/${coppeliasim_version}/${coppeliasim_file}

@@ -2,7 +2,7 @@
 sim = require'sim'
 simROS = require'simROS'
 
-nb_dofs = 7
+nb_dofs = NB_DOFS
 
 function sysCall_init()
     -- Robot state
@@ -100,4 +100,21 @@ end
 function callback_joint_cmd(msg)
     new_cmd = true
     cmd_msg = msg.data
+end
+
+function get_handles()
+    JOINT_NAMES
+    JOINT_HANDLES
+    LINK_HANDLES
+
+    baseHandle = sim.getObject(BASE_HANDLE_NAME)
+    eeHandle = sim.getObject(EE_HANDLE_NAME)
+end
+
+function set_cmd()
+    new_cmd = false
+
+    for i=1, nb_dofs, 1 do
+        sim.setJointTargetCMD(jointHandles[i], cmd_msg[i])
+    end
 end

@@ -1,11 +1,8 @@
 import os
 import yaml
-import xml.etree.ElementTree as ET
 import signal
 import argparse
 import asyncio
-import rospy
-import roslib; roslib.load_manifest('urdfdom_py')
 
 from typing import Dict, List
 from dataclasses import dataclass, field, asdict
@@ -17,7 +14,7 @@ VERBOSE = True
 SHUTDOWN_KEY = False
 current_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
 
-
+#TODO: add footplatform as an option
 @dataclass()
 class Robot():
     """ Robot dataclass. """
@@ -50,9 +47,6 @@ async def main():
     # Read YAML and URDF files
     yaml_config = read_yaml_file(parse_input_arguments())
     robot = read_urdf(current_dir + yaml_config["filepath"]["urdf"])
-
-    if VERBOSE:
-        robot.print()
 
     # Launch roscore and coppeliasim
     lst_processes.append(await send_command_bash(["roscore"]))
@@ -137,33 +131,39 @@ def read_urdf(str_urdf: str) -> Robot:
     returns:
         Robot: Robot dataclass containing information from URDF file.
     """
+    global VERBOSE
+
     new_robot = Robot()
-    urdf_tree = ET.parse(str_urdf)
+    urdf_description = URDF.from_xml_file(str_urdf)
 
     # Fill the robot world link name
-    new_robot.world_link = "/" + \
-        urdf_tree.find("link").attrib["name"] + "_visual"
+    for link in urdf_description.links:
+        if link.name == "world":
+            new_robot.world_link = "/" + link.name + "_visual"
+            break
+
+    if new_robot.world_link == "":
+        if urdf_description.links[0].collision is None:
+            new_robot.world_link = "/" + urdf_description.links[0].name + "_visual"
+        else:
+            new_robot.world_link = "/" + urdf_description.links[0].name + "_respondable"
 
     # Fill the robot joints name
     nb_dofs = 0
-    for joint in urdf_tree.findall(".//joint"):
-        try:
-            joint.attrib["type"]
-        except:
-            continue
-
-        joint_limit = joint.find("limit")
-        if joint_limit is not None:
+    for joint in urdf_description.joints:
+        if joint.limit is not None:
             nb_dofs += 1
-            new_robot.lst_joints_name.append(joint.attrib["name"])
+            new_robot.lst_joints_name.append(joint.name)
 
     new_robot.nb_dofs = nb_dofs
 
     # Fill the robot links name
-    for link in urdf_tree.findall(".//link"):
-        link_resp = link.find("collision")
-        if link_resp is not None:
-            new_robot.lst_links_name.append(link.attrib["name"] + "_respondable")
+    for link in urdf_description.links:
+        if link.collision is not None:
+            new_robot.lst_links_name.append(link.name + "_respondable")
+
+    if VERBOSE:
+        new_robot.print()
 
     return new_robot
 
@@ -193,47 +193,51 @@ async def attach_script_to_object(sim, robot: Robot, control_type: str):
     await sim.associateScriptWithObject(child_script_handle, robot.handle)
 
     # Fill the lua file content with the different scriptable parts
-    with open("../lua/common_part.lua", "r") as lua_common:
+    with open("../lua/robot_controller.lua", "r") as lua_common:
         lua_file_content += lua_common.read().replace("CONTROLLER_TYPE", control_type.lower())
 
-    str_joints_name = "jointNames = {"
-    str_joints_name += ", ".join([f"'{j}'" for j in robot.lst_joints_name]) + "}"
-
-    str_joints_handle = "jointHandles = {"
-    str_joints_handle += ", ".join([f"'{j}'" for j in robot.lst_joints]) + "}"
-
-    str_links_handle = "linkHandles = {"
-    str_links_handle += ", ".join([f"'{j}'" for j in robot.lst_links]) + "}"
-
-    with open("../lua/get_handles.lua", "r") as lua_handles:
-        str_get_handles = lua_handles.read()
-
-    str_get_handles = str_get_handles.replace("JOINT_NAMES", str_joints_name)
-    str_get_handles = str_get_handles.replace(
-        "JOINT_HANDLES", str_joints_handle
+    lua_file_content = lua_file_content.replace("NB_DOFS", str(robot.nb_dofs))
+    lua_file_content = lua_file_content.replace(
+        "JOINT_NAMES", create_replacement("jointHandles = {", robot.lst_joints_name)
     )
-    str_get_handles = str_get_handles.replace(
-        "LINK_HANDLES", str_links_handle
+    lua_file_content = lua_file_content.replace(
+        "JOINT_HANDLES", create_replacement("jointHandles = {", robot.lst_joints)
     )
-    str_get_handles = str_get_handles.replace(
+    lua_file_content = lua_file_content.replace(
+        "LINK_HANDLES", create_replacement("linkHandles = {", robot.lst_links)
+    )
+    lua_file_content = lua_file_content.replace(
         "BASE_HANDLE_NAME",
         "'" + robot.world_link + "/" + robot.lst_links_name[0] + "'"
     )
-    str_get_handles = str_get_handles.replace(
+    lua_file_content = lua_file_content.replace(
         "EE_HANDLE_NAME",
         "'" + robot.world_link + "/" + robot.lst_links_name[0] + "'"
     )
 
-    lua_file_content += str_get_handles
-
-    with open("../lua/set_cmd.lua", "r") as lua_cmd:
-        lua_file_content += lua_cmd.read().replace("CMD", control_type)
+    lua_file_content = lua_file_content.replace("CMD", control_type)
 
     await sim.setScriptStringParam(
         child_script_handle,
         sim.scriptstringparam_text,
         lua_file_content
     )
+
+
+def create_replacement(prefix: str, lst_str: List[str]) -> str:
+    """ Create a replacement string for a specific string.
+
+        args:
+            prefix (str): Prefix to be added before the replacement.
+            lst_str (List[str]): List of string to be replaced.
+
+        return:
+            new_str (str): New string with the replacement.
+    """
+    new_str = prefix
+    new_str += ", ".join([f"'{s}'" for s in lst_str]) + "}"
+
+    return new_str
 
 
 async def setup_robot(client: any, sim: any, robot: Robot, config: Dict[str, str]):
