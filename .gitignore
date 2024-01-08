@@ -26,7 +26,6 @@ src/gazebo_ros_pkgs
 src/kuka_fri
 src/mc_rbdyn_urdf
 src/send_pose/Third_party/qpOASES
-src/rokae_ros_package
 iiwa_toolkit
 
 .DS_Store
