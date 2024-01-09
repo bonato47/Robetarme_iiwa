@@ -19,6 +19,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
 class Robot():
     """ Robot dataclass. """
     name = ""
+    urdf = ""
     handle: int = 0
     world_link: str = ""
     nb_dofs: int = 0
@@ -27,6 +28,11 @@ class Robot():
     lst_joints_name: List[str] = field(default_factory=list)
     lst_links: List[int] = field(default_factory=list)
     lst_links_name: List[str] = field(default_factory=list)
+
+    def __init__(self, urdf: str, name: str = ""):
+        """ Constructor. """
+        self.urdf = urdf
+        self.name = name
 
     def print(self):
         """ Print the robot informations. """
@@ -46,7 +52,7 @@ async def main():
 
     # Read YAML and URDF files
     yaml_config = read_yaml_file(parse_input_arguments())
-    robot = read_urdf(current_dir + yaml_config["filepath"]["urdf"])
+    robot = read_urdf(current_dir + yaml_config["robot"]["urdf"])
 
     # Launch roscore and coppeliasim
     lst_processes.append(await send_command_bash(["roscore"]))
@@ -133,7 +139,7 @@ def read_urdf(str_urdf: str) -> Robot:
     """
     global VERBOSE
 
-    new_robot = Robot()
+    new_robot = Robot(urdf=str_urdf)
     urdf_description = URDF.from_xml_file(str_urdf)
 
     # Fill the robot world link name
@@ -251,10 +257,7 @@ async def setup_robot(client: any, sim: any, robot: Robot, config: Dict[str, str
     """
     robot.name = await client.call(
         ("simURDF.import"),
-        (
-            current_dir + config["filepath"]["urdf"],
-            int(0b01000001100),  # bitwise operation
-        )
+        (robot.urdf, int(0b01000001100)),  # bitwise operation
     )
 
     for j in robot.lst_joints_name:

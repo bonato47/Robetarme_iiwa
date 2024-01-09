@@ -1,8 +1,9 @@
 filepath:
   coppeliasim: ~/CoppeliaSim_Edu_V4_6_0_rev16_Ubuntu20_04/coppeliaSim
   scene: ../testspace/test_first_setup.ttt
-  urdf: ../urdf/ur5.urdf
 robot:
+  platform: true
+  urdf: ../urdf/ur5.urdf
   ee_name: iiwa_link_ee
   base_name: iiwa_link_0
   xyz: [0.0, 0.0, 0.0]
@@ -10,3 +11,4 @@ robot:
   init_pos: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
   init_cmd: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
   control_type: Position # Position, Velocity, Force
+  tool: shotcrete # none, shotcrete, surfacer, welding, cleaner
