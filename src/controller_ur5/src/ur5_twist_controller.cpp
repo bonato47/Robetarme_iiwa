@@ -43,10 +43,11 @@ class JointStateHandler {
         if (!msg->position.empty()) {
                 jointPosition = msg->position; // Update the position vector with received positions
                 jointSpeed = msg->velocity; // Update the position vector with received positions
+                // swwap the position to have each joint in the kinematic order
                 swap(jointPosition[0], jointPosition[2]);
                 swap(jointSpeed[0], jointSpeed[2]);
-
                 init_joint = false;
+                
             } else {
                 ROS_WARN("Received joint positions are empty.");
             }
@@ -60,13 +61,11 @@ class DsStateHandler {
     public:
         vector<double> quatDs;
         vector<double> speedCartDs;
-        int loopDS= 0;
 
         bool init_Ds;
         DsStateHandler(ros::NodeHandle& nh) : nh_(nh) {
             quatDs    = {0,0,0,1};
             speedCartDs = {0,0,0};
-
             init_Ds = true;
         
             sub_ = nh_.subscribe("/passive_control/vel_quat", 10, &DsStateHandler::DsStateCallback, this);
@@ -78,43 +77,6 @@ class DsStateHandler {
                 quatDs = {msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w};
                 speedCartDs={msg->position.x,msg->position.y,msg->position.z};
                 init_Ds = false;
-                double speed = 0.1;
-                double step =200;
-                double rad = 3.14 * loopDS/step ;
-                loopDS++;
-
-                // if (loopDS >= 0){
-                //     speedCartDs = {speed,0,0.0};
-                    
-                // }if (loopDS >=step){
-                //     speedCartDs = {0.0,0.0,-speed};
-                    
-                // }if (loopDS >=step){
-                //     speedCartDs = {0.0,0.0,-speed};
-                //     speedCartDs = {0.0,0.0,-speed};
-                // }if (loopDS >=2*step){
-                //     speedCartDs = {-speed,-0.0,-0.0};
-                // }if (loopDS >=3*step){
-                //     speedCartDs = {-0.00,-0.0,-speed};
-                // }                
-                // if (loopDS >=4*step){
-                //     speedCartDs = {speed,-0.0,-0.0};
-                // }
-                // if(loopDS>=5*step){
-                //     speedCartDs = {0.0,0.0,0.0};
-                // }
-
-                // if (loopDS >= 0){
-                //     speedCartDs = {cos(rad)*speed,0,sin(rad)*speed};
-                // }
-                // if(loopDS>=1000){
-                //     speedCartDs = {0.0,0.0,0.0};
-                // }
-
-
-
-
-
             } else {
                 ROS_WARN("Received joint positions are empty.");
             }
@@ -294,14 +256,13 @@ int main(int argc, char **argv)
         loop_rate.sleep(); 
         cin >> UserInput;
     }
-    DsHandler.loopDS=0;
 
     std_msgs::Float64MultiArray nextSpeedJointMsg;
     while (ros::ok()){
 
         update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);
         // ros::Duration(1.5*freq_DS).sleep();
-        // ros::spinOnce(); //wait to get the new speed
+        ros::spinOnce(); //wait to get the new speed
 
 
 

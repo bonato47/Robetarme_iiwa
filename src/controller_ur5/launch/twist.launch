@@ -1,0 +1,7 @@
+<launch>
+    <!-- Launch the C++ node -->
+  <node pkg="ur5_controller" name="ur5_twist_controller" type="ur5_twist_controller" output="screen"/>
+
+    <!-- Launch the Python node -->
+    <node pkg="ur5_controller" type="metrics_ploting.py" name="metrics_ploting" output="screen"/>
+</launch>
