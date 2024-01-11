@@ -229,11 +229,7 @@ int main(int argc, char **argv)
 
     vector<double> nextSpeedJoint = RobotUr5.getIDynamics(JsHandler.jointPosition,twistDesiredEigen);
 
-    ROS_WARN("actualquat : x = %f, y = %f, z = %f,w = %f",poseCartActual[0],poseCartActual[1],poseCartActual[2],poseCartActual[3]);
-    // ROS_WARN("desired linear speed: x = %f, y = %f, z = %f",twistDesiredEigen(3), twistDesiredEigen(4), twistDesiredEigen(5));
-    // ROS_WARN("desired angular speed: x = %f, y = %f, z = %f",twistDesiredEigen(0), twistDesiredEigen(1), twistDesiredEigen(2));
-    // ROS_WARN("The robot wants to go with join speed: j1 = %f, j2 = %f, j3 = %f, j4 = %f, j5 = %f, j6 = %f", nextSpeedJoint[0],nextSpeedJoint[1],nextSpeedJoint[2],nextSpeedJoint[3],nextSpeedJoint[4],nextSpeedJoint[5]);
-    srv.request.start_controllers = { "twist_controller" };
+   srv.request.start_controllers = { "twist_controller" };
     srv.request.stop_controllers = { "joint_group_pos_controller" };
     srv.request.strictness = 2;
     srv.request.start_asap = false;
@@ -264,30 +260,12 @@ int main(int argc, char **argv)
         // ros::Duration(1.5*freq_DS).sleep();
         ros::spinOnce(); //wait to get the new speed
 
-
-
         vector<double> poseCartActual  = RobotUr5.getFK(JsHandler.jointPosition);
-        ROS_WARN("actual pos: x = %f, y = %f, z = %f",poseCartActual[4], poseCartActual[5], poseCartActual[6]);
 
 
         //use the speed from topic and convert the quat from topic to angular velocity
         VectorXd twistDesiredEigen = speed_func(poseCartActual, DsHandler.quatDs,DsHandler.speedCartDs);
         twistMarker(twistDesiredEigen,{poseCartActual[4],poseCartActual[5],poseCartActual[6]} ,visPub) ;
-
-
-
-
-        // state_representation::CartesianState wSa("base"); // reference frame is world by default
-        // wSa.set_twist(twistDesiredEigen);
-        // state_representation::CartesianState aSb("base_link", "base");
-        
-        // // for this operation to be valid aSb should be expressed in a (wSa)
-        // // the result is b expressed in world
-        // state_representation::CartesianState wSb = wSa * aSb;
-        
-        // VectorXd twistDesiredEigen_transform = wSb.get_twist();
-
-
 
         geometry_msgs::Twist twist_msg;
 
@@ -306,8 +284,6 @@ int main(int argc, char **argv)
         chatter_pub_twist.publish(twist_msg);
         update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);
 
-        ROS_WARN("desired linear speed: x = %f, y = %f, z = %f",twistDesiredEigen(3), twistDesiredEigen(4), twistDesiredEigen(5));
-        // ROS_WARN("desired angular speed: x = %f, y = %f, z = %f",twistDesiredEigen(0), twistDesiredEigen(1), twistDesiredEigen(2));
 
         // double tol_speed= 0.01;
 

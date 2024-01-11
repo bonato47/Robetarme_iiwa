@@ -38,6 +38,7 @@ USER ${USER}
 RUN sudo apt update
 RUN if [ "${ROS_DISTRO}" == "noetic" ] ; \
     then sudo apt install python-is-python3 ; fi
+RUN pip install matplotlib
 
 ### Add a few tools
 RUN sudo apt update && sudo apt install -y \
