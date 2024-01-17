@@ -92,26 +92,6 @@ if [ "${MODE}" != "connect" ]; then
     FWD_ARGS+=("--privileged")
 
 
-
-    # Add volume ros_ik_services/
-    # docker volume rm ros_ik_services
-    # docker volume create --driver local \
-    # --opt type="none" \
-    # --opt device="${PWD}/../../ros_ik_services" \
-    # --opt o="bind" \
-    # "ros_ik_services"
-
-    # FWD_ARGS+=(--volume="ros_ik_services:/home/ros/ros_ws/src/ros_ik_services:rw")
-
-    # Add volume simulation_utils/
-    #docker volume rm simulation_utils
-    #docker volume create --driver local \
-    #--opt type="none" \
-    #--opt device="${PWD}/../../simulations" \
-    #--opt o="bind" \
-    #"simulation_utils"
-
-    #FWD_ARGS+=(--volume="simulation_utils:/home/ros/simulation_utils:rw")
     
      # Add volume controller_ur5/
     docker volume rm controller_ur5
