@@ -93,7 +93,7 @@ int main(int argc, char **argv)
     //string whichSimu = "Ur";
     double pi = 3.14;
     //choose the time step for ros
-    double delta_t = 0.001;
+    double delta_t = 1/150; //150hz
     //choose the tintegration time for the next pos 
     double integrationTime = 0.05;
     // choose the tolerance to the new joints
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
         ros::spinOnce(); 
         loop_rate.sleep();  
         i++;
-        if(i >= 1000){
+        if(i >= 10000){
             ROS_ERROR("Cannot contact with the DS or the Robot, exiting...");
             return 0;
         }

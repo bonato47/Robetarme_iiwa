@@ -20,7 +20,7 @@ def ee_info_callback(data):
 def listener():
     rospy.init_node('topic_subscriber', anonymous=True)
     rospy.Subscriber("passive_control/vel_quat", Pose, pose_callback)
-    rospy.Subscriber("iiwa/ee_info/Vel", Twist, ee_info_callback)
+    rospy.Subscriber("ur5/ee_info/Vel", Twist, ee_info_callback)
     rospy.spin()
 
 if __name__ == '__main__':
