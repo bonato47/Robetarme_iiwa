@@ -74,9 +74,9 @@ class DsStateHandler {
     void DsStateCallback(const geometry_msgs::Pose::ConstPtr& msg) {
         if (msg){
 
-                quatDs = {msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w};
-                speedCartDs={msg->position.x,msg->position.y,msg->position.z};
-                init_Ds = false;
+            quatDs = {msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w};
+            speedCartDs={msg->position.x,msg->position.y,msg->position.z};
+            init_Ds = false;
             } else {
                 ROS_WARN("Received joint positions are empty.");
             }
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
     //string whichSimu = "Ur";
     double pi = 3.14;
     //choose the time step for ros
-    double delta_t = 1/150; //150hz
+    double delta_t = 0.001; //150hz
     //choose the tintegration time for the next pos 
     double integrationTime = 0.05;
     // choose the tolerance to the new joints
@@ -145,7 +145,14 @@ int main(int argc, char **argv)
         loop_rate.sleep();  
         i++;
         if(i >= 10000){
-            ROS_ERROR("Cannot contact with the DS or the Robot, exiting...");
+            if (JsHandler.init_joint == true){
+            ROS_ERROR("Cannot contact with the Robot");
+            }
+            if (DsHandler.init_Ds == true){
+            ROS_ERROR("Cannot contact with the DS");
+            }
+            ROS_ERROR("Exit..");
+
             return 0;
         }
     } 
@@ -156,7 +163,7 @@ int main(int argc, char **argv)
 
     //select goal
     //vector<double> initialJointPos= {-1.75,-1.0,-1.3,-0.8,0.15,0}; //
-    vector<double> initialJointPos= {1.57,-1.83,1.57,-0.0,1.57,0.0}; //
+    vector<double> initialJointPos= {3.14,-1.83,1.57,3.38,-1.57,1.57}; //
     // connect to rosservice position control
     // Create a service request
     controller_manager_msgs::SwitchController srv;
