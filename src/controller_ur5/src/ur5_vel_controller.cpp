@@ -111,13 +111,9 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "speed_controler");
     ros::NodeHandle Nh_;
 
-    //ros::Publisher chatter_pub_speed = Nh_.advertise<std_msgs::Float64MultiArray>("/joint_group_vel_controller/command", 1000);
-    ros::Publisher chatter_pub_twist = Nh_.advertise<geometry_msgs::Twist>("/ur5/twist_controller/command", 1000);
+    ros::Publisher chatter_pub_speed = Nh_.advertise<std_msgs::Float64MultiArray>("/ur5/joint_group_vel_controller/command", 1000);
+    //ros::Publisher chatter_pub_twist = Nh_.advertise<geometry_msgs::Twist>("/ur5/twist_controller/command", 1000);
     ros::Publisher chatter_pub_pos = Nh_.advertise<std_msgs::Float64MultiArray>("/ur5/joint_group_pos_controller/command", 1000);
-    //ros::Publisher joint_trajectory_pub = Nh_.advertise<trajectory_msgs::JointTrajectory>("/pos_joint_traj_controller/command", 1000);
-
-    // ros::Publisher pub_pos     = Nh_.advertise<geometry_msgs::Pose>("/ur5/ee_info/Pose", 1000);
-    // ros::Publisher pub_speed   = Nh_.advertise<geometry_msgs::Twist>("/ur5/ee_info/Vel", 1000);
 
     ros::Publisher pub_pos     = Nh_.advertise<geometry_msgs::Pose>("/ur5/ee_info/Pose", 1000);
     ros::Publisher pub_speed   = Nh_.advertise<geometry_msgs::Twist>("/ur5/ee_info/Vel", 1000);
@@ -168,7 +164,7 @@ int main(int argc, char **argv)
     // Create a service request
     controller_manager_msgs::SwitchController srv;
     srv.request.start_controllers = {"joint_group_pos_controller"};
-    srv.request.stop_controllers = { "twist_controller" };
+    srv.request.stop_controllers = { "joint_group_vel_controller" };
     srv.request.strictness = 2;
     srv.request.start_asap = false;
     srv.request.timeout = 0;  // Timeout set to 0.0 seconds
@@ -187,26 +183,6 @@ int main(int argc, char **argv)
     int interpSize= 4000;
     vector<vector<double>> joint_positions = interpolatePath(JsHandler.jointPosition, initialJointPos,interpSize);
 
-
-    // // Create a JointTrajectory message
-    // trajectory_msgs::JointTrajectory joint_traj;
-    // joint_traj.header.stamp = ros::Time::now();
-    // joint_traj.joint_names = {"shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint","wrist_1_joint", "wrist_2_joint", "wrist_3_joint"}; // Replace with your joint names
-
-    // // Populate the trajectory with joint positions
-    // for (const auto &pos : joint_positions) {
-    //     trajectory_msgs::JointTrajectoryPoint point;
-    //     point.positions = pos;
-    //     point.time_from_start = ros::Duration(0.1); // Set appropriate duration for each point
-    //     joint_traj.points.push_back(point);
-    // }
-    // //&& bool mseValue_cart(vector<double> v1, vector<double> v2,float tol)
-    // // Publish the joint trajectory
-    // while (ros::ok() ) {
-    //     joint_trajectory_pub.publish(joint_traj);
-    //     ros::Duration(0.1).sleep(); // Publish at 1 Hz
-
-    // }
     //populate messages
     std_msgs::Float64MultiArray nextPosJointMsg;
     // send message and wait until position achieved
@@ -236,7 +212,7 @@ int main(int argc, char **argv)
 
     vector<double> nextSpeedJoint = RobotUr5.getIDynamics(JsHandler.jointPosition,twistDesiredEigen);
 
-   srv.request.start_controllers = { "twist_controller" };
+   srv.request.start_controllers = { "joint_group_vel_controller" };
     srv.request.stop_controllers = { "joint_group_pos_controller" };
     srv.request.strictness = 2;
     srv.request.start_asap = false;
@@ -244,7 +220,7 @@ int main(int argc, char **argv)
 
     if (client.call(srv)) {
     if (srv.response.ok) {
-            ROS_INFO("you are now in twist controler");
+            ROS_INFO("you are now in joint velocity controler");
     } else {
         ROS_ERROR("Service call failed");
     }
@@ -274,32 +250,15 @@ int main(int argc, char **argv)
         VectorXd twistDesiredEigen = speed_func(poseCartActual, DsHandler.quatDs,DsHandler.speedCartDs);
         twistMarker(twistDesiredEigen,{poseCartActual[4],poseCartActual[5],poseCartActual[6]} ,visPub) ;
 
-        geometry_msgs::Twist twist_msg;
+        vector<double> nextSpeedJoint = RobotUr5.getIDynamics(JsHandler.jointPosition,twistDesiredEigen);
 
-        // Set angular velocity (from quaternion data in the vector)
-        twist_msg.angular.x = twistDesiredEigen[0];
-        twist_msg.angular.y = twistDesiredEigen[1];
-        twist_msg.angular.z = twistDesiredEigen[2];
+        ROS_WARN("desired linear speed: x = %f, y = %f, z = %f",twistDesiredEigen(3), twistDesiredEigen(4), twistDesiredEigen(5));
 
-        // // Set linear velocity (from position data in the vector)
-        twist_msg.linear.x = twistDesiredEigen[3];
-        twist_msg.linear.y = twistDesiredEigen[4];
-        twist_msg.linear.z = twistDesiredEigen[5];
+        nextSpeedJointMsg.data = nextSpeedJoint;
 
-
-        // Publish the Twist message
-        chatter_pub_twist.publish(twist_msg);
+        chatter_pub_speed.publish(nextSpeedJointMsg);
         
         update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);
-
-
-        // double tol_speed= 0.01;
-
-        // if(twistDesiredEigen.norm() > tol_speed){
-        //     // publish to the ur5 speed controller
-        //     nextSpeedJointMsg.data = nextSpeedJoint;
-        //     chatter_pub_speed.publish(nextSpeedJointMsg);
-        // }
 
         ros::spinOnce(); // Allow the message to be published
         loop_rate.sleep();  

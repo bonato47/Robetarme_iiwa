@@ -228,8 +228,8 @@ include_directories(
 # add_executable(Ds src/Ds.cpp src/Utils.cpp)
 # target_link_libraries(Ds ${catkin_LIBRARIES})
 
-add_executable(ur5_speed_controller src/ur5_speed_controller.cpp src/control_function_ur5.cpp src/Utils.cpp)
-target_link_libraries(ur5_speed_controller ${catkin_LIBRARIES} ${control_libraries_LIBRARIES})
+add_executable(ur5_vel_controller src/ur5_vel_controller.cpp src/control_function_ur5.cpp src/Utils.cpp)
+target_link_libraries(ur5_vel_controller ${catkin_LIBRARIES} ${control_libraries_LIBRARIES})
 
 add_executable(ur5_twist_controller src/ur5_twist_controller.cpp src/control_function_ur5.cpp src/Utils.cpp)
 target_link_libraries(ur5_twist_controller ${catkin_LIBRARIES} ${control_libraries_LIBRARIES})
