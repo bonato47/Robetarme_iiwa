@@ -188,26 +188,6 @@ int main(int argc, char **argv)
     int interpSize= 20;
     vector<vector<double>> joint_positions = interpolatePath(JsHandler.jointPosition, initialJointPos,interpSize);
 
-
-    // // Create a JointTrajectory message
-    // trajectory_msgs::JointTrajectory joint_traj;
-    // joint_traj.header.stamp = ros::Time::now();
-    // joint_traj.joint_names = {"shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint","wrist_1_joint", "wrist_2_joint", "wrist_3_joint"}; // Replace with your joint names
-
-    // // Populate the trajectory with joint positions
-    // for (const auto &pos : joint_positions) {
-    //     trajectory_msgs::JointTrajectoryPoint point;
-    //     point.positions = pos;
-    //     point.time_from_start = ros::Duration(0.1); // Set appropriate duration for each point
-    //     joint_traj.points.push_back(point);
-    // }
-    // //&& bool mseValue_cart(vector<double> v1, vector<double> v2,float tol)
-    // // Publish the joint trajectory
-    // while (ros::ok() ) {
-    //     joint_trajectory_pub.publish(joint_traj);
-    //     ros::Duration(0.1).sleep(); // Publish at 1 Hz
-
-    // }
     //populate messages
     std_msgs::Float64MultiArray nextPosJointMsg;
     // send message and wait until position achieved
@@ -251,7 +231,8 @@ int main(int argc, char **argv)
         ROS_ERROR("Failed to call service");
     }
 
-    ROS_INFO("first position reached, please Press GO when ready to shotcreet");
+    ROS_INFO("Please press GO when ready to shotcreet");
+    
     while( UserInput != "GO"){
         update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);
         ros::spinOnce(); 

@@ -57,7 +57,7 @@ class InverseKinematics {       // The class
     string URDF_param="";
     int  nJoint = 0  ;
     double error = 0.01;
-    double timeoutInSecs = 0.01;
+    double timeoutInSecs = 0.5;
 
     vector<double> posJointNext = {};
     int rc = 0;

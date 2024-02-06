@@ -126,7 +126,6 @@ InverseKinematics::InverseKinematics() {  // Method/function defined inside the 
     nJoint    = 6;
     vector<double> vector_0(nJoint, 0.0);
     posJointNext = vector_0;
-    type = TRAC_IK::Distance;
     ikSolver= new TRAC_IK::TRAC_IK(baseLink, tipLink, URDF_param, timeoutInSecs, error, type);  
     
     valid = ikSolver->getKDLChain(chain);

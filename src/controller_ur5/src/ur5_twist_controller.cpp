@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 
     //select goal
     //vector<double> initialJointPos= {-1.75,-1.0,-1.3,-0.8,0.15,0}; //
-    vector<double> initialJointPos= {3.14,-1.83,1.57,3.38,-1.57,1.57}; //
+    vector<double> initialJointPos= {3.14,-1.83,1.57,0,-1.57,1.57}; //
     // connect to rosservice position control
     // Create a service request
     controller_manager_msgs::SwitchController srv;
@@ -207,6 +207,8 @@ int main(int argc, char **argv)
     //     ros::Duration(0.1).sleep(); // Publish at 1 Hz
 
     // }
+
+
     //populate messages
     std_msgs::Float64MultiArray nextPosJointMsg;
     // send message and wait until position achieved
@@ -224,6 +226,7 @@ int main(int argc, char **argv)
         ros::spinOnce();        
         loop_rate.sleep();  
     }
+    
     string UserInput = "stop";
 
     update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);

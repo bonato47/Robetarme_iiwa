@@ -1,6 +1,7 @@
 import rospy
 import matplotlib.pyplot as plt
 from geometry_msgs.msg import Pose, Twist
+import math
 
 pose_data = {'x': [], 'y': [], 'z': [], 'timestamps': []}
 ee_info_data = {'x': [], 'y': [], 'z': [], 'timestamps': []}
@@ -30,7 +31,7 @@ if __name__ == '__main__':
         # Create subplots for x, y, and z coordinates of position and velocity
         fig, axs = plt.subplots(3, 1, figsize=(8, 12))
 
-        # Plot x, y, and z coordinates of position against timestamps
+        # Plot x, y, and z coordinates of velocity  against timestamps
         for i, axis in enumerate(['x', 'y', 'z']):
             coordinates, timestamps = zip(*pose_data[axis])
             axs[i].plot(timestamps, coordinates, label=f'{axis}-coordinate')
@@ -45,6 +46,15 @@ if __name__ == '__main__':
             axs[i].set_xlabel('Time')
             axs[i].set_ylabel(f'{axis.capitalize()}-velocity')
             axs[i].legend()
+             
+        # max_vel_temp = math.sqrt(data.linear.x**3+data.linear.y**2+data.linear.z**2)
+    
+        # if max_vel_temp > max_velocity_robot:
+        #     max_velocity_robot = max_vel_temp
+    
+        # axs[-1].annotate(f'Max Velocity of the robot: {max_velocity_robot}',
+        #                  xy=(0.5, 0), xytext=(0, -60), textcoords='offset points',
+        #                  ha='center', va='top', fontsize=10, color='blue')
 
         plt.suptitle('Position and Velocity Coordinates vs. Timestamps', fontsize=16)
         plt.tight_layout()
