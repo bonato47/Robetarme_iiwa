@@ -86,6 +86,10 @@ class DsStateHandler {
         ros::Subscriber sub_;
 };
 
+void positionController(vector<double> initialPos, vector<double> initialQuat, ros::NodeHandle& nh,
+                         InverseKinematics& Ik, JointStateHandler& JsHandler, RobotParameter& RobotUr5, DsStateHandler& DsHandler,
+                         ros::ServiceClient& client, ros::Publisher& chatter_pub_pos,
+                         ros::Publisher& pub_pos, ros::Publisher& pub_speed, ros::Publisher& visPub,ros::Rate loop_rate);
 
 int main(int argc, char **argv)
 {
@@ -129,13 +133,19 @@ int main(int argc, char **argv)
     InverseKinematics Ik;
     JointStateHandler JsHandler(Nh_);
     DsStateHandler DsHandler(Nh_);
+    Nh_.setParam("/startController", false);
+
 
     //waiting for the first joint position and connection with the ds 
 
     ROS_INFO("connection with he DS and the Robot...");
+    bool initDS;
+    Nh_.getParam("/startDS", initDS);
 
     int i = 0;
-    while(JsHandler.init_joint || DsHandler.init_Ds ){
+    while(JsHandler.init_joint || !initDS ){
+        Nh_.getParam("/startDS", initDS);
+
         update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);
         ros::spinOnce(); 
         loop_rate.sleep();  
@@ -158,8 +168,7 @@ int main(int argc, char **argv)
     //-------------------------------------code for first position----------------------------------
 
     //select goal
-    //vector<double> initialJointPos= {-1.75,-1.0,-1.3,-0.8,0.15,0}; //
-    // vector<double> initialJointPos= {3.14,-1.83,1.57,3.38,-1.57,1.57}; //
+
     vector<double> initialPos, QuatPos;
     Nh_.getParam("/initialPos", initialPos);
     Nh_.getParam("/initialQuat", QuatPos);
@@ -242,9 +251,12 @@ int main(int argc, char **argv)
         ros::spinOnce(); 
         loop_rate.sleep(); 
         cin >> UserInput;
+
     }
+    Nh_.setParam("/startController", true);
 
     std_msgs::Float64MultiArray nextSpeedJointMsg;
+    bool finishDS;
     while (ros::ok()){
 
         update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);
@@ -267,144 +279,83 @@ int main(int argc, char **argv)
         chatter_pub_speed.publish(nextSpeedJointMsg);
         
         update_publisher_for_DS(RobotUr5,JsHandler.jointPosition,JsHandler.jointSpeed,pub_pos,pub_speed);
+        Nh_.getParam("/finishDS", finishDS);
+        if(finishDS == true){
+            ROS_INFO("Shotcrete finish, go back to the center of the target");
+            break;
+        }
 
         ros::spinOnce(); // Allow the message to be published
-        loop_rate.sleep();  
-
+        loop_rate.sleep(); 
     }
+
+    Nh_.setParam("/finishDS", false);
+    Nh_.setParam("/startController", false);
+     // Your existing logic here
+    vector<double> finalPos, finalQuatPos;
+    Nh_.getParam("/finalPos", finalPos);
+    Nh_.getParam("/initialQuat", finalQuatPos);
+    positionController(finalPos,finalQuatPos, Nh_, Ik, JsHandler, RobotUr5, DsHandler, client, chatter_pub_pos, pub_pos, pub_speed, visPub, loop_rate);
+    // Initiate ROS shutdown
+    ros::shutdown();
+
+    // Ensure all callbacks and subscribers have completed
+    ros::waitForShutdown();
+
     return 0;    
 
 }
+void positionController(vector<double> initialPos, vector<double> initialQuat, ros::NodeHandle& nh,
+                         InverseKinematics& Ik, JointStateHandler& JsHandler, RobotParameter& RobotUr5, DsStateHandler& DsHandler,
+                         ros::ServiceClient& client, ros::Publisher& chatter_pub_pos,
+                         ros::Publisher& pub_pos, ros::Publisher& pub_speed, ros::Publisher& visPub,ros::Rate loop_rate){
 
+    initialQuat.insert(initialQuat.end(), initialPos.begin(), initialPos.end());
+    pair<int, vector<double>> IkPair = Ik.getIK(JsHandler.jointPosition, initialQuat);
 
+    vector<double> initialJointPos = IkPair.second;
 
+    // Connect to rosservice position control
+    controller_manager_msgs::SwitchController srv;
+    srv.request.start_controllers = {"joint_group_pos_controller"};
+    srv.request.stop_controllers = {"joint_group_vel_controller"};
+    srv.request.strictness = 2;
+    srv.request.start_asap = false;
+    srv.request.timeout = 0;  // Timeout set to 0.0 seconds
 
-    // ------......--------   
+    if (client.call(srv)) {
+        if (srv.response.ok) {
+            ROS_INFO("You are now in joint position controller");
+        } else {
+            ROS_ERROR("Service call failed");
+        }
+    } else {
+        ROS_ERROR("Failed to call service");
+    }
 
+    // Make a spline to goal
+    int interpSize = 4000;
+    vector<vector<double>> joint_positions = interpolatePath(JsHandler.jointPosition, initialJointPos, interpSize);
 
+    // Populate messages
+    std_msgs::Float64MultiArray nextPosJointMsg;
 
+    // Send message and wait until position achieved
+    for (int i = 0; i <= interpSize; ++i) {
+        nextPosJointMsg.data = joint_positions[i];
 
+        // Publish to the UR5 position controller
+        chatter_pub_pos.publish(nextPosJointMsg);
 
-    // //Check orientation at the desired intial pos
-    // geometry_msgs::Pose msgInitPos;
-    // geometry_msgs::Twist msgInitSpeed;
+        // Update other publishers
+        update_publisher_for_DS(RobotUr5, JsHandler.jointPosition, JsHandler.jointSpeed, pub_pos, pub_speed);
 
-    // msgInitPos.orientation.x = intialPos[0];
-    // msgInitPos.orientation.y = intialPos[1];
-    // msgInitPos.orientation.z = intialPos[2];
-    // msgInitPos.orientation.w = intialPos[3];
-    // msgInitPos.position.x    = intialPos[4];
-    // msgInitPos.position.y    = intialPos[5];
-    // msgInitPos.position.z    = intialPos[6];
+        vector<double> poseCartActual = RobotUr5.getFK(JsHandler.jointPosition);
 
-    // pub_pos.publish(msgInitPos);
-    // pub_speed.publish(msgInitSpeed);
-    // // run two time to send the pos to the DS node and receive the new DS
-    // ros::spinOnce(); 
-    // loop_rate.sleep();  
-    // ros::spinOnce();   
-    // loop_rate.sleep();  
-    
-    // intialState={nextState.quatFromDS[0],nextState.quatFromDS[1],nextState.quatFromDS[2],nextState.quatFromDS[3],intialPos[0],intialPos[1],intialPos[2]};
+        VectorXd twistDesiredEigen = speed_func(poseCartActual, DsHandler.quatDs, DsHandler.speedCartDs);
+        twistMarker(twistDesiredEigen, {poseCartActual[4], poseCartActual[5], poseCartActual[6]}, visPub);
 
-    // std::cout << "Desired position: ";
-    // for (const double& element : intialState) {
-    //     std::cout << element << " ";
-    // }
-    // std::cout << std::endl;
-            
-    // //go to first pos     
-    // int rc = nextState.getIK(actualState.posJointActual,intialState);
-
-    // if (rc < 0){
-    //     ROS_ERROR("your intial point is not achiveable");
-    //     return 1;
-    // }
-    // string UserInput = "stop";
-
-
-    // while (!mseValue_cart(actualState.posJointActual,nextState.posJointNext,tol_mse) ){
-    //     Fk_and_pub(actualState,client,pub_pos,pub_speed);
-
-    //     chatter_pub.publish(nextState.msgP);
-    //     ros::spinOnce();        
-    //     loop_rate.sleep();  
-    // }
-
-
-
-
-    // ROS_INFO("first position reached, please Press GO when ready to shotcreet");
-    // while( UserInput != "GO"){
-
-    //     Fk_and_pub(actualState,client,pub_pos,pub_speed);
-
-    //     cin >> UserInput;
-    // }
-    // // rostopic pub /passive_control/vel_quat geometry_msgs/Pose '{position: {x: 0.05 ,y: 0.0, z: -0.05}, orientation: {x: 0, y: 0.9848, z: 0, w: 0.1736}}'
-
-    // //------------------------------------------------------------------------------------------------------------------------//
-    // //send first pos
-
-    // //update publisher for DS
-    // update_publisher_for_DS(actualState,actualState.posJointActual, pub_pos, pub_speed,client, loop_rate);
-
-    // vector<double> nextPosCartTemp  = actualState.posCartActual;
-    // vector<double> nextPosJointTemp = nextState.posJointNext;
-
-    // //use the speed from topic and convert the quat from topic to angular velocity
-    // VectorXd speed_eigen = speed_func(actualState.posCartActual, nextState.quatFromDS,nextState.speedFromDS);
-
-    // //integrate the speed with the actual cartesian state to find new cartesian state. The output is in  (quat,pos)
-    // vector<double> NextQuatPosCart = Integral_func(actualState.posCartActual, speed_eigen, integrationTime, nextState);
-    
-    // //compute inverse kinematic
-    // nextState.getIK(nextPosJointTemp,NextQuatPosCart);
-
-    // // publish to the iiwa position controller
-    // std_msgs::Float64MultiArray nextPosJointTempMsg = nextState.msgP;
-    // chatter_pub.publish(nextPosJointTempMsg);
-
-    // nextPosJointTemp= nextState.posJointNext;
-    // nextPosCartTemp = actualState.getFK(nextPosJointTemp);
-
-    // // publish the next cart position for the DS
-    // pub_pos.publish(actualState.actualCart); // the name is not clear but it's send a msg with the values of nextPosCartTemp
-
-    // // we should update the twist as well
-
-    // ros::spinOnce();        
-    // loop_rate.sleep();  
-
-    // //begin the ros loop
-
-    // bool check_ik = true;
-    // ROS_INFO("LETSGO");
-    // while (ros::ok())
-    // {
-    //             //compute nextpos +1 
-    //     VectorXd speed_eigen = speed_func(nextPosCartTemp, nextState.quatFromDS,nextState.speedFromDS);
-    //     vector<double> NextQuatPosCart = Integral_func(nextPosCartTemp, speed_eigen, integrationTime, nextState);
-        
-    //     nextState.getIK(nextPosJointTemp,NextQuatPosCart);
-
-    //     update_publisher_for_DS(actualState, nextState.posJointNext, pub_pos, pub_speed,client, loop_rate);
-
-
-    //     nextPosJointTemp = nextState.posJointNext;
-    //     nextPosCartTemp = actualState.getFK(nextPosJointTemp); 
-    //     nextPosJointTempMsg = nextState.msgP;
-    //     // Print the vector elements
-    //     cout << "Vector elements: ";
-    //     for (const double& value : NextQuatPosCart) {
-    //         cout << value << " ";
-    //     }
-    //     cout << endl;
-    //     ros::spinOnce();        
-    //     loop_rate.sleep();  
-    //     //--------------------------------------------------------------------
-    //     //send next joint 
-    //     chatter_pub.publish(nextPosJointTempMsg);
-    // }
-    // return 0;    
-
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+}
