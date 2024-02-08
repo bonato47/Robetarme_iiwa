@@ -153,6 +153,16 @@ if [ "${MODE}" != "connect" ]; then
 
     FWD_ARGS+=(--volume="simulation_utils:/home/ros/simulation_utils:rw")
 
+    # Add volume rokae robot/
+    docker volume rm rokae_ros_package
+    docker volume create --driver local \
+    --opt type="none" \
+    --opt device="${PWD}/../src/rokae_ros_package" \
+    --opt o="bind" \
+    "rokae_ros_package"
+
+    FWD_ARGS+=(--volume="rokae_ros_package:/home/ros/ros_ws/src/rokae_ros_package:rw")
+
 
     # Setup git config
     FWD_ARGS+=(--volume="${HOME}/.gitconfig:/home/ros/.gitconfig:ro")
