@@ -272,8 +272,6 @@ int main(int argc, char **argv)
 
         vector<double> nextSpeedJoint = RobotUr5.getIDynamics(JsHandler.jointPosition,twistDesiredEigen);
 
-        ROS_WARN("desired linear speed: x = %f, y = %f, z = %f",twistDesiredEigen(3), twistDesiredEigen(4), twistDesiredEigen(5));
-
         nextSpeedJointMsg.data = nextSpeedJoint;
 
         chatter_pub_speed.publish(nextSpeedJointMsg);
@@ -289,16 +287,16 @@ int main(int argc, char **argv)
         loop_rate.sleep(); 
     }
 
-    Nh_.setParam("/finishDS", false);
+    //Nh_.setParam("/finishDS", false);
     Nh_.setParam("/startController", false);
      // Your existing logic here
     vector<double> finalPos, finalQuatPos;
     Nh_.getParam("/finalPos", finalPos);
     Nh_.getParam("/initialQuat", finalQuatPos);
     positionController(finalPos,finalQuatPos, Nh_, Ik, JsHandler, RobotUr5, DsHandler, client, chatter_pub_pos, pub_pos, pub_speed, visPub, loop_rate);
+    
     // Initiate ROS shutdown
     ros::shutdown();
-
     // Ensure all callbacks and subscribers have completed
     ros::waitForShutdown();
 

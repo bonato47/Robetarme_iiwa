@@ -3,5 +3,5 @@
   <node pkg="ur5_controller" name="ur5_vel_controller" type="ur5_vel_controller" output="screen"/>
 
     <!-- Launch the Python node -->
-    <node pkg="ur5_controller" type="metrics_ploting.py" name="metrics_ploting" output="screen"/>
+  <node pkg="ur5_controller" type="metrics_ploting.py" name="metrics_ploting" output="screen"/>
 </launch>
