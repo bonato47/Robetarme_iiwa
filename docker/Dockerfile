@@ -213,15 +213,16 @@ RUN python3 -m pip install -U cbor pyzmq
 # Use of && since a new terminal is instanciated for each RUN command
 USER root
 RUN source ~/.bashrc && echo PYTHONPATH=${PYTHONPATH}":/home/ros/${coppeliasim_file}/programming/zmqRemoteApi/clients/python" >> ~/.bashrc
-USER ${USER}
 
 RUN sudo apt update -y --fix-missing
 RUN sudo apt install -y \
     python3-vcstool \
     ros-noetic-rqt-joint-trajectory-controller \
     ros-noetic-moveit-commander \
-    ros-noetic-teleop-twist-keyboard
+    ros-noetic-teleop-twist-keyboard \
+    ros-noetic-pcl-ros
 
+USER ${USER}
 WORKDIR /home/${USER}/ros_ws
 RUN vcs import --input https://raw.githubusercontent.com/RobotnikAutomation/rbvogui_sim/noetic-devel/repos/rbvogui_sim.repos
 RUN source /home/${USER}/.bashrc && rosdep install --from-paths src --ignore-src -y -r
