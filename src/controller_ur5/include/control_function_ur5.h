@@ -45,6 +45,7 @@ class RobotParameter {
 
     RobotParameter();
     vector<double> getFK(vector<double> );
+    vector<double> getFK_link(vector<double> , string );
     geometry_msgs::Twist getTwist(vector<double> , vector<double> );
     MatrixXd getJacobian(vector<double> );
     vector<double> getIDynamics(vector<double> vectJoint, VectorXd speed_eigen);

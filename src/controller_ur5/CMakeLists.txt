@@ -234,3 +234,6 @@ target_link_libraries(ur5_vel_controller ${catkin_LIBRARIES} ${control_libraries
 add_executable(ur5_twist_controller src/ur5_twist_controller.cpp src/control_function_ur5.cpp src/Utils.cpp)
 target_link_libraries(ur5_twist_controller ${catkin_LIBRARIES} ${control_libraries_LIBRARIES})
 
+#add_executable(position_links src/position_links.cpp src/control_function_ur5.cpp src/Utils.cpp)
+#target_link_libraries(position_links ${catkin_LIBRARIES} ${control_libraries_LIBRARIES})
+

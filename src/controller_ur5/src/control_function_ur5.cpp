@@ -52,6 +52,19 @@ vector<double> RobotParameter::getFK(vector<double> vectJoint){
     return posCart;
 }
 
+
+vector<double> RobotParameter::getFK_link(vector<double> vectJoint, string tipLinkDesired){
+    Map<VectorXd> posJoint_eigen(vectJoint.data(), vectJoint.size());
+    state_representation::JointPositions nextJoinState =  state_representation::JointPositions(robot_name,joint_names,posJoint_eigen);        
+    state_representation::CartesianPose nextCartesianPose = model->forward_kinematics(nextJoinState,tipLinkDesired);
+
+    Vector3d p1Prime = nextCartesianPose.get_position();
+    Quaterniond q1Prime = nextCartesianPose.get_orientation();
+
+    vector<double> posCart ={q1Prime.x(),q1Prime.y(),q1Prime.z(),q1Prime.w(),p1Prime[0],p1Prime[1],p1Prime[2]};
+    return posCart;
+}
+
 geometry_msgs::Twist RobotParameter::getTwist(vector<double> posJoint, vector<double> speedJoint){
 
     // Create a Twist message
