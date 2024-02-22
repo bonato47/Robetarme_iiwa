@@ -172,9 +172,9 @@ int main(int argc, char **argv)
     vector<double> initialPos, QuatPos;
     Nh_.getParam("/initialPos", initialPos);
     Nh_.getParam("/initialQuat", QuatPos);
+
     QuatPos.insert(QuatPos.end(), initialPos.begin(), initialPos.end());
     pair<int, vector<double>> IkPair = Ik.getIK(JsHandler.jointPosition,QuatPos);
-
     vector<double> initialJointPos = IkPair.second ;
 
     // connect to rosservice position control

@@ -4,7 +4,7 @@ project(ur5_controller)
 set (CMAKE_CXX_STANDARD 14)
 # set(CMAKE_BUILD_TYPE Release)
 ## Compile as C++11, supported in ROS Kinetic and newer
-#add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -237,3 +237,4 @@ target_link_libraries(ur5_twist_controller ${catkin_LIBRARIES} ${control_librari
 #add_executable(position_links src/position_links.cpp src/control_function_ur5.cpp src/Utils.cpp)
 #target_link_libraries(position_links ${catkin_LIBRARIES} ${control_libraries_LIBRARIES})
 
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
